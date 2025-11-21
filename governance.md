@@ -179,7 +179,7 @@ exclude_lines = [
 ```
   - 1.2.3 README
     - Create initial skeleton 'README.md' document in each folder
-  - 1.2.4 Copy this document (governance.md) from /Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration into \<project name>/ai
+  - 1.2.4 Copy this document (governance.md) from ˜/Documents/GitHub/LLM-Governance-and-Orchestration into \<project name>/ai
   - 1.2.5 Traceability Matrix
      - Create skeleton trace-0000-master_traceability-matrix.md in workspace/trace/
   - 1.2.6 Project folder structure
