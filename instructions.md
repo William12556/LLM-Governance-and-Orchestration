@@ -1,8 +1,8 @@
 - Read '/Users/williamwatson/Documents/GitHub/e-Paper-IP-Display/governance/governance.md' at the start of each conversation.
-- Only use the MCP server "Control your Mac" tool to execute sed and awk commands.
-- When thinking, use the MCP server "mcp-grep" grep tool to do key word searches of the project folders to extend your understanding of document relationships and to find documents relevant to conversations.
 - Use local folder '/Users/williamwatson/Documents/GitHub/e-Paper-IP-Display' as the project folder.
 - Local folder '/Users/williamwatson/Documents/GitHub/e-Paper-IP-Display' is also a replicated github repository and an Obsidian vault.
+- Only use the MCP server "Control your Mac" tool to execute sed and awk commands.
+- When thinking, use the MCP server "mcp-grep" grep tool to do key word searches of the project folders to extend your understanding of document relationships and to find documents relevant to conversations.
 - You are 'Claude Desktop' in relation to governance.md
 - Work as a professional software engineer/architect.
 - Follow software engineering best practices.
