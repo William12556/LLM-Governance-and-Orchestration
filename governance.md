@@ -68,7 +68,7 @@
     - Both Claude Desktop and Claude Code have MCP filesystem access to project
     - Communication uses filesystem-based message passing (semaphores)
     - Claude Desktop: Uses template [T04 Prompt](<#2.4 t04 prompt>) to create code generation or debug prompts for Claude Code
-    - Claude Desktop: Embeds complete design specifications and schema within prompt documents
+    - Claude Desktop: Embeds complete Tier 3 component design specifications and schema within prompt documents
     - Claude Desktop: Ensures prompt documents are self-contained requiring no external file references
     - Claude Desktop: Saves T04 prompt to workspace/prompt/prompt-NNNN-\<name\>.md
     - Claude Desktop: Creates instruction document workspace/prompt/prompt-NNNN-instructions.md
@@ -89,6 +89,7 @@
     - Master documents have '0000' as a sequence number and are named as \<document class\>-0000-master_\<document name\>.md
     - Claude Desktop: Based on document class (design, change, issue, prompt, trace, test, audit) adds a sequentially contiguous \<sequence number\> starting at 0001 to all created documents
     - Claude Desktop: Based on document class (design, change, issue, prompt, trace, test, audit) follows naming format \<document class\>-\<sequence number\>-\<document name\>.md when creating documents
+    - Claude Desktop: Design documents follow tier naming convention: master_, domain_, component_ prefixes
     - Claude Desktop: Insures related documents are Obsidian cross linked
     - Document classes that require a master document are: design, audit, trace and test
   - 1.1.11 Configuration Management
@@ -221,46 +222,67 @@ exclude_lines = [
 [Return to Table of Contents](<#table of contents>)
 
 #### 1.3 P02 Design
-  - 1.3.1 Master design creation
-    - Claude Desktop: Creates master design document named \<design\>-0000-master_\<document name\>.md from human software specifications and requirements (there is only one master design document) using template [T01 Design](<#2.1 t01 design>)
-  - 1.3.2 Design decomposition
-    - Claude Desktop: Deconstructs the master design document into cross linked design element (modules) documents according to functionality using template [T01 Design](<#2.1 t01 design>)
-  - 1.3.3 Context window constraints
-    - Claude Desktop: Insures design element documents do not exceed Claude Code context window
-  - 1.3.4 Master designation
-    - Claude Desktop: Insures the master  design document  is clearly designated within as the master design document.
-  - 1.3.5 Design Verification
-    - Claude Desktop: Validates design completeness before creating T04 prompt
-    - Claude Desktop: Verifies all functional requirements have corresponding design elements
-    - Claude Desktop: Confirms all non-functional requirements addressed in design specifications
-  - 1.3.6 Design Review
-    - Claude Desktop: Presents master design document for human approval before decomposition into functional modules
+  - 1.3.1 Tier 1: System Architecture
+    - Claude Desktop: Creates design-0000-master_\<project\>.md from human requirements using template [T01 Design](<#2.1 t01 design>)
+    - Claude Desktop: Defines system architecture, technology stack, cross-cutting concerns
+    - Claude Desktop: Includes system-level Mermaid diagrams (architecture, component interaction, state machine, data flow)
+    - Claude Desktop: Clearly designates document as master design within document content
+  - 1.3.2 Tier 1 Review
+    - Claude Desktop: Presents master design document for human approval
     - Claude Desktop: Documents review findings, required changes, approval decision
-    - Claude Desktop: Proceeds with module decomposition only after approval recorded
-  - 1.3.7 Requirements Traceability
+    - Claude Desktop: Proceeds with Tier 2 decomposition only after approval recorded
+  - 1.3.3 Tier 2: Domain Decomposition
+    - Claude Desktop: Decomposes master into functional domains using template [T01 Design](<#2.1 t01 design>)
+    - Claude Desktop: Creates design-NNNN-domain_\<name\>.md for each domain with contiguous sequence numbers (0001, 0002, etc.)
+    - Claude Desktop: Each domain defines: boundaries, interfaces, domain patterns, responsibilities
+    - Claude Desktop: Includes domain-level Mermaid diagrams as needed
+  - 1.3.4 Tier 2 Review
+    - Claude Desktop: Presents domain design documents for human approval
+    - Claude Desktop: Documents review findings, required changes, approval decision
+    - Claude Desktop: Proceeds with Tier 3 decomposition only after approval recorded
+  - 1.3.5 Tier 3: Component Decomposition
+    - Claude Desktop: Decomposes each domain into components using template [T01 Design](<#2.1 t01 design>)
+    - Claude Desktop: Creates design-NNNN-component_\<domain\>_\<name\>.md for each component
+    - Claude Desktop: Component shares parent domain's sequence number
+    - Claude Desktop: Each component defines: implementation details, interfaces, processing logic, error handling
+    - Claude Desktop: Includes component-level Mermaid diagrams as needed
+  - 1.3.6 Tier 3 Review
+    - Claude Desktop: Presents component design documents for human approval
+    - Claude Desktop: Documents review findings, required changes, approval decision
+    - Claude Desktop: Proceeds with T04 prompt creation only after approval recorded
+  - 1.3.7 Design Hierarchy Naming Convention
+    - Tier 1: design-0000-master_\<project\>.md (single master document)
+    - Tier 2: design-NNNN-domain_\<name\>.md (one per domain, contiguous sequence)
+    - Tier 3: design-NNNN-component_\<domain\>_\<name\>.md (shares domain sequence number)
+  - 1.3.8 Cross-Linking Requirements
+    - Claude Desktop: Master lists all Tier 2 domain document references
+    - Claude Desktop: Each domain lists: master parent reference, all Tier 3 component children references
+    - Claude Desktop: Each component lists: domain parent reference, generated code file paths
+    - Claude Desktop: Uses Obsidian internal link syntax for all cross-references
+  - 1.3.9 Context Window Constraints
+    - Claude Desktop: Ensures design documents at each tier do not exceed Claude Code context window
+    - Claude Desktop: T04 prompts embed only Tier 3 component designs relevant to code generation task
+  - 1.3.10 Design Verification
+    - Claude Desktop: Validates design completeness at each tier before proceeding to next tier
+    - Claude Desktop: Verifies all functional requirements have corresponding design coverage
+    - Claude Desktop: Confirms all non-functional requirements addressed across design hierarchy
+  - 1.3.11 Requirements Traceability
     - Claude Desktop: Assigns unique identifier to each functional and non-functional requirement
-    - Claude Desktop: Maps requirements to design elements using traceability matrix
-    - Claude Desktop: Maintains bidirectional links enabling navigation: requirement ↔ design ↔ code ↔ test (forward and backward)
-  - 1.3.8 Requirements Validation
-    - Claude Desktop: Verifies design satisfies all stated requirements before baseline
-    - Claude Desktop: Documents validation results in design document
+    - Claude Desktop: Maps requirements through design tiers: requirement → master → domain → component
+    - Claude Desktop: Maintains bidirectional links in traceability matrix
+  - 1.3.12 Requirements Validation
+    - Claude Desktop: Verifies design hierarchy satisfies all stated requirements before baseline
+    - Claude Desktop: Documents validation results in master design document
     - Claude Desktop: Resolves discrepancies before proceeding to code generation
-  - 1.3.9 Document storage
+  - 1.3.13 Document Storage
     - Claude Desktop: Saves all design documents in workspace/design
-  - 1.3.10 Visual Documentation Requirements
-    - Claude Desktop: Embeds Mermaid diagrams directly within design documents
-    - Claude Desktop: Master design document includes system architecture diagrams
-    - Claude Desktop: Design element documents include component-specific diagrams as needed
+  - 1.3.14 Visual Documentation Requirements
+    - Claude Desktop: Embeds Mermaid diagrams directly within design documents at all tiers
+    - Tier 1 Master: System architecture, overall component relationships, system-level state machines
+    - Tier 2 Domain: Domain boundaries, domain internal structure, domain interfaces
+    - Tier 3 Component: Component-specific flows, detailed state machines, data transformations
     - Claude Desktop: All diagrams use Mermaid syntax within markdown code blocks
-    - Claude Desktop: Diagram types include:
-      - System Architecture: Overall structure showing state machine and core modules
-      - Component Interaction: Data flow between modules and interface contracts
-      - State Machine: State transitions, event handling, and system behavior
-      - Data Flow: Information processing paths through components
-    - Claude Desktop: Each diagram includes:
-      - Clear purpose statement explaining what diagram illustrates
-      - Comprehensive legend explaining symbols and notation
-      - Cross-references to related design sections
+    - Claude Desktop: Each diagram includes: purpose statement, legend, cross-references
     - Claude Desktop: Updates diagrams when design modifications require visual clarification
     - Claude Desktop: Maintains diagram consistency with textual design specifications
 
@@ -3012,6 +3034,7 @@ flowchart TD
 | 3.4 | 2025-11-20 | Restructured instruction document directives: moved P00 1.1.11 to P09 1.10.6; deleted embedded markdown template; converted to point-by-point directive structure; renumbered P00 1.1.12-1.1.13 to 1.1.11-1.1.12 |
 | 3.5 | 2025-11-20 | Enhanced P00 1.1.11 Configuration Management with configuration audit procedure directives; added config-audit template and process requirements; established baseline verification workflow |
 | 3.6 | 2025-11-21 | Enforced one-to-one issue-change coupling: replaced P03 1.4.1-1.4.2 requiring exclusive issue-to-change relationships; added P04 1.5.7 Issue-Change Coupling with bidirectional linkage verification |
+| 3.7 | 2025-11-26 | Restructured P02 Design into three-tier hierarchy: Tier 1 System Architecture (1.3.1-1.3.2), Tier 2 Domain Decomposition (1.3.3-1.3.4), Tier 3 Component Decomposition (1.3.5-1.3.6); added human review gates after each tier; added Design Hierarchy Naming Convention (1.3.7), Cross-Linking Requirements (1.3.8); updated P00 1.1.8 to specify Tier 3 component designs in T04 prompts; added tier naming convention to P00 1.1.10 |
 
 ---
 [Return to Table of Contents](<#table of contents>)
