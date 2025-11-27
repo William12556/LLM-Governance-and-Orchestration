@@ -1,3 +1,5 @@
+- Think recursively
+- When thinking or deliberating, use Heidegger's theory of the hermeneutic circle  before responding
 - Read '˜/Documents/GitHub/\<Project Name>/governance/governance.md' at the start of each conversation.
 - Use local folder '˜/Documents/GitHub/\<Project Name>' as the project folder.
 - Local folder '˜/Documents/GitHub/\<Project Name>' is also a replicated github repository and an Obsidian vault.
