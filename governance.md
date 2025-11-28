@@ -3419,7 +3419,9 @@ flowchart TD
     
     D1_Decompose --> H2{Human: Review<br/>design elements}
     H2 -->|Revise| D1_Decompose
-    H2 -->|Approve| D1_Baseline[Human: Tag baseline<br/>in GitHub]
+    H2 -->|Approve| Trace1[Claude Desktop: Update<br/>traceability matrix P05]
+    
+    Trace1 --> D1_Baseline[Human: Tag baseline<br/>in GitHub]
     
     D1_Baseline --> D1_Prompt[Claude Desktop: Create T04 prompt<br/>with design + schema]
     
@@ -3435,11 +3437,13 @@ flowchart TD
     D2_Complete --> H_Notify[Human: Notify Claude Desktop]
     H_Notify --> D1_Verify[Claude Desktop: Verify<br/>completion doc]
     
-    D1_Verify --> D1_Audit[Claude Desktop: Config audit<br/>code vs baseline]
+    D1_Verify --> Trace2[Claude Desktop: Update<br/>traceability matrix P05]
+    Trace2 --> D1_Audit[Claude Desktop: Config audit<br/>code vs baseline]
     D1_Audit --> D1_Test_Doc[Claude Desktop: Create test doc T05]
     
     D1_Test_Doc --> D1_Execute[Claude Desktop: Execute tests]
-    D1_Execute --> Test_Result{Tests pass?}
+    D1_Execute --> Trace3[Claude Desktop: Update<br/>traceability matrix P05]
+    Trace3 --> Test_Result{Tests pass?}
     
     Test_Result -->|Fail| D1_Issue[Claude Desktop: Create issue T03]
     D1_Issue --> Issue_Type{Issue type?}
@@ -3451,7 +3455,8 @@ flowchart TD
     D1_Change --> H4{Human: Review<br/>change}
     H4 -->|Revise| D1_Change
     H4 -->|Approve| D1_Update_Design[Claude Desktop: Update design]
-    D1_Update_Design --> D1_Prompt
+    D1_Update_Design --> Trace4[Claude Desktop: Update<br/>traceability matrix P05]
+    Trace4 --> D1_Prompt
     
     Test_Result -->|Pass| H5{Human: Accept<br/>deliverable?}
     H5 -->|Reject| D1_Change
@@ -3496,6 +3501,7 @@ flowchart TD
 | 3.7 | 2025-11-26 | Restructured P02 Design into three-tier hierarchy: Tier 1 System Architecture (1.3.1-1.3.2), Tier 2 Domain Decomposition (1.3.3-1.3.4), Tier 3 Component Decomposition (1.3.5-1.3.6); added human review gates after each tier; added Design Hierarchy Naming Convention (1.3.7), Cross-Linking Requirements (1.3.8); updated P00 1.1.8 to specify Tier 3 component designs in T04 prompts; added tier naming convention to P00 1.1.10 |
 | 3.8 | 2025-11-28 | Implemented iteration-based document coupling with lifecycle management: Added iteration field and coupled_docs section to all templates (T02-T06); Enhanced P00 1.1.10 with iteration tracking and git commit requirements; Created P00 1.1.13 Document Lifecycle Management defining active/closed states, closure criteria, archival procedures; Added closed/ subfolders to P01 1.2.6; Enhanced P03 1.4.2, P04 1.5.7, P06 1.7.12-1.7.13, P09 1.10.2 with iteration synchronization and coupling requirements; Created T06 Result template and schema |
 | 3.9 | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 1.2.6 folder structure; Added Python build artifacts to P01 1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 1.2.2 to 1.2.8 Python documents containing pyproject.toml; Created P06 1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
+| 4.0 | 2025-11-28 | Integrated traceability matrix updates into workflow flowchart: Added P05 matrix update nodes after design approval (Trace1), code generation completion (Trace2), test execution (Trace3), and change implementation (Trace4); ensures bidirectional traceability maintained throughout development lifecycle |
 
 ---
 [Return to Table of Contents](<#table of contents>)
