@@ -22,6 +22,7 @@
   - [T03: Issue](<#2.3 t03 issue>)
   - [T04: Prompt](<#2.4 t04 prompt>)
   - [T05: Test](<#2.5 t05 test>)
+  - [T06: Result](<#2.6 t06 result>)
   
 [Workflow](<#3.0 workflow>)
 
@@ -51,7 +52,7 @@
   - 1.1.5 Forbidden
     - Both domains: Unrequested creation, addition, removal or change of source code and documents is forbidden
   - 1.1.6 Constraints
-    - Claude Desktop: Does not exceed language model token/context resource budget communicating with Claude Code
+    - Claude Desktop: Does not exceed language model context resource budget when communicating with Claude Code
   - 1.1.7 Control
     - Claude Desktop: Strategic coordination and validation authority
     - Claude Desktop: Analyzes requirements and formulates design specifications
@@ -87,11 +88,16 @@
     - Claude Desktop: Verifies completion document exists and indicates SUCCESS before proceeding
   - 1.1.10 Documents
     - Master documents have '0000' as a sequence number and are named as \<document class\>-0000-master_\<document name\>.md
-    - Claude Desktop: Based on document class (design, change, issue, prompt, trace, test, audit) adds a sequentially contiguous \<sequence number\> starting at 0001 to all created documents
-    - Claude Desktop: Based on document class (design, change, issue, prompt, trace, test, audit) follows naming format \<document class\>-\<sequence number\>-\<document name\>.md when creating documents
+    - Claude Desktop: Based on document class (design, change, issue, prompt, trace, test, result, audit) adds a sequentially contiguous \<sequence number\> starting at 0001 to all created documents
+    - Claude Desktop: Based on document class (design, change, issue, prompt, trace, test, result, audit) follows naming format \<document class\>-\<sequence number\>-\<document name\>.md when creating documents
     - Claude Desktop: Design documents follow tier naming convention: master_, domain_, component_ prefixes
     - Claude Desktop: Insures related documents are Obsidian cross linked
     - Document classes that require a master document are: design, audit, trace and test
+    - All document classes (issue, change, prompt, test, result) contain internal iteration field starting at 1
+    - Iteration increments when document enters new cycle after failed verification
+    - Git commit required after iteration field modification
+    - Filesystem contains only current iteration; GitHub history preserves prior iterations
+    - Coupled documents share sequence number and maintain synchronized iteration numbers
   - 1.1.11 Configuration Management
     - GitHub repository is authoritative source for all project artifacts
     - Human: Tags design document commits when approved as baseline for code generation via GitHub Desktop (History → right-click commit → Create Tag → Push Tags)
@@ -112,14 +118,47 @@
     - Initial development: 0.y.z (MAJOR version zero for initial development)
     - Git tags format: vMAJOR.MINOR.PATCH (e.g., v1.0.0, v0.1.0)
     - Release notes filename: RELEASE_NOTES_vMAJOR.MINOR.PATCH.md
+  - 1.1.13 Document Lifecycle Management
+    - 1.1.13.1 Active State
+      - Active documents reside in workspace/\<class\>/
+      - Active documents are mutable during iteration cycles
+      - Iteration field increments with each debug/refinement cycle
+      - Git commit required after each iteration increment
+    - 1.1.13.2 Closed State
+      - Upon human acceptance, documents moved to workspace/\<class\>/closed/
+      - Closed documents are immutable
+      - Closed documents preserve final iteration number
+      - Access: Read-only reference for future work
+    - 1.1.13.3 Closure Criteria
+      - Issue: Resolved and verified, corresponding change implemented and tested
+      - Change: Implemented, tested, design updated, human accepted
+      - Prompt: Code generated successfully, completion document verified
+      - Test: Executed with passing results, result document created
+      - Result: Tests passed, no issues created, acceptance confirmed
+    - 1.1.13.4 Archival Procedure
+      - Human initiates closure after acceptance
+      - Claude Desktop verifies closure criteria met
+      - Claude Desktop moves coupled document set to respective closed/ subfolders
+      - Git commit records closure transition
+      - Closed documents referenced but not modified
+    - 1.1.13.5 Closed Subfolder Structure
+      - workspace/issue/closed/
+      - workspace/change/closed/
+      - workspace/prompt/closed/
+      - workspace/test/closed/
+      - workspace/test/result/closed/
+    - 1.1.13.6 Access Constraints
+      - Closed documents: Read-only access for reference
+      - No modifications permitted to closed documents
+      - New work requires new document with new sequence number
+      - Reopening closed work: Create new issue referencing closed documents
 
 [Return to Table of Contents](<#table of contents>)
 
 #### 1.2 P01 Project Initialization (Execute once)
   - 1.2.1 Project folders
-    - Create if does not exist (see 1.2.6 Project folder structure)
+    - Create (see 1.2.6 Project folder structure)
   - 1.2.2 GitHub documents
-    - Create if does not exist
     - Create .gitignore in project root:
 ```
 .DS_Store
@@ -135,9 +174,84 @@ test.txt
 **/tmp
 deprecated/
 workspace/ai/
+venv/
+.venv/
+*.pyc
+__pycache__/
+.pytest_cache/
+dist/
+build/
+*.egg-info/
 ```
+
+  - 1.2.3 README
+    - Create initial skeleton 'README.md' document in each folder
+  - 1.2.4 Copy this document (governance.md) from ˜/Documents/GitHub/LLM-Governance-and-Orchestration into \<project name>/ai
+  - 1.2.5 Traceability Matrix
+     - Create skeleton trace-0000-master_traceability-matrix.md in workspace/trace/
+  - 1.2.6 Project folder structure
+    - Layout
+```
+    └── <project name>/
+        ├── ai/           # Operational rules
+        │   └── governance.md
+        ├── release/                  # Application releases
+        ├── venv/                     # Python virtual environment (excluded from git)
+        ├── dist/                     # Build artifacts (excluded from git)
+        ├── workspace/            # Execution space
+        │   ├── design/
+        │   ├── change/
+        │   │   └── closed/
+        │   ├── issues/
+        │   │   └── closed/
+        │   ├── prompt/          # Code generation prompts
+        │   │   └── closed/
+        │   ├── trace/              # Requirements traceability
+        │   │   └── trace-0000-master_traceability-matrix.md
+        │   ├── audit/
+        │   ├── test/
+        │   │   ├── closed/
+        │   │   └── result/
+        │   │       └── closed/
+        │   └── ai/                   # Optional: Temporary AI working materials (excluded from git)
+        ├── docs/                    # Technical Documents
+        ├── src/                       # Source code
+        │   └── tests/
+        └── deprecated/           # Archive (excluded from git)
+            ├── ai/
+            ├── workspace/
+            │   ├── design/
+            │   ├── change/
+            │   ├── issue/
+            │   ├── prompt/
+            │   ├── trace/
+            │   ├── audit/
+            │   └── test/
+            │       └── result/
+            ├── docs/
+            └── src/
+```
+
+  - 1.2.7 Python Virtual Environment Setup (Human executes)
+    - Human: virtual environment setup instructions for when project initialization completes
+```
+# Create virtual environment in project root
+cd <project name>
+
+python3 -m venv venv
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Install project dependencies
+pip install -e .[dev]
+
+# Verify installation
+pip list
+```
+  - 1.2.8 Python documents
     - Create pyproject.toml in project root:
-```toml
+```
 [project]
 name = "\<project-name\>"
 version = "0.1.0"
@@ -177,46 +291,6 @@ exclude_lines = [
     "raise AssertionError",
     "raise NotImplementedError",
 ]
-```
-  - 1.2.3 README
-    - Create initial skeleton 'README.md' document in each folder
-  - 1.2.4 Copy this document (governance.md) from ˜/Documents/GitHub/LLM-Governance-and-Orchestration into \<project name>/ai
-  - 1.2.5 Traceability Matrix
-     - Create skeleton trace-0000-master_traceability-matrix.md in workspace/trace/
-  - 1.2.6 Project folder structure
-    - Layout
-```text
-    └── <project name>/
-		├── ai/           # Operational rules
-        │   └── governance.md
-        ├── release/                  # Application releases.
-        ├── workspace/            # Execution space
-        │   ├── design/
-        │   ├── change/
-        │   ├── issues/
-        │   ├── prompt/          # Code generation prompts
-        │   ├── trace/              # Requirements traceability
-        │   │   └── trace-0000-master_traceability-matrix.md
-        │   ├── audit/
-        │   ├── test/
-        │   │   └── result/
-        │   └── ai/                   # Optional: Temporary AI working materials (excluded from git)
-        ├── docs/                    # Technical Documents
-        ├── src/                       # Source code
-        │   └── tests/
-        └── deprecated/           # Archive (excluded from git)
-            ├── ai/
-            ├── workspace/
-            │   ├── design/
-            │   ├── change/
-            │   ├── issue/
-            │   ├── prompt/
-            │   ├── trace/
-            │   ├── audit/
-            │   └── test/
-            │       └── result/
-            ├── docs/
-            └── src/
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -298,6 +372,10 @@ exclude_lines = [
     - Claude Desktop: Every source code change document must reference exactly one source issue document
     - Claude Desktop: Every resolved source code issue must reference exactly one change document
     - Claude Desktop: Prohibits multiple change documents addressing same issue or multiple issues addressed by same change
+    - Claude Desktop: Change sequence number matches source issue sequence number
+    - Claude Desktop: Change iteration number matches source issue iteration number at creation
+    - Claude Desktop: When issue iteration increments, corresponding change iteration increments synchronously
+    - Claude Desktop: Verifies iteration synchronization before workflow transitions
   - 1.4.3 Design document updates
     - Claude Desktop: Updates all relevant design documents after implementation
   - 1.4.4 Design document cross-linking
@@ -349,6 +427,10 @@ exclude_lines = [
     - Claude Desktop: Sets issue status to "resolved" when corresponding change status becomes "implemented"
     - Claude Desktop: Verifies bidirectional linkage exists: issue.change_ref ↔ change.source.reference
     - Claude Desktop: Prevents issue closure without corresponding change document for source code issues
+    - Claude Desktop: issue.iteration must equal change.iteration throughout cycle
+    - Claude Desktop: When debugging requires new iteration, both documents increment together
+    - Claude Desktop: Git commit captures synchronized iteration state
+    - Claude Desktop: Validates iteration match before proceeding
     - Note: One-to-one coupling does not prevent modification of paired issue/change documents during debugging iterations
 
 [Return to Table of Contents](<#table of contents>)
@@ -425,6 +507,34 @@ exclude_lines = [
     - Claude Desktop: Maintains permanent tests in component subdirectories
     - Claude Desktop: Archives or removes ephemeral validation scripts post-verification
     - Claude Desktop: Updates test documentation to reflect lifecycle status
+  - 1.7.12 Test-Prompt Coupling
+    - Test sequence number matches source prompt sequence number
+    - Test iteration number matches source prompt iteration number
+    - Iteration synchronization maintained through debug cycles
+    - Claude Desktop verifies coupling before test execution
+  - 1.7.13 Test Result Lifecycle
+    - Results named: result-NNNN-\<name>.md in workspace/test/result/
+    - Result iteration matches parent test iteration
+    - Failed results trigger issue creation with matching sequence number
+    - Passed results enable document closure workflow
+    - Result documents moved to workspace/test/result/closed/ upon acceptance
+  - 1.7.14 Distribution Creation (Human executes)
+    - Human: Distribution build when code generation complete and tests pass
+```
+cd <project name>
+
+# Clean previous build artifacts:
+rm -rf dist/ build/ *.egg-info/
+
+# Build distribution
+python -m build
+
+# Verify build artifacts
+ls -lh dist/
+
+# Test installation in clean environment
+pip install dist/*.whl
+```
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -499,6 +609,10 @@ exclude_lines = [
     - Claude Desktop: Rewrites prompt documents in place when revisions required
     - Claude Desktop: Embeds complete design specifications and schema within prompt documents
     - Claude Desktop: Ensures prompt documents are self-contained requiring no external file references
+    - Claude Desktop: Prompt sequence number matches source change sequence number
+    - Claude Desktop: Prompt iteration number matches source change iteration number
+    - Claude Desktop: Iteration synchronization maintained through debug cycles
+    - Claude Desktop: Verifies coupling before prompt creation
     - GitHub version control maintains complete revision history
   - 1.10.3 Instruction Documents
     - Claude Desktop: Creates instruction document workspace/prompt/prompt-NNNN-instructions.md after human approval
@@ -1166,6 +1280,10 @@ change_info:
   author: ""
   status: ""  # proposed, approved, implemented, verified, rejected
   priority: ""  # critical, high, medium, low
+  iteration: 1  # Increments with each debug cycle
+  coupled_docs:
+    issue_ref: "issue-NNNN"  # Must match sequence number
+    issue_iteration: 1  # Must match issue.iteration
 
 source:
   type: ""  # issue, human_request, enhancement, refactor
@@ -1307,6 +1425,8 @@ properties:
       - title
       - date
       - status
+      - iteration
+      - coupled_docs
     properties:
       id:
         type: string
@@ -1332,6 +1452,22 @@ properties:
           - high
           - medium
           - low
+      iteration:
+        type: integer
+        minimum: 1
+        description: "Increments with each debug cycle"
+      coupled_docs:
+        type: object
+        required:
+          - issue_ref
+          - issue_iteration
+        properties:
+          issue_ref:
+            type: string
+            pattern: "^issue-[0-9]{4}$"
+          issue_iteration:
+            type: integer
+            minimum: 1
   
   source:
     type: object
@@ -1662,6 +1798,10 @@ issue_info:
   status: ""  # open, investigating, resolved, verified, closed, deferred
   severity: ""  # critical, high, medium, low
   type: ""  # bug, defect, error, performance, security
+  iteration: 1  # Increments with each debug cycle
+  coupled_docs:
+    change_ref: ""  # change-NNNN when created
+    change_iteration: null  # Matches change.iteration
 
 source:
   origin: ""  # test_result, user_report, code_review, monitoring
@@ -1776,6 +1916,7 @@ properties:
       - status
       - severity
       - type
+      - iteration
     properties:
       id:
         type: string
@@ -1810,6 +1951,19 @@ properties:
           - error
           - performance
           - security
+      iteration:
+        type: integer
+        minimum: 1
+        description: "Increments with each debug cycle"
+      coupled_docs:
+        type: object
+        properties:
+          change_ref:
+            type: string
+            pattern: "^change-[0-9]{4}$"
+          change_iteration:
+            type: integer
+            minimum: 1
   
   source:
     type: object
@@ -2022,6 +2176,10 @@ prompt_info:
   source_ref: ""  # design-NNNN or change-NNNN
   date: ""
   priority: ""  # critical, high, medium, low
+  iteration: 1  # Increments with each debug cycle
+  coupled_docs:
+    change_ref: "change-NNNN"  # Must match sequence number
+    change_iteration: 1  # Must match change.iteration
 
 context:
   purpose: ""  # What this code accomplishes
@@ -2145,6 +2303,8 @@ properties:
       - task_type
       - source_ref
       - date
+      - iteration
+      - coupled_docs
     properties:
       id:
         type: string
@@ -2167,6 +2327,21 @@ properties:
           - high
           - medium
           - low
+      iteration:
+        type: integer
+        minimum: 1
+      coupled_docs:
+        type: object
+        required:
+          - change_ref
+          - change_iteration
+        properties:
+          change_ref:
+            type: string
+            pattern: "^change-[0-9]{4}$"
+          change_iteration:
+            type: integer
+            minimum: 1
   
   mcp_config:
     type: object
@@ -2444,6 +2619,11 @@ test_info:
   status: ""  # planned, in_progress, executed, passed, failed, blocked
   type: ""  # unit, integration, system, acceptance, regression, performance
   priority: ""  # critical, high, medium, low
+  iteration: 1  # Increments with each debug cycle
+  coupled_docs:
+    prompt_ref: "prompt-NNNN"  # Must match sequence number
+    prompt_iteration: 1  # Must match prompt.iteration
+    result_ref: ""  # result-NNNN when created
 
 source:
   test_target: ""  # Component/feature under test
@@ -2592,6 +2772,8 @@ properties:
       - date
       - status
       - type
+      - iteration
+      - coupled_docs
     properties:
       id:
         type: string
@@ -2627,6 +2809,24 @@ properties:
           - high
           - medium
           - low
+      iteration:
+        type: integer
+        minimum: 1
+      coupled_docs:
+        type: object
+        required:
+          - prompt_ref
+          - prompt_iteration
+        properties:
+          prompt_ref:
+            type: string
+            pattern: "^prompt-[0-9]{4}$"
+          prompt_iteration:
+            type: integer
+            minimum: 1
+          result_ref:
+            type: string
+            pattern: "^result-[0-9]{4}$"
   
   source:
     type: object
@@ -2947,6 +3147,265 @@ properties:
 
 [Return to Table of Contents](<#table of contents>)
 
+#### 2.6 T06 Result
+```yaml
+# T06 Result Template v1.0 - YAML Format
+# Test execution results documentation
+
+result_info:
+  id: ""  # result-NNNN format
+  title: ""
+  date: ""
+  executor: ""
+  status: ""  # passed, failed, blocked, partial
+  iteration: 1  # Matches parent test iteration
+  coupled_docs:
+    test_ref: "test-NNNN"  # Must match test sequence
+    test_iteration: 1  # Must match test.iteration
+
+execution:
+  timestamp: ""
+  environment:
+    python_version: ""
+    os: ""
+    test_framework: ""
+  duration: ""
+
+summary:
+  total_cases: 0
+  passed: 0
+  failed: 0
+  blocked: 0
+  skipped: 0
+  pass_rate: ""
+
+failures:
+  - case_id: ""
+    description: ""
+    error_output: ""
+    stack_trace: ""
+    issue_created: ""  # issue-NNNN if failure triggered issue
+
+passed_cases:
+  - case_id: ""
+    description: ""
+    execution_time: ""
+
+coverage:
+  code_coverage: ""
+  requirements_validated:
+    - ""
+
+issues_created:
+  - issue_ref: "issue-NNNN"
+    severity: ""
+    description: ""
+
+recommendations:
+  - ""
+
+notes: ""
+
+version_history:
+  - version: ""
+    date: ""
+    author: ""
+    changes:
+      - ""
+
+metadata:
+  copyright: "Copyright (c) 2025 William Watson. This work is licensed under the MIT License."
+  template_version: "1.0"
+  schema_type: "t06_result"
+```
+
+[Return to Table of Contents](<#table of contents>)
+
+```yaml
+# T06 Result Schema v1.0
+$schema: http://json-schema.org/draft-07/schema#
+type: object
+required:
+  - result_info
+  - execution
+  - summary
+
+properties:
+  result_info:
+    type: object
+    required:
+      - id
+      - title
+      - date
+      - status
+      - iteration
+      - coupled_docs
+    properties:
+      id:
+        type: string
+        pattern: "^result-[0-9]{4}$"
+      title:
+        type: string
+      date:
+        type: string
+      executor:
+        type: string
+      status:
+        type: string
+        enum:
+          - passed
+          - failed
+          - blocked
+          - partial
+      iteration:
+        type: integer
+        minimum: 1
+      coupled_docs:
+        type: object
+        required:
+          - test_ref
+          - test_iteration
+        properties:
+          test_ref:
+            type: string
+            pattern: "^test-[0-9]{4}$"
+          test_iteration:
+            type: integer
+            minimum: 1
+  
+  execution:
+    type: object
+    required:
+      - timestamp
+    properties:
+      timestamp:
+        type: string
+      environment:
+        type: object
+        properties:
+          python_version:
+            type: string
+          os:
+            type: string
+          test_framework:
+            type: string
+      duration:
+        type: string
+  
+  summary:
+    type: object
+    required:
+      - total_cases
+      - passed
+      - failed
+    properties:
+      total_cases:
+        type: integer
+      passed:
+        type: integer
+      failed:
+        type: integer
+      blocked:
+        type: integer
+      skipped:
+        type: integer
+      pass_rate:
+        type: string
+  
+  failures:
+    type: array
+    items:
+      type: object
+      properties:
+        case_id:
+          type: string
+        description:
+          type: string
+        error_output:
+          type: string
+        stack_trace:
+          type: string
+        issue_created:
+          type: string
+          pattern: "^issue-[0-9]{4}$"
+  
+  passed_cases:
+    type: array
+    items:
+      type: object
+      properties:
+        case_id:
+          type: string
+        description:
+          type: string
+        execution_time:
+          type: string
+  
+  coverage:
+    type: object
+    properties:
+      code_coverage:
+        type: string
+      requirements_validated:
+        type: array
+        items:
+          type: string
+  
+  issues_created:
+    type: array
+    items:
+      type: object
+      properties:
+        issue_ref:
+          type: string
+          pattern: "^issue-[0-9]{4}$"
+        severity:
+          type: string
+        description:
+          type: string
+  
+  recommendations:
+    type: array
+    items:
+      type: string
+  
+  notes:
+    type: string
+  
+  version_history:
+    type: array
+    items:
+      type: object
+      properties:
+        version:
+          type: string
+        date:
+          type: string
+        author:
+          type: string
+        changes:
+          type: array
+          items:
+            type: string
+  
+  metadata:
+    type: object
+    required:
+      - template_version
+      - schema_type
+    properties:
+      copyright:
+        type: string
+      template_version:
+        type: string
+      schema_type:
+        type: string
+        enum:
+          - t06_result
+```
+
+[Return to Table of Contents](<#table of contents>)
+
 ## 3.0 Workflow
 
 ```mermaid
@@ -3035,6 +3494,8 @@ flowchart TD
 | 3.5 | 2025-11-20 | Enhanced P00 1.1.11 Configuration Management with configuration audit procedure directives; added config-audit template and process requirements; established baseline verification workflow |
 | 3.6 | 2025-11-21 | Enforced one-to-one issue-change coupling: replaced P03 1.4.1-1.4.2 requiring exclusive issue-to-change relationships; added P04 1.5.7 Issue-Change Coupling with bidirectional linkage verification |
 | 3.7 | 2025-11-26 | Restructured P02 Design into three-tier hierarchy: Tier 1 System Architecture (1.3.1-1.3.2), Tier 2 Domain Decomposition (1.3.3-1.3.4), Tier 3 Component Decomposition (1.3.5-1.3.6); added human review gates after each tier; added Design Hierarchy Naming Convention (1.3.7), Cross-Linking Requirements (1.3.8); updated P00 1.1.8 to specify Tier 3 component designs in T04 prompts; added tier naming convention to P00 1.1.10 |
+| 3.8 | 2025-11-28 | Implemented iteration-based document coupling with lifecycle management: Added iteration field and coupled_docs section to all templates (T02-T06); Enhanced P00 1.1.10 with iteration tracking and git commit requirements; Created P00 1.1.13 Document Lifecycle Management defining active/closed states, closure criteria, archival procedures; Added closed/ subfolders to P01 1.2.6; Enhanced P03 1.4.2, P04 1.5.7, P06 1.7.12-1.7.13, P09 1.10.2 with iteration synchronization and coupling requirements; Created T06 Result template and schema |
+| 3.9 | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 1.2.6 folder structure; Added Python build artifacts to P01 1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 1.2.2 to 1.2.8 Python documents containing pyproject.toml; Created P06 1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
 
 ---
 [Return to Table of Contents](<#table of contents>)
