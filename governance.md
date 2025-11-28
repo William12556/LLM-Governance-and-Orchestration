@@ -135,6 +135,7 @@
       - Prompt: Code generated successfully, completion document verified
       - Test: Executed with passing results, result document created
       - Result: Tests passed, no issues created, acceptance confirmed
+      - Audit: All critical findings resolved, high-priority findings addressed or mitigated, human approved
     - 1.1.13.4 Archival Procedure
       - Human initiates closure after acceptance
       - Claude Desktop verifies closure criteria met
@@ -145,6 +146,7 @@
       - workspace/issue/closed/
       - workspace/change/closed/
       - workspace/prompt/closed/
+      - workspace/audit/closed/
       - workspace/test/closed/
       - workspace/test/result/closed/
     - 1.1.13.6 Access Constraints
@@ -209,6 +211,7 @@ build/
         │   ├── trace/              # Requirements traceability
         │   │   └── trace-0000-master_traceability-matrix.md
         │   ├── audit/
+        │   │   └── closed/
         │   ├── test/
         │   │   ├── closed/
         │   │   └── result/
@@ -595,6 +598,26 @@ pip install dist/*.whl
     - Claude Desktop: Maintains chronological audit history
     - Claude Desktop: Links related audits (initial → follow-up → closure)
     - Claude Desktop: Preserves audit reports for process improvement analysis
+  - 1.9.9 Audit Closure
+    - 1.9.9.1 Closure Criteria
+      - All critical findings fully resolved
+      - All high-priority findings addressed or mitigated with documented acceptance
+      - Completion documented in audit report
+      - Human approval obtained
+    - 1.9.9.2 Closure Process
+      - Claude Desktop: Verifies all closure criteria satisfied
+      - Claude Desktop: Documents closure status with final compliance metrics
+      - Claude Desktop: Records closure date and approver
+      - Human: Reviews closure documentation
+      - Human: Approves audit closure or identifies remaining work
+    - 1.9.9.3 Post-Closure Archival
+      - Claude Desktop: Moves closed audit report to workspace/audit/closed/
+      - Claude Desktop: Updates audit traceability links in master traceability matrix
+      - Claude Desktop: Preserves read-only access for future reference
+    - 1.9.9.4 Reopening Closed Audits
+      - Prohibited: Closed audits are immutable
+      - New findings: Create new audit with reference to closed audit
+      - Follow-up verification: Covered by new audit cycle
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -3502,6 +3525,7 @@ flowchart TD
 | 3.8 | 2025-11-28 | Implemented iteration-based document coupling with lifecycle management: Added iteration field and coupled_docs section to all templates (T02-T06); Enhanced P00 1.1.10 with iteration tracking and git commit requirements; Created P00 1.1.13 Document Lifecycle Management defining active/closed states, closure criteria, archival procedures; Added closed/ subfolders to P01 1.2.6; Enhanced P03 1.4.2, P04 1.5.7, P06 1.7.12-1.7.13, P09 1.10.2 with iteration synchronization and coupling requirements; Created T06 Result template and schema |
 | 3.9 | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 1.2.6 folder structure; Added Python build artifacts to P01 1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 1.2.2 to 1.2.8 Python documents containing pyproject.toml; Created P06 1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
 | 4.0 | 2025-11-28 | Integrated traceability matrix updates into workflow flowchart: Added P05 matrix update nodes after design approval (Trace1), code generation completion (Trace2), test execution (Trace3), and change implementation (Trace4); ensures bidirectional traceability maintained throughout development lifecycle |
+| 4.1 | 2025-11-28 | Added P08 1.9.9 Audit Closure with closure criteria, process, archival procedures, and reopening constraints; added workspace/audit/closed/ to P01 1.2.6 folder structure; added audit closure criteria to P00 1.1.13.3 and audit closed subfolder to P00 1.1.13.5 |
 
 ---
 [Return to Table of Contents](<#table of contents>)
