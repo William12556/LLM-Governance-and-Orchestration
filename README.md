@@ -25,6 +25,8 @@ This framework is experimental in nature, serving as a learning exercise in prom
 
 This project represents a first attempt at AI-supported software development using Claude Desktop and Claude Code from anthropic.com. The objective is to establish a sort of AI orchestration framework to guide software development. A kind of AI wrangler if you will.
 
+It is loosely based on https://governance.md but directed towards AI.
+
 ---
 
 Copyright: Copyright (c) 2025 William Watson. This work is licensed under the MIT License.

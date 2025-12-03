@@ -538,6 +538,42 @@ ls -lh dist/
 # Test installation in clean environment
 pip install dist/*.whl
 ```
+  - 1.7.15 Progressive Validation Strategy
+    - Claude Desktop: Implements graduated validation during debug cycles
+    - Targeted validation: Execute minimal test to verify specific fix
+    - Integration validation: Execute tests for dependent components
+    - Regression validation: Execute full test suite before closure
+    - Ephemeral scripts: Create temporary validation at tests/ root
+    - Permanent tests: Maintain regression suite in component subdirectories
+    - Script lifecycle: Archive or remove validation scripts post-verification
+    - Validation sequence mandatory before document closure
+  - 1.7.16 Test Type Selection
+    - Unit tests: All component implementations (mandatory)
+    - Integration tests: Component boundary interactions (as needed)
+    - System tests: Full application deployment (pre-release)
+    - Acceptance tests: Requirement validation (milestone-based)
+    - Regression tests: All unit/integration tests (permanent)
+    - Performance tests: NFR validation (periodic benchmarking)
+    - Claude Desktop: Selects appropriate test type based on requirements and architecture
+    - Test documentation specifies type in test_info.type field
+  - 1.7.17 Test Execution Platforms
+    - Unit tests: Development platform (MacOS) with comprehensive mocking
+    - Integration tests: Target platform (Raspberry Pi) with actual subsystems
+    - System tests: Target platform (Raspberry Pi) exclusively
+    - Acceptance tests: Target platform (Raspberry Pi) with stakeholder validation
+    - Regression tests: Development platform (primary), target platform (validation)
+    - Performance tests: Target platform (Raspberry Pi) for accurate measurements
+    - Mocking requirements:
+      - Development platform: Mock all external dependencies (nmcli, systemd, sockets)
+      - Target platform: Use actual system services where integration testing required
+    - Validation workflow:
+      - All code changes: Unit tests on development platform
+      - Pre-release: Full test suite on target platform
+      - Performance benchmarks: Target platform measurements only
+    - Cross-platform considerations:
+      - Claude Desktop: Documents platform-specific limitations in test documentation
+      - Mocking strategy must isolate tests from platform differences
+      - Integration/system tests require target hardware availability
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -3471,19 +3507,38 @@ flowchart TD
     Test_Result -->|Fail| D1_Issue[Claude Desktop: Create issue T03]
     D1_Issue --> Issue_Type{Issue type?}
     
-    Issue_Type -->|Bug| D1_Debug_Prompt[Claude Desktop: Create debug<br/>prompt T04]
-    D1_Debug_Prompt --> H3
-    
-    Issue_Type -->|Design flaw| D1_Change[Claude Desktop: Create change T02]
+    Issue_Type -->|Bug| D1_Change[Claude Desktop: Create change T02]
     D1_Change --> H4{Human: Review<br/>change}
     H4 -->|Revise| D1_Change
-    H4 -->|Approve| D1_Update_Design[Claude Desktop: Update design]
+    H4 -->|Approve| D1_Debug_Prompt[Claude Desktop: Create debug<br/>prompt T04]
+    
+    D1_Debug_Prompt --> H5{Human: Approve<br/>debug}
+    H5 -->|Revise| D1_Debug_Prompt
+    H5 -->|Approve| D1_Debug_Instruct[Claude Desktop: Create<br/>instruction doc]
+    D1_Debug_Instruct --> H_Invoke
+    
+    Issue_Type -->|Design flaw| D1_Design_Change[Claude Desktop: Create change T02]
+    D1_Design_Change --> H6{Human: Review<br/>change}
+    H6 -->|Revise| D1_Design_Change
+    H6 -->|Approve| D1_Update_Design[Claude Desktop: Update design]
     D1_Update_Design --> Trace4[Claude Desktop: Update<br/>traceability matrix P05]
     Trace4 --> D1_Prompt
     
-    Test_Result -->|Pass| H5{Human: Accept<br/>deliverable?}
-    H5 -->|Reject| D1_Change
-    H5 -->|Accept| Complete([Complete])
+    Test_Result -->|Pass| Progressive{Progressive<br/>validation<br/>complete?}
+    
+    Progressive -->|Targeted only| Integration_Val[Claude Desktop: Execute<br/>integration validation]
+    Integration_Val --> Integration_Result{Integration<br/>tests pass?}
+    Integration_Result -->|Fail| D1_Issue
+    Integration_Result -->|Pass| Regression_Val
+    
+    Progressive -->|Integration done| Regression_Val[Claude Desktop: Execute<br/>full regression suite]
+    Regression_Val --> Regression_Result{Regression<br/>tests pass?}
+    Regression_Result -->|Fail| D1_Issue
+    Regression_Result -->|Pass| H7
+    
+    Progressive -->|Full regression| H7{Human: Accept<br/>deliverable?}
+    H7 -->|Reject| D1_Issue
+    H7 -->|Accept| Complete([Complete])
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -3526,6 +3581,7 @@ flowchart TD
 | 3.9 | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 1.2.6 folder structure; Added Python build artifacts to P01 1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 1.2.2 to 1.2.8 Python documents containing pyproject.toml; Created P06 1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
 | 4.0 | 2025-11-28 | Integrated traceability matrix updates into workflow flowchart: Added P05 matrix update nodes after design approval (Trace1), code generation completion (Trace2), test execution (Trace3), and change implementation (Trace4); ensures bidirectional traceability maintained throughout development lifecycle |
 | 4.1 | 2025-11-28 | Added P08 1.9.9 Audit Closure with closure criteria, process, archival procedures, and reopening constraints; added workspace/audit/closed/ to P01 1.2.6 folder structure; added audit closure criteria to P00 1.1.13.3 and audit closed subfolder to P00 1.1.13.5 |
+| 4.2 | 2025-11-30 | Enhanced P06 Test with progressive validation strategy (1.7.15), test type selection criteria (1.7.16), platform execution specifications (1.7.17); updated workflow flowchart to incorporate progressive validation phases and platform-specific testing requirements |
 
 ---
 [Return to Table of Contents](<#table of contents>)
