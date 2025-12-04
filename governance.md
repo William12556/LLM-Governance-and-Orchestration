@@ -64,7 +64,7 @@
     - Claude Code: Performs direct file operations in src/ directory
     - Claude Code: Validates protocol compliance through direct file access
     - Claude Code: Coordinates multi-file implementations and dependencies
-    - Claude Code: Creates completion documents per T04 specifications
+
   - 1.1.8 Communication
     - Both Claude Desktop and Claude Code have MCP filesystem access to project
     - Communication uses filesystem-based message passing (semaphores)
@@ -72,20 +72,19 @@
     - Claude Desktop: Embeds complete Tier 3 component design specifications and schema within prompt documents
     - Claude Desktop: Ensures prompt documents are self-contained requiring no external file references
     - Claude Desktop: Saves T04 prompt to workspace/prompt/prompt-NNNN-\<name\>.md
-    - Claude Desktop: Creates instruction document workspace/prompt/prompt-NNNN-instructions.md
-    - Claude Desktop: Notifies human to initiate Claude Code
-    - Human: Invokes Claude Code with instruction document
+    - Claude Desktop: Provides ready-to-execute command in conversation after human approval
+    - Human: Executes provided command to invoke Claude Code with T04 prompt
     - Claude Code: Reads T04 prompt from workspace/prompt/
     - Claude Code: Analyzes project structure and existing code via MCP filesystem access
     - Claude Code: Generates code, saves directly to src/ per T04 specifications
-    - Claude Code: Creates completion document workspace/prompt/prompt-NNNN-completion.md
-    - Claude Desktop: Reads completion document, verifies SUCCESS status, proceeds with audit
+    - Human: Notifies Claude Desktop when code generation complete
+    - Claude Desktop: Reviews generated code, proceeds with audit
   - 1.1.9 Quality
     - Human review and approval of design, change and initiation of code generation is required
-    - Claude Desktop: Creates instruction document after human approval
+    - Claude Desktop: Provides ready-to-execute command after human approval
     - Human: Invokes Claude Code with provided command
     - Human: Notifies Claude Desktop when Claude Code completes
-    - Claude Desktop: Verifies completion document exists and indicates SUCCESS before proceeding
+    - Claude Desktop: Reviews generated code before proceeding
   - 1.1.10 Documents
     - Master documents have '0000' as a sequence number and are named as \<document class\>-0000-master_\<document name\>.md
     - Claude Desktop: Based on document class (design, change, issue, proposal, prompt, trace, test, result, audit) adds a sequentially contiguous \<sequence number\> starting at 0001 to all created documents
@@ -132,7 +131,7 @@
     - 1.1.13.3 Closure Criteria
       - Issue: Resolved and verified, corresponding change implemented and tested
       - Change: Implemented, tested, design updated, human accepted
-      - Prompt: Code generated successfully, completion document verified
+      - Prompt: Code generated successfully, human confirmed
       - Test: Executed with passing results, result document created
       - Result: Tests passed, no issues created, acceptance confirmed
       - Audit: All critical findings resolved, high-priority findings addressed or mitigated, human approved
@@ -154,6 +153,32 @@
       - No modifications permitted to closed documents
       - New work requires new document with new sequence number
       - Reopening closed work: Create new issue referencing closed documents
+  - 1.1.14 Logging Standards
+    - Generated applications implement environment-based log level control
+    - Debug mode enables verbose logging for development and testing
+    - Normal mode restricts logging to informational events only
+    - Flat file format recommended: timestamp level logger message
+    - Centralized log location per application requirements
+    - Log rotation policy prevents disk exhaustion
+    - Test environments use debug mode for comprehensive logging
+    - Production environments use normal mode for operational efficiency
+    - Log artifacts preserved for failure analysis
+  - 1.1.15 Knowledge Base
+    - Claude Desktop: Consults workspace/knowledge/ before creating documents or code
+    - Claude Code: Consults workspace/knowledge/ before implementing changes
+    - Both domains: Add newly discovered patterns and solutions to knowledge base
+    - Knowledge documents contain: problem statements, solutions, examples, rationale
+    - Knowledge base prevents repeated problem-solving across development cycles
+  - 1.1.16 Logging Standards
+    - Generated applications implement environment-based log level control
+    - Debug mode enables verbose logging for development and testing
+    - Normal mode restricts logging to informational events only
+    - Flat file format recommended: timestamp level logger message
+    - Centralized log location per application requirements
+    - Log rotation policy prevents disk exhaustion
+    - Test environments use debug mode for comprehensive logging
+    - Production environments use normal mode for operational efficiency
+    - Log artifacts preserved for failure analysis
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -175,6 +200,7 @@ coverage.xml
 test.txt
 **/tmp
 deprecated/
+workspace/admin/
 workspace/ai/
 workspace/proposal/
 workspace/proposal/closed
@@ -203,9 +229,11 @@ build/
         ├── venv/                     # Python virtual environment (excluded from git)
         ├── dist/                     # Python build artefacts (excluded from git)
         ├── workspace/                # Execution space
+        │   ├── admin/                # Administrative reports (excluded from git)
         │   ├── design/
         │   ├── change/
         │   │   └── closed/
+        │   ├── knowledge/            # Institutional knowledge
         │   ├── issues/
         │   │   └── closed/
         │   ├── proposal/             # (excluded from git)
@@ -664,24 +692,18 @@ pip install dist/*.whl
     - Claude Desktop: Iteration synchronization maintained through debug cycles
     - Claude Desktop: Verifies coupling before prompt creation
     - GitHub version control maintains complete revision history
-  - 1.10.3 Instruction Documents
-    - Claude Desktop: Creates instruction document workspace/prompt/prompt-NNNN-instructions.md after human approval
-    - Claude Desktop: Provides instruction document path to human
-    - Instruction document contains: Claude Code invocation command, T04 prompt location, expected output locations, completion document requirements
-  - 1.10.4 Completion Documents
-    - Claude Code: Creates completion document workspace/prompt/prompt-NNNN-completion.md
-    - Required fields: generation timestamp, files created with paths, status (SUCCESS/FAILURE), warnings/notes
-    - Claude Desktop: Verifies completion document exists and indicates SUCCESS before proceeding
-  - 1.10.5 Prompt Revision
+  - 1.10.3 Human Handoff
+    - Claude Desktop: After human approval of T04 prompt, provides ready-to-execute command in conversation
+    - Command format: `claude --print < /path/to/workspace/prompt/prompt-NNNN-<name>.md`
+    - Claude Desktop: Command must specify complete absolute path to T04 prompt document
+    - Claude Desktop: No separate instruction document files are created
+    - Human: Copies command from conversation and executes in terminal
+    - Human: Notifies Claude Desktop when Claude Code execution completes
+
+  - 1.10.4 Prompt Revision
     - Claude Desktop: Rewrites existing prompt documents when changes needed
     - Claude Desktop: Documents revision rationale in prompt version_history section
     - GitHub commits provide complete change tracking and rollback capability
-  - 1.10.6 Instruction Document Creation
-    - Claude Desktop: Creates instruction document workspace/prompt/prompt-NNNN-instructions.md after human approval
-    - Claude Desktop: Provides instruction document path to human
-    - Human: Invokes Claude Code with provided command
-    - Claude Desktop: Waits for human confirmation of Claude Code completion
-    - Claude Desktop: Verifies completion document exists and indicates SUCCESS before proceeding
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -2234,6 +2256,7 @@ prompt_info:
 context:
   purpose: ""  # What this code accomplishes
   integration: ""  # How it fits in project
+  knowledge_references: [] # workspace/knowledge/ docs consulted
   constraints:
     - ""  # Technical limitations
 
@@ -2310,17 +2333,9 @@ testing:
 deliverable:
   format_requirements:
     - "Save generated code directly to specified paths"
-    - "Create completion document in workspace/prompt/"
   files:
     - path: "src/<component>/<file>.py"
       content: ""
-  completion_document:
-    path: "workspace/prompt/prompt-NNNN-completion.md"
-    required_fields:
-      - "timestamp"
-      - "files_created: [paths]"
-      - "status: SUCCESS or FAILURE"
-      - "notes: [any warnings]"
 
 success_criteria:
   - ""
@@ -3483,11 +3498,10 @@ flowchart TD
     H_Invoke --> D2_Read[Claude Code: Read T04]
     D2_Read --> D2_Generate[Claude Code: Generate code]
     D2_Generate --> D2_Save[Claude Code: Save to src/]
-    D2_Save --> D2_Complete[Claude Code: Create<br/>completion doc]
-    D2_Complete --> H_Notify[Human: Notify Claude Desktop]
-    H_Notify --> D1_Verify[Claude Desktop: Verify<br/>completion doc]
+    D2_Save --> H_Notify[Human: Notify Claude Desktop]
+    H_Notify --> D1_Review[Claude Desktop: Review<br/>generated code]
     
-    D1_Verify --> Trace2[Claude Desktop: Update<br/>traceability matrix P05]
+    D1_Review --> Trace2[Claude Desktop: Update<br/>traceability matrix P05]
     Trace2 --> D1_Audit[Claude Desktop: Config audit<br/>code vs baseline]
     D1_Audit --> D1_Test_Doc[Claude Desktop: Create test doc T05]
     
@@ -3538,42 +3552,45 @@ flowchart TD
 
 ## Version History
 
-| Version | Date       | Description                                                                                                                                                                                                         |
-| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.0     | 2025-10-30 | Initial enumeration                                                                                                                                                                                                 |
-| 1.1     | 2025-11-03 | Added T02 Change template and schema                                                                                                                                                                                |
-| 1.2     | 2025-11-03 | Added T03 Issue template and schema                                                                                                                                                                                 |
-| 1.3     | 2025-11-03 | Added T04 Prompt template and schema                                                                                                                                                                                |
-| 1.4     | 2025-11-06 | Integrated IEEE/ISO standards-based directives: P00 (1.1.11-1.1.12), P02 (1.3.5-1.3.8), P03 (1.4.5-1.4.9), P04 (1.5.5-1.5.6), P05 (1.6.2-1.6.3), P06 (1.7.2-1.7.4), new P07 Quality Assurance (1.8.1)               |
-| 1.5     | 2025-11-06 | Added T05 Test template and schema                                                                                                                                                                                  |
-| 1.6     | 2025-11-06 | Replaced flowchart with revised version incorporating human review checkpoints, iterative cycles, and complete workflow loops                                                                                       |
-| 1.7     | 2025-11-06 | Enhanced T04 Prompt template with output format controls to constrain Claude Code responses to code-only with minimal integration instructions                                                                         |
-| 1.8     | 2025-11-11 | Added P01 initialization square to Framework Execution Flowchart                                                                                                                                                    |
-| 1.9     | 2025-11-11 | Added .gitignore specification to P01.2.2                                                                                                                                                                           |
-| 2.0     | 2025-11-11 | Added pyproject.toml skeleton to P01.2.2                                                                                                                                                                            |
-| 2.1     | 2025-11-12 | Specified GitHub Desktop as tagging mechanism in P00 1.1.11 Configuration Management                                                                                                                                |
-| 2.2     | 2025-11-12 | Added P00 1.1.13 Claude Code Configuration and Appendix A: Claude Code Preset Specifications                                                                                                                              |
-| 2.3     | 2025-11-13 | Added tests/ subfolder to src/ directory structure in P01.2.4                                                                                                                                                       |
-| 2.4     | 2025-11-13 | Enhanced P06 Test with sections 1.7.1a (test script creation), 1.7.5-1.7.9 (test organization, isolation, mocking, regression testing, lifecycle management)                                                        |
-| 2.5     | 2025-11-13 | Added audit/ subfolder to workspace directory structure in P01.2.4                                                                                                                                                  |
-| 2.6     | 2025-11-13 | Added P08 Audit protocol establishing periodic compliance verification, audit deliverable requirements, and remediation workflow                                                                                    |
-| 2.7     | 2025-11-13 | Added audit document class to P00 1.1.10 naming convention and updated P08 1.9.5 to use sequence numbering format                                                                                                   |
-| 2.8     | 2025-11-13 | Added P00 1.1.3 Framework Application clarifying that Claude Desktop/2 separation applies to development workflow, not runtime architecture of generated applications. Renumbered subsequent P00 subsections 1.1.4-1.1.13 |
-| 2.9 | 2025-11-14 | Added P01 1.2.5 traceability matrix skeleton directive and P05 1.6.4 traceability matrix structure specification. Renumbered P01 1.2.4 to 1.2.6 |
-| 3.0 | 2025-11-14 | Replaced MCP communication with filesystem communication for Claude Desktop↔Claude Code (P00 1.1.7-1.1.8-1.1.9-1.1.11); removed LM Studio references; simplified T04 template; updated flowchart; deleted Appendix A |
-| 3.1 | 2025-11-14 | Added P09 Prompt protocol; separated prompt management from trace; created workspace/prompt/ folder; updated P00 1.1.10 document class list; updated P08 1.9.3 audit scope to P00-P09 |
-| 3.2 | 2025-11-16 | Removed prompt iteration numbering (P09 1.10.2, 1.10.5); GitHub version control replaces iteration-based versioning |
-| 3.3 | 2025-11-19 | Enhanced P00 Control (1.1.7) and Communication (1.1.8) with strategic/tactical clarification and MCP filesystem awareness; Added semantic versioning standard to P01 Versioning (1.1.13); Added workspace/ai/ directory to P01 folder structure (1.2.6) and .gitignore (1.2.2); Added visual documentation requirements to P02 (1.3.10) for embedded Mermaid diagrams; Enhanced T01 Design template with visual_documentation section; Enhanced T03 Issue template with prerequisites, reproducibility_conditions, prevention, and verification_enhanced sections |
-| 3.4 | 2025-11-20 | Restructured instruction document directives: moved P00 1.1.11 to P09 1.10.6; deleted embedded markdown template; converted to point-by-point directive structure; renumbered P00 1.1.12-1.1.13 to 1.1.11-1.1.12 |
-| 3.5 | 2025-11-20 | Enhanced P00 1.1.11 Configuration Management with configuration audit procedure directives; added config-audit template and process requirements; established baseline verification workflow |
-| 3.6 | 2025-11-21 | Enforced one-to-one issue-change coupling: replaced P03 1.4.1-1.4.2 requiring exclusive issue-to-change relationships; added P04 1.5.7 Issue-Change Coupling with bidirectional linkage verification |
-| 3.7 | 2025-11-26 | Restructured P02 Design into three-tier hierarchy: Tier 1 System Architecture (1.3.1-1.3.2), Tier 2 Domain Decomposition (1.3.3-1.3.4), Tier 3 Component Decomposition (1.3.5-1.3.6); added human review gates after each tier; added Design Hierarchy Naming Convention (1.3.7), Cross-Linking Requirements (1.3.8); updated P00 1.1.8 to specify Tier 3 component designs in T04 prompts; added tier naming convention to P00 1.1.10 |
-| 3.8 | 2025-11-28 | Implemented iteration-based document coupling with lifecycle management: Added iteration field and coupled_docs section to all templates (T02-T06); Enhanced P00 1.1.10 with iteration tracking and git commit requirements; Created P00 1.1.13 Document Lifecycle Management defining active/closed states, closure criteria, archival procedures; Added closed/ subfolders to P01 1.2.6; Enhanced P03 1.4.2, P04 1.5.7, P06 1.7.12-1.7.13, P09 1.10.2 with iteration synchronization and coupling requirements; Created T06 Result template and schema |
-| 3.9 | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 1.2.6 folder structure; Added Python build artifacts to P01 1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 1.2.2 to 1.2.8 Python documents containing pyproject.toml; Created P06 1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
-| 4.0 | 2025-11-28 | Integrated traceability matrix updates into workflow flowchart: Added P05 matrix update nodes after design approval (Trace1), code generation completion (Trace2), test execution (Trace3), and change implementation (Trace4); ensures bidirectional traceability maintained throughout development lifecycle |
-| 4.1 | 2025-11-28 | Added P08 1.9.9 Audit Closure with closure criteria, process, archival procedures, and reopening constraints; added workspace/audit/closed/ to P01 1.2.6 folder structure; added audit closure criteria to P00 1.1.13.3 and audit closed subfolder to P00 1.1.13.5 |
-| 4.2 | 2025-11-30 | Enhanced P06 Test with progressive validation strategy (1.7.15), test type selection criteria (1.7.16), platform execution specifications (1.7.17); updated workflow flowchart to incorporate progressive validation phases and platform-specific testing requirements |
-| 4.3 | 2025-12-03 | Added workspace/proposal/ directory: Added proposal document class to P00 1.1.10; added workspace/proposal/ and workspace/proposal/closed/ to P01 1.2.6 folder structure; added proposal directories to P01 1.2.2 .gitignore |
+| Version | Date       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.0     | 2025-10-30 | Initial enumeration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 1.1     | 2025-11-03 | Added T02 Change template and schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 1.2     | 2025-11-03 | Added T03 Issue template and schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 1.3     | 2025-11-03 | Added T04 Prompt template and schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 1.4     | 2025-11-06 | Integrated IEEE/ISO standards-based directives: P00 (1.1.11-1.1.12), P02 (1.3.5-1.3.8), P03 (1.4.5-1.4.9), P04 (1.5.5-1.5.6), P05 (1.6.2-1.6.3), P06 (1.7.2-1.7.4), new P07 Quality Assurance (1.8.1)                                                                                                                                                                                                                                                                                                                                                                     |
+| 1.5     | 2025-11-06 | Added T05 Test template and schema                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 1.6     | 2025-11-06 | Replaced flowchart with revised version incorporating human review checkpoints, iterative cycles, and complete workflow loops                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 1.7     | 2025-11-06 | Enhanced T04 Prompt template with output format controls to constrain Claude Code responses to code-only with minimal integration instructions                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 1.8     | 2025-11-11 | Added P01 initialization square to Framework Execution Flowchart                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 1.9     | 2025-11-11 | Added .gitignore specification to P01.2.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 2.0     | 2025-11-11 | Added pyproject.toml skeleton to P01.2.2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 2.1     | 2025-11-12 | Specified GitHub Desktop as tagging mechanism in P00 1.1.11 Configuration Management                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 2.2     | 2025-11-12 | Added P00 1.1.13 Claude Code Configuration and Appendix A: Claude Code Preset Specifications                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2.3     | 2025-11-13 | Added tests/ subfolder to src/ directory structure in P01.2.4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2.4     | 2025-11-13 | Enhanced P06 Test with sections 1.7.1a (test script creation), 1.7.5-1.7.9 (test organization, isolation, mocking, regression testing, lifecycle management)                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 2.5     | 2025-11-13 | Added audit/ subfolder to workspace directory structure in P01.2.4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 2.6     | 2025-11-13 | Added P08 Audit protocol establishing periodic compliance verification, audit deliverable requirements, and remediation workflow                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| 2.7     | 2025-11-13 | Added audit document class to P00 1.1.10 naming convention and updated P08 1.9.5 to use sequence numbering format                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 2.8     | 2025-11-13 | Added P00 1.1.3 Framework Application clarifying that Claude Desktop/2 separation applies to development workflow, not runtime architecture of generated applications. Renumbered subsequent P00 subsections 1.1.4-1.1.13                                                                                                                                                                                                                                                                                                                                                 |
+| 2.9     | 2025-11-14 | Added P01 1.2.5 traceability matrix skeleton directive and P05 1.6.4 traceability matrix structure specification. Renumbered P01 1.2.4 to 1.2.6                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 3.0     | 2025-11-14 | Replaced MCP communication with filesystem communication for Claude Desktop↔Claude Code (P00 1.1.7-1.1.8-1.1.9-1.1.11); removed LM Studio references; simplified T04 template; updated flowchart; deleted Appendix A                                                                                                                                                                                                                                                                                                                                                      |
+| 3.1     | 2025-11-14 | Added P09 Prompt protocol; separated prompt management from trace; created workspace/prompt/ folder; updated P00 1.1.10 document class list; updated P08 1.9.3 audit scope to P00-P09                                                                                                                                                                                                                                                                                                                                                                                     |
+| 3.2     | 2025-11-16 | Removed prompt iteration numbering (P09 1.10.2, 1.10.5); GitHub version control replaces iteration-based versioning                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 3.3     | 2025-11-19 | Enhanced P00 Control (1.1.7) and Communication (1.1.8) with strategic/tactical clarification and MCP filesystem awareness; Added semantic versioning standard to P01 Versioning (1.1.13); Added workspace/ai/ directory to P01 folder structure (1.2.6) and .gitignore (1.2.2); Added visual documentation requirements to P02 (1.3.10) for embedded Mermaid diagrams; Enhanced T01 Design template with visual_documentation section; Enhanced T03 Issue template with prerequisites, reproducibility_conditions, prevention, and verification_enhanced sections         |
+| 3.4     | 2025-11-20 | Restructured instruction document directives: moved P00 1.1.11 to P09 1.10.6; deleted embedded markdown template; converted to point-by-point directive structure; renumbered P00 1.1.12-1.1.13 to 1.1.11-1.1.12                                                                                                                                                                                                                                                                                                                                                          |
+| 3.5     | 2025-11-20 | Enhanced P00 1.1.11 Configuration Management with configuration audit procedure directives; added config-audit template and process requirements; established baseline verification workflow                                                                                                                                                                                                                                                                                                                                                                              |
+| 3.6     | 2025-11-21 | Enforced one-to-one issue-change coupling: replaced P03 1.4.1-1.4.2 requiring exclusive issue-to-change relationships; added P04 1.5.7 Issue-Change Coupling with bidirectional linkage verification                                                                                                                                                                                                                                                                                                                                                                      |
+| 3.7     | 2025-11-26 | Restructured P02 Design into three-tier hierarchy: Tier 1 System Architecture (1.3.1-1.3.2), Tier 2 Domain Decomposition (1.3.3-1.3.4), Tier 3 Component Decomposition (1.3.5-1.3.6); added human review gates after each tier; added Design Hierarchy Naming Convention (1.3.7), Cross-Linking Requirements (1.3.8); updated P00 1.1.8 to specify Tier 3 component designs in T04 prompts; added tier naming convention to P00 1.1.10                                                                                                                                    |
+| 3.8     | 2025-11-28 | Implemented iteration-based document coupling with lifecycle management: Added iteration field and coupled_docs section to all templates (T02-T06); Enhanced P00 1.1.10 with iteration tracking and git commit requirements; Created P00 1.1.13 Document Lifecycle Management defining active/closed states, closure criteria, archival procedures; Added closed/ subfolders to P01 1.2.6; Enhanced P03 1.4.2, P04 1.5.7, P06 1.7.12-1.7.13, P09 1.10.2 with iteration synchronization and coupling requirements; Created T06 Result template and schema                  |
+| 3.9     | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 1.2.6 folder structure; Added Python build artifacts to P01 1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 1.2.2 to 1.2.8 Python documents containing pyproject.toml; Created P06 1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
+| 4.0     | 2025-11-28 | Integrated traceability matrix updates into workflow flowchart: Added P05 matrix update nodes after design approval (Trace1), code generation completion (Trace2), test execution (Trace3), and change implementation (Trace4); ensures bidirectional traceability maintained throughout development lifecycle                                                                                                                                                                                                                                                            |
+| 4.1     | 2025-11-28 | Added P08 1.9.9 Audit Closure with closure criteria, process, archival procedures, and reopening constraints; added workspace/audit/closed/ to P01 1.2.6 folder structure; added audit closure criteria to P00 1.1.13.3 and audit closed subfolder to P00 1.1.13.5                                                                                                                                                                                                                                                                                                        |
+| 4.2     | 2025-11-30 | Enhanced P06 Test with progressive validation strategy (1.7.15), test type selection criteria (1.7.16), platform execution specifications (1.7.17); updated workflow flowchart to incorporate progressive validation phases and platform-specific testing requirements                                                                                                                                                                                                                                                                                                    |
+| 4.3     | 2025-12-03 | Added workspace/proposal/ directory: Added proposal document class to P00 1.1.10; added workspace/proposal/ and workspace/proposal/closed/ to P01 1.2.6 folder structure; added proposal directories to P01 1.2.2 .gitignore                                                                                                                                                                                                                                                                                                                                              |
+| 4.4     | 2025-12-03 | Added P00 1.1.14 Logging Standards: environment-based log level control, flat file format, rotation policy, test/production mode separation                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 4.5     | 2025-12-04 | Simplified human handoff mechanism: Replaced P00 1.1.8 and P00 1.1.9 instruction document creation with conversational command delivery; replaced P09 1.10.3 Instruction Documents with Human Handoff providing ready-to-execute commands directly in conversation; removed P09 1.10.5 Instruction Document Creation (now covered by 1.10.3); eliminates redundant prompt-NNNN-instructions.md files while maintaining domain separation                                                                                                                                  |
+| 4.6     | 2025-12-04 | Added P00 1.1.15 Knowledge Base: Both domains must consult workspace/knowledge/ when creating documents or code; established institutional knowledge capture; added knowledge/ to P01 1.2.6 folder structure; enhanced T04 Prompt context with knowledge_references field                                                                                                                                                                                                                                                                                                 |
 
 ---
 [Return to Table of Contents](<#table of contents>)
