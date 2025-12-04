@@ -225,7 +225,6 @@ build/
     └── <project name>/
         ├── ai/                       # Operational rules
         │   └── governance.md
-        ├── release/                  # Application releases
         ├── venv/                     # Python virtual environment (excluded from git)
         ├── dist/                     # Python build artefacts (excluded from git)
         ├── workspace/                # Execution space
