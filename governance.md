@@ -3553,7 +3553,8 @@ flowchart TD
     
     Progressive -->|Full regression| H7{Human: Accept<br/>deliverable?}
     H7 -->|Reject| D1_Issue
-    H7 -->|Accept| Complete([Complete])
+    H7 -->|Accept| D1_Close[Claude Desktop: Close documents<br/>Move to closed/<br/>Git commit]
+    D1_Close --> Complete([Complete])
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -3604,6 +3605,7 @@ flowchart TD
 | 4.7     | 2025-12-10 | Enhanced P09 1.10.3 Human Handoff: Replaced single command format with structured approach providing governance, design, and prompt locations to Claude Code; changed execution from terminal command to paste-into-Claude Code workflow |
 | 4.8     | 2025-12-11 | Enhanced P06 1.7.3 Test Script Creation: clarified pytest generation as automatic precursor to test execution; added workflow sequence T05→pytest→execute; inserted D1_Generate_Tests node in flowchart between D1_Test_Doc and D1_Execute |
 | 4.9     | 2025-12-11 | Test directory relocation: Moved tests/ from src/tests/ to project root; updated P01 1.2.6 folder structure; updated P06 1.7.3, 1.7.7, 1.7.11 path references; resolves Python import conflicts and aligns with pytest ecosystem standards |
+| 5.0     | 2025-12-11 | Added explicit document closure node to workflow flowchart: Inserted D1_Close node between H7 acceptance and completion; ensures archival procedure execution visible in workflow; aligns flowchart with P00 1.1.13.4 archival directives |
 
 ---
 [Return to Table of Contents](<#table of contents>)
