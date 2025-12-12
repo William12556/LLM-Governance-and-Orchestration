@@ -577,19 +577,23 @@ pip install dist/*.whl
     - Claude Desktop: Selects appropriate test type based on requirements and architecture
     - Test documentation specifies type in test_info.type field
   - 1.7.17 Test Execution Platforms
-    - Unit tests: Development platform (MacOS) with comprehensive mocking
-    - Integration tests: Target platform (Raspberry Pi) with actual subsystems
-    - System tests: Target platform (Raspberry Pi) exclusively
-    - Acceptance tests: Target platform (Raspberry Pi) with stakeholder validation
+    - Unit tests: Development platform with comprehensive mocking
+    - Integration tests: Target deployment platform with actual subsystems
+    - System tests: Target deployment platform exclusively
+    - Acceptance tests: Target deployment platform with stakeholder validation
     - Regression tests: Development platform (primary), target platform (validation)
-    - Performance tests: Target platform (Raspberry Pi) for accurate measurements
+    - Performance tests: Target deployment platform for accurate measurements
     - Mocking requirements:
-      - Development platform: Mock all external dependencies (nmcli, systemd, sockets)
+      - Development platform: Mock all external dependencies and system services
       - Target platform: Use actual system services where integration testing required
     - Validation workflow:
       - All code changes: Unit tests on development platform
-      - Pre-release: Full test suite on target platform
-      - Performance benchmarks: Target platform measurements only
+      - Pre-release: Full test suite on target deployment platform
+      - Performance benchmarks: Target deployment platform measurements only
+    - Platform specification:
+      - Define specific development and target platforms in project design documents
+      - Document platform-specific tooling and dependencies in component designs
+      - Include platform requirements in test documentation
     - Cross-platform considerations:
       - Claude Desktop: Documents platform-specific limitations in test documentation
       - Mocking strategy must isolate tests from platform differences
@@ -3606,6 +3610,7 @@ flowchart TD
 | 4.8     | 2025-12-11 | Enhanced P06 1.7.3 Test Script Creation: clarified pytest generation as automatic precursor to test execution; added workflow sequence T05→pytest→execute; inserted D1_Generate_Tests node in flowchart between D1_Test_Doc and D1_Execute |
 | 4.9     | 2025-12-11 | Test directory relocation: Moved tests/ from src/tests/ to project root; updated P01 1.2.6 folder structure; updated P06 1.7.3, 1.7.7, 1.7.11 path references; resolves Python import conflicts and aligns with pytest ecosystem standards |
 | 5.0     | 2025-12-11 | Added explicit document closure node to workflow flowchart: Inserted D1_Close node between H7 acceptance and completion; ensures archival procedure execution visible in workflow; aligns flowchart with P00 1.1.13.4 archival directives |
+| 5.1     | 2025-12-12 | Removed platform-specific assumptions from P06 1.7.17 Test Execution Platforms: Replaced hardcoded references to Raspberry Pi, MacOS, nmcli, systemd, sockets with generic development/target deployment platform terminology; added Platform specification guidance directing platform details to project design documents; eliminates inappropriate context bleed across projects with different deployment targets |
 
 ---
 [Return to Table of Contents](<#table of contents>)
