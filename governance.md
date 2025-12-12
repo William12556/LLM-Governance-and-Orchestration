@@ -762,6 +762,18 @@ design_constraints:
     - metric: ""
       value: ""
 
+development_environment:
+  platform: ""  # e.g., "macOS 14+", "Ubuntu 22.04"
+  python_version: ""
+  toolchain: []  # pytest, mypy, ruff, etc.
+
+target_platform:
+  type: ""  # embedded, server, desktop, cloud
+  os: ""
+  architecture: ""  # ARM64, x86_64, etc.
+  constraints:
+    - ""  # Memory, CPU, storage, network limitations
+
 architecture:
   pattern: ""  # e.g., "layered", "pipeline", "microservices"
   component_relationships: ""  # e.g., "A → B → C"
@@ -1010,6 +1022,37 @@ properties:
               type: string
             value:
               type: string
+  
+  development_environment:
+    type: object
+    properties:
+      platform:
+        type: string
+      python_version:
+        type: string
+      toolchain:
+        type: array
+        items:
+          type: string
+  
+  target_platform:
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - embedded
+          - server
+          - desktop
+          - cloud
+      os:
+        type: string
+      architecture:
+        type: string
+      constraints:
+        type: array
+        items:
+          type: string
   
   architecture:
     type: object
@@ -3611,6 +3654,7 @@ flowchart TD
 | 4.9     | 2025-12-11 | Test directory relocation: Moved tests/ from src/tests/ to project root; updated P01 1.2.6 folder structure; updated P06 1.7.3, 1.7.7, 1.7.11 path references; resolves Python import conflicts and aligns with pytest ecosystem standards |
 | 5.0     | 2025-12-11 | Added explicit document closure node to workflow flowchart: Inserted D1_Close node between H7 acceptance and completion; ensures archival procedure execution visible in workflow; aligns flowchart with P00 1.1.13.4 archival directives |
 | 5.1     | 2025-12-12 | Removed platform-specific assumptions from P06 1.7.17 Test Execution Platforms: Replaced hardcoded references to Raspberry Pi, MacOS, nmcli, systemd, sockets with generic development/target deployment platform terminology; added Platform specification guidance directing platform details to project design documents; eliminates inappropriate context bleed across projects with different deployment targets |
+| 5.2     | 2025-12-12 | Enhanced T01 Design template with explicit platform specifications: Added development_environment (platform, python_version, toolchain) and target_platform (type, os, architecture, constraints) sections; updated T01 schema with corresponding validation rules; provides structured platform documentation aligned with P06 1.7.17 test execution requirements |
 
 ---
 [Return to Table of Contents](<#table of contents>)
