@@ -31,7 +31,7 @@
 [Version History](<#version history>)
 
 ---
-###### Governance Prime directive: Follow workflow [flowchart](<#3.0 framework execution flowchart>)
+###### Governance Prime Directive: Follow workflow [flowchart](<#3.0 framework execution flowchart>)
 ---
 ## 1.0 Protocols (Directives)
 
