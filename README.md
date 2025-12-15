@@ -17,7 +17,7 @@ This repository provides a governance framework for AI-assisted software develop
 
 ## Getting Started
 
-Review `governance.md` for complete framework specification. Begin with Protocol P00 (Governance) and follow the workflow flowchart in section 3.0.
+Review `governance.md` for complete framework specification. Begin with Protocol P00 (Governance) and follow the workflow flowchart in section 2.0.
 
 ## Important Notice
 
