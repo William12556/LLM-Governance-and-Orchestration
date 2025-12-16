@@ -10,10 +10,13 @@ This repository provides a governance framework for AI-assisted software develop
 
 ## Key Characteristics
 
-- **Protocol-driven workflow**: Nine protocols (P00-P09) govern project initialization, design, change management, issue resolution, testing, quality assurance, and audit
-- **Human approval gates**: Strategic checkpoints requiring explicit human authorization before proceeding to code generation or baseline modifications
+- **Protocol-driven workflow**: Eleven protocols (P00-P10) govern requirements capture, project initialization, three-tier design hierarchy, change management, issue resolution, traceability, testing, quality assurance, audit, prompting, and requirements management
+- **Human approval gates**: Strategic checkpoints requiring explicit human authorization before proceeding through requirements baseline, design tiers, code generation, or baseline modifications
+- **Three-tier design decomposition**: Master (system) → Domain (functional) → Component (implementation) with validation gates between tiers
+- **UUID-based document coupling**: 8-character hex identifiers with iteration-based synchronization through debug cycles
+- **Document lifecycle management**: Active/closed states with immutable archival and closure criteria for issues, changes, prompts, tests, results, and audits
 - **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages enabling forward and backward navigation
-- **Template-based documentation**: Five YAML templates (T01-T05) optimized for token efficiency and LLM communication
+- **Template-based documentation**: Seven YAML templates (T01-T07) optimized for token efficiency and LLM communication
 
 ## Getting Started
 
