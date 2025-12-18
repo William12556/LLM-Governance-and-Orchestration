@@ -6,7 +6,7 @@ This repository provides a governance framework for AI-assisted software develop
 
 ## Overview
 
-`governance.md` establishes a dual-domain architecture separating strategic coordination (Claude Desktop/Domain 1) from tactical implementation (Claude Code/Domain 2). The framework uses filesystem-based communication, YAML templates, and systematic documentation to maintain human authority while leveraging AI capabilities for code generation.
+`governance.md` establishes a dual-domain architecture separating strategic coordination (Claude Desktop/Domain 1) from tactical implementation (Claude Code/Domain 2). The framework uses MCP filesystem-based communication, YAML templates, and systematic documentation to maintain human authority while leveraging AI capabilities for code generation.
 
 ## Key Characteristics
 
