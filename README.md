@@ -32,4 +32,4 @@ It is loosely based on https://governance.md but directed towards AI.
 
 ---
 
-Copyright: Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
+Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
