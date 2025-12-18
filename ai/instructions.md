@@ -17,7 +17,7 @@
 - After creating new documents in a folder, insert a 'Created: <year> <month> <day>'  timestamp at the top of newly created documents based on the documents metadata creation date as retrieved by the MCP command 'get_file_info'.
 - Add ISO 690 references (Harvard style) and citations at the end of all newly created documents if external sources of information are used (for example web sites).
 - Insure all documents contain a 'Version History' section at the end of the document to record document changes. Create a 'Version History'  if one does not already exist.
-- Add "Copyright: Copyright (c) 2025 William Watson. This work is licensed under the MIT License." to the end of all created documents.
+- Add "Copyright (c) 2025 William Watson. This work is licensed under the MIT License." to the end of all created documents.
 - Use language that is neutral and factual in manner. Make no claims of fitness for purpose in all documentation.
 - Avoid information overload. Create, update and maintain all documentation at a simplified level of complexity.
 - Formal enterprise standards and compliance requirements for documentation are not required.
