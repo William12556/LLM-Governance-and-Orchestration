@@ -145,7 +145,7 @@
       - Git commit records closure transition
       - Closed documents referenced but not modified
     - 1.1.13.5 Closed Subfolder Structure
-      - workspace/issue/closed/
+      - workspace/issues/closed/
       - workspace/change/closed/
       - workspace/prompt/closed/
       - workspace/audit/closed/
@@ -458,7 +458,7 @@ exclude_lines = [
     - Claude Code: Debugs issues submitted from Claude Code and returns change proposal to Claude Desktop
   - 1.5.4 Issue updates
     - Claude Desktop: Reads template from ai/templates/T03-issue.md
-    - Claude Desktop: Updates issue documents from bugs using T03 template and saves them in folder workspace/issue
+    - Claude Desktop: Updates issue documents from bugs using T03 template and saves them in folder workspace/issues
   - 1.5.5 Non-Conformance Reporting
     - Claude Desktop: Documents instances where generated code deviates from design specifications
     - Claude Desktop: Records deviation type, severity, affected components
