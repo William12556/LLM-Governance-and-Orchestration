@@ -451,7 +451,7 @@ exclude_lines = [
 #### 1.5 P04 Issue
   - 1.5.1 Issue creation from test results
     - Claude Desktop: Reads template from ai/templates/T03-issue.md
-    - Claude Desktop: Creates issue documents from errors reported in workspace/test/result using T03 template and saves them in folder workspace/issue
+    - Claude Desktop: Creates issue documents from errors reported in workspace/test/result using T03 template and saves them in folder workspace/issues
   - 1.5.2 Reserved for future use
     - Claude Desktop: Reserved for future use
   - 1.5.3 Debug workflow
