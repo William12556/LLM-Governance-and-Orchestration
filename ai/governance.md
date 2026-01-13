@@ -243,11 +243,11 @@ build/
     - Layout
 ```
     └── <project name>/
-        ├── ai/                       # Operational rules
+        ├── ai/                       # Framework operational rules
         │   └── governance.md
         ├── venv/                     # Python virtual environment (excluded from git)
         ├── dist/                     # Python build artefacts (excluded from git)
-        ├── workspace/                # Execution space
+        ├── workspace/                # Framework execution space
         │   ├── admin/                # Administrative reports (excluded from git)
         │   ├── requirements/
         │   │   └── closed/
@@ -485,7 +485,7 @@ exclude_lines = [
 
 #### 1.6 P05 Trace
   - §1.6.1 Traceability Matrix Management
-    - Claude Desktop: Maintains traceability matrix in workspace/trace/trace-0000_master-traceability-matrix.md
+    - Claude Desktop: Maintains traceability matrix in workspace/trace/trace-traceability-matrix-master.md
     - Claude Desktop: Updates matrix when requirements, designs, code, or tests modified
   - §1.6.2 Traceability Verification
     - Claude Desktop: Verifies bidirectional links exist: requirements ↔ design ↔ code ↔ test (navigable forward and backward)
