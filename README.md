@@ -20,6 +20,8 @@ This repository provides a governance framework for AI-assisted software develop
 
 ## Getting Started
 
+You will need to configure Claude Desktop to use MCP servers Filesystem and mcp-grep.
+
 Copy the `ai/governance.md` folder to the root of your github project. Then review `ai/governance.md` for complete framework specification. Next, ask Claude desktop to review the governance.md document and initialize the project according to `1.2 P01 Project Initialization`. Begin with Protocol P00 (Governance) and follow the workflow flowchart in section 2.0.
 
 ## Important Notice
