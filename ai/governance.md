@@ -206,30 +206,49 @@
   - §1.2.2 GitHub documents
     - Create .gitignore in project root:
 ```
-.DS_Store
-**/.DS_Store
-.obsidian/
-*.log
-**/*.log
-10000
-**/logs
-.zsh_history
-coverage.xml
-test.txt
-**/tmp
-deprecated/
-workspace/admin/
-workspace/ai/
-workspace/proposal/
-workspace/proposal/closed
-venv/
-.venv/
-*.pyc
+# Python
 __pycache__/
+*.pyc
 .pytest_cache/
 dist/
 build/
 *.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# MacOS
+.DS_Store
+**/.DS_Store
+.zsh_history
+
+# Logs
+*.log
+**/*.log
+
+# Obsidian
+.obsidian/
+*.canvas
+
+# AI framework
+deprecated/
+workspace/admin/
+workspace/ai/
+workspace/proposal/
+workspace/proposal/closed/
+
+# other
+10000
+test.txt
+**/tmp
+*.pdf
+
 ```
 
   - §1.2.3 README
