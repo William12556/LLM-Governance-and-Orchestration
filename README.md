@@ -20,7 +20,7 @@ This repository provides a governance framework for AI-assisted software develop
 
 ## Getting Started
 
-Copy `ai/governance.md` folder to the root of your github project. Then Review `ai/governance.md` for complete framework specification. Next ask Claude desktop review the governance.md document and initialize the project according to 1.2 P01 Project Initialization. Begin with Protocol P00 (Governance) and follow the workflow flowchart in section 2.0.
+Copy the `ai/governance.md` folder to the root of your github project. Then review `ai/governance.md` for complete framework specification. Next, ask Claude desktop to review the governance.md document and initialize the project according to `1.2 P01 Project Initialization`. Begin with Protocol P00 (Governance) and follow the workflow flowchart in section 2.0.
 
 ## Important Notice
 
