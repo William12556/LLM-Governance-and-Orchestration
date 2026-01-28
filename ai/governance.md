@@ -197,6 +197,35 @@
     - Claude Desktop: Read template from ai/templates/ before creating documents
     - Claude Code: Read templates when referenced in prompt documents
     - Templates contain YAML structure and JSON Schema validation rules
+  - §1.1.18 Skills Management
+    - Claude Code: Utilizes skills from .claude/skills/ for reusable workflows
+    - Skills organization: governance/, testing/, validation/, audit/ subdirectories
+    - Hot-reload enabled: Skill modifications activate without session restart
+    - Forked contexts: Validation skills execute in isolated sub-agent contexts
+    - Lifecycle hooks: PreToolUse (schema validation), PostToolUse (compliance verification), Stop (cleanup)
+    - Skills repository: Project-specific skills checked into git for team sharing
+    - Personal skills: ~/.claude/skills/ for individual workflow preferences
+    - Common skills examples:
+      - governance/validate-design.md: Schema validation before T04 prompt creation
+      - testing/generate-pytest.md: Automated pytest generation from T05 documentation
+      - validation/coupling-check.md: Verify iteration synchronization in coupled documents
+      - audit/protocol-compliance.md: Check generated code against protocol requirements
+  - §1.1.19 Context Optimization
+    - CLAUDE.md location: Project root (checked into git for team sharing)
+    - CLAUDE.local.md: Personal preferences (.gitignore'd)
+    - Content specification:
+      - Project overview and technology stack
+      - Common bash commands (build, test, lint)
+      - Code style guidelines
+      - Repository conventions (branch naming, commit patterns)
+      - Governance framework location: ai/governance.md
+      - Design documents location: workspace/design/
+      - Protocol compliance requirements summary
+      - Platform-specific tooling and dependencies
+    - Token efficiency: Externalize stable context from T04 prompts
+    - Update frequency: Modify via # key during Claude Code sessions
+    - Team coordination: Review CLAUDE.md changes during git commits
+    - Auto-generation: Claude Desktop creates initial CLAUDE.md during project initialization or when absent
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -243,6 +272,10 @@ workspace/ai/
 workspace/proposal/
 workspace/proposal/closed/
 
+# Claude Code
+CLAUDE.local.md
+.claude/settings.json
+
 # other
 10000
 test.txt
@@ -264,6 +297,14 @@ test.txt
     └── <project name>/
         ├── ai/                       # Framework operational rules
         │   └── governance.md
+        ├── .claude/                  # Claude Code configuration
+        │   ├── skills/               # Project-specific skills
+        │   │   ├── governance/
+        │   │   ├── testing/
+        │   │   ├── validation/
+        │   │   └── audit/
+        │   └── commands/
+        ├── CLAUDE.md                 # Claude Code context (team shared)
         ├── venv/                     # Python virtual environment (excluded from git)
         ├── dist/                     # Python build artefacts (excluded from git)
         ├── workspace/                # Framework execution space
@@ -392,29 +433,40 @@ exclude_lines = [
     - Tier 1: design-\<project\>-master.md (single master document)
     - Tier 2: design-\<uuid\>-domain_\<name\>.md (one per domain)
     - Tier 3: design-\<uuid\>-component_\<domain\>_\<name\>.md
-  - §1.3.8 Cross-Linking Requirements
+  - §1.3.8 Exploration Phase
+    - Claude Code: Supports exploratory code generation without formal design hierarchy
+    - Use case: Proof-of-concept development, technology validation, prototype iteration
+    - Documentation: Lightweight T04 prompts without coupled design documents
+    - Permission scope: Limited to experimental/ directory tree
+    - Testing: Informal validation, no formal test documentation required
+    - Transition: Successful prototypes promote to formal design workflow
+    - Human decision: Determines when exploration transitions to formal development
+    - Knowledge capture: Findings documented in workspace/knowledge/ for reuse
+    - Audit exemption: Exploration work excluded from P08 compliance audits
+    - Git workflow: Feature branches for exploration, merge on formalization
+  - §1.3.9 Cross-Linking Requirements
     - Claude Desktop: Master lists all Tier 2 domain document references
     - Claude Desktop: Each domain lists: master parent reference, all Tier 3 component children references
     - Claude Desktop: Each component lists: domain parent reference, generated code file paths
     - Claude Desktop: Uses Obsidian internal link syntax for all cross-references
-  - §1.3.9 Context Window Constraints
+  - §1.3.10 Context Window Constraints
     - Claude Desktop: Ensures design documents at each tier do not exceed Claude Code context window
     - Claude Desktop: T04 prompts embed only Tier 3 component designs relevant to code generation task
-  - §1.3.10 Design Verification
+  - §1.3.11 Design Verification
     - Claude Desktop: Validates design completeness at each tier before proceeding to next tier
     - Claude Desktop: Verifies all functional requirements have corresponding design coverage
     - Claude Desktop: Confirms all non-functional requirements addressed across design hierarchy
-  - §1.3.11 Requirements Traceability
+  - §1.3.12 Requirements Traceability
     - Claude Desktop: Assigns unique identifier to each functional and non-functional requirement
     - Claude Desktop: Maps requirements through design tiers: requirement → master → domain → component
     - Claude Desktop: Maintains bidirectional links in traceability matrix
-  - §1.3.12 Requirements Validation
+  - §1.3.13 Requirements Validation
     - Claude Desktop: Verifies design hierarchy satisfies all stated requirements before baseline
     - Claude Desktop: Documents validation results in master design document
     - Claude Desktop: Resolves discrepancies before proceeding to code generation
-  - §1.3.13 Document Storage
+  - §1.3.14 Document Storage
     - Claude Desktop: Saves all design documents in workspace/design
-  - §1.3.14 Visual Documentation Requirements
+  - §1.3.15 Visual Documentation Requirements
     - Claude Desktop: Embeds Mermaid diagrams directly within design documents at all tiers
     - Tier 1 Master: System architecture, overall component relationships, system-level state machines
     - Tier 2 Domain: Domain boundaries, domain internal structure, domain interfaces
@@ -457,15 +509,24 @@ exclude_lines = [
     - Claude Desktop: Categorizes changes: corrective, adaptive, perfective, preventive
     - Claude Desktop: Records classification in change document metadata
     - Claude Desktop: Tracks change type distribution for process metrics
-  - §1.4.8 Change Impact Analysis
+  - §1.4.8 Checkpoint Strategy
+    - Claude Code: Creates automatic checkpoint per file modification during code generation
+    - Claude Code: Checkpoint captures pre-modification state for rewind capability
+    - Claude Code: Failed verifications trigger rewind to checkpoint before modification
+    - Claude Desktop: Reviews checkpoint log after code generation completion
+    - Git commit occurs at iteration boundaries after human approval
+    - Checkpoint scope: Session-local, ephemeral
+    - Human oversight: Maintained through iteration approval gates
+    - Rollback efficiency: Eliminates manual file restoration during debug cycles
+  - §1.4.9 Change Impact Analysis
     - Claude Desktop: Evaluates change effects on system integrity, performance, security
     - Claude Desktop: Identifies all components requiring modification
     - Claude Desktop: Documents cascading effects in change document
-  - §1.4.9 Maintenance Documentation
+  - §1.4.10 Maintenance Documentation
     - Claude Desktop: Updates all affected documentation when changes implemented
     - Claude Desktop: Maintains documentation currency with code state
     - Claude Desktop: Cross-links updated documents to source change document
-  - §1.4.10 Documentation domain
+  - §1.4.11 Documentation domain
     - Change documentation is only required for source code changes in src/. Change documentation to documents in the workspace/ is not required and can be made directly after human approval.
 
 [Return to Table of Contents](<#table of contents>)
@@ -616,6 +677,15 @@ pip install dist/*.whl
     - Permanent tests: Maintain regression suite in component subdirectories
     - Script lifecycle: Archive or remove validation scripts post-verification
     - Validation sequence mandatory before document closure
+    - **Validation Hooks (Claude Code):**
+      - PreToolUse hook: Validates design constraints before code generation
+      - PostToolUse hook: Executes targeted tests after file modification
+      - Hook failures trigger checkpoint rewind automatically
+      - Design validation: Verifies requirements traceability, architecture compliance
+      - Code validation: Executes pytest for modified component
+      - Hook configuration: Defined in .claude/skills/validation/
+      - Hook scope: File-level (per modification) and iteration-level (batch)
+      - Validation logs: Captured in session metadata for audit trail
   - §1.7.16 Test Type Selection
     - Unit tests: All component implementations (mandatory)
     - Integration tests: Component boundary interactions (as needed)
@@ -656,6 +726,26 @@ pip install dist/*.whl
     - Claude Desktop: Verifies generated code implements all design requirements
     - Claude Desktop: Validates against design specifications, interface contracts, data schemas
     - Claude Desktop: Documents validation results, discrepancies found
+  - §1.8.3 Automated Audits
+    - Claude Code: Stop hook triggers automated compliance audit after code generation
+    - Audit verification: Protocol compliance, naming conventions, traceability links
+    - Compliance report: Generated in session metadata for Claude Desktop review
+    - Critical violations: Halt workflow, require human intervention before commit
+    - Minor violations: Logged as warnings, accumulated for periodic review
+    - Audit scope: Document coupling integrity, iteration synchronization, file organization
+    - Human review: Claude Desktop evaluates audit findings before approving iteration
+    - Audit integration: Complements P08 milestone audits with continuous checking
+  - §1.8.7 Hook-Based Auditing
+    - Claude Code: Lifecycle hooks enable automated audit event capture
+    - PreToolUse hook: Records design context, requirements traceability before generation
+    - PostToolUse hook: Captures test results, validation outcomes after modification
+    - Stop hook: Logs session metrics, checkpoint usage, validation summary
+    - Audit trail: Stored in session metadata for post-execution review
+    - Hook configuration: Defined in .claude/skills/audit/
+    - Automated compliance: Reduces manual audit overhead for repetitive checks
+    - Human review: Session metadata reviewed by Claude Desktop after completion
+    - Audit scope: File-level modifications, iteration-level decisions, session-level metrics
+    - Integration: Audit events linked to git commits via timestamp correlation
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -748,6 +838,9 @@ pip install dist/*.whl
     - Claude Desktop: Verifies coupling before prompt creation
     - GitHub version control maintains complete revision history
   - §1.10.3 Human Handoff
+    - Claude Desktop: Verifies CLAUDE.md exists at project root before providing command
+    - Claude Desktop: If CLAUDE.md absent, generates initial CLAUDE.md with project context
+    - Claude Desktop: Generated CLAUDE.md requires human approval before proceeding
     - Claude Desktop: After human approval of T04 prompt, provides ready-to-execute command in conversation
     - Command format includes:
       - Governance document location for context
@@ -761,10 +854,20 @@ pip install dist/*.whl
 
 ```text
   - For reference and context, governance is in '/path/to/project/ai/governance.md' and design documents are in '/path/to/project/workspace/design'
-  -  Implement prompt '/path/to/project/workspace/prompt/prompt-NNNN-<name>.md'.
+  -  Implement prompt '/path/to/project/workspace/prompt/prompt-<uuid>-<n>.md'.'.
 ```
 
-  - §1.10.4 Prompt Revision
+  - §1.10.4 Wildcard Permissions
+    - Claude Code: Supports wildcard patterns in permission grants for batch operations
+    - Permission scope: src/**/*.py enables modifications across source tree
+    - Validation: PreToolUse hooks verify modifications within approved scope
+    - Audit trail: All wildcard-permitted modifications logged per-file
+    - Human approval: Wildcard grants require explicit approval in T04 prompt
+    - Rollback capability: Checkpoint system preserves state before each modification
+    - Use cases: Refactoring, formatting, batch updates, code migrations
+    - Constraints: Wildcard permissions limited to src/ directory tree
+    - Exclusions: Configuration files, test fixtures require individual approval
+  - §1.10.5 Prompt Revision
     - Claude Desktop: Rewrites existing prompt documents when changes needed
     - Claude Desktop: Documents revision rationale in prompt version_history section
     - GitHub commits provide complete change tracking and rollback capability
@@ -946,6 +1049,9 @@ flowchart TD
 | 5.7     | 2025-01-13 | Eliminated legacy 0000 sequence from master document naming: Changed from \<class\>-0000-master_\<name\>.md to \<class\>-\<name\>-master.md; Updated P00 §1.1.10, P01 §1.2.5, P02 §1.3.1/§1.3.7, P05 §1.6.4, P10 §1.11.2/§1.11.5; Suffix pattern enables clearer alphabetical sorting while maintaining master designation |
 | 5.8     | 2025-01-13 | Clarified P00 §1.1.10 document naming conventions: Explicitly separated master document naming (no UUID) from all other documents (UUID required); Added concrete examples for both patterns; Removes ambiguity about UUID assignment criteria |
 | 5.9     | 2025-01-13 | Added section symbol (§) notation throughout governance document: Replaced all section number references with § prefix for formal technical documentation aesthetics and improved reference precision; Updated all protocol sections (P00-P10), subsections, and version history references |
+| 6.0     | 2025-01-28 | Added Claude Code 2.1.0 integration Phase 1: Skills Management (P00 §1.1.18), Context Optimization (P00 §1.1.19), .claude/ directory structure (P01 §1.2.6), CLAUDE.md requirement (P09 §1.10.3 with verification and UUID format correction), .gitignore additions (P01 §1.2.2) |
+| 6.1     | 2025-01-28 | Added Claude Code 2.1.0 integration Phase 2: Checkpoint Strategy (P03 §1.4.8 with automatic rewind capability), Validation Hooks (P06 §1.7.15 PreToolUse/PostToolUse integration), Hook-Based Auditing (P07 §1.8.7 automated audit trail capture); Renumbered P03 subsections §1.4.9-§1.4.11 |
+| 6.2     | 2025-01-28 | Added Claude Code 2.1.0 integration Phase 3: Wildcard Permissions (P09 §1.10.4 batch operation support), Automated Audits (P07 §1.8.3 Stop hook compliance checking), Exploration Phase (P02 §1.3.8 lightweight prototyping workflow); Renumbered P02 subsections §1.3.9-§1.3.15; Renumbered P09 §1.10.5 |
 
 ---
 [Return to Table of Contents](<#table of contents>)
