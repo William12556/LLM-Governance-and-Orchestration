@@ -109,6 +109,13 @@ traceability:
 
 notes: ""
 
+
+loop_context:
+  was_loop_execution: false
+  blocked_at_iteration: 0
+  failure_mode: ""  # boundary_exceeded, divergence, critical_error
+  last_review_feedback: ""
+
 version_history:
   - version: ""
     date: ""
@@ -359,6 +366,22 @@ properties:
   
   notes:
     type: string
+
+  loop_context:
+    type: object
+    properties:
+      was_loop_execution:
+        type: boolean
+      blocked_at_iteration:
+        type: integer
+      failure_mode:
+        type: string
+        enum:
+          - boundary_exceeded
+          - divergence
+          - critical_error
+      last_review_feedback:
+        type: string
   
   version_history:
     type: array

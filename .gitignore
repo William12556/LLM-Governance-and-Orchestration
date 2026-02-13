@@ -40,3 +40,10 @@ workspace/proposal/closed/
 test.txt
 **/tmp
 *.pdf
+
+# Ralph Loop ephemeral state
+.goose/
+**/ralph/
+
+# Model-specific configs (local only)
+.model-config.local.yaml

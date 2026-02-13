@@ -43,108 +43,76 @@
     - Agnostic plan, control and initiation of software generation
   - §1.1.3 Framework Practice
     - This governance framework defines software development processes and workflows
-    - Strategic Domain/Tactical Domain separation applies to software creation, not to generated application runtime
+    - Claude Desktop/Claude Code separation applies to software creation, not to generated application runtime
     - Generated software/applications (outputs) are independent of framework architecture
     - Framework controls: how we build software
     - Framework does not control: how the built software operates
     - Example: \<project name\> uses this framework for development but is a standalone Python application at runtime
-  - §1.1.4 Architecture (Model-Agnostic)
-    - Strategic Domain: Plan and control: design, change, test and launching of code generation
-      - Implementation options: Claude Desktop, local LLM via Goose, API-based LLM
-    - Tactical Domain: Execute: code generation
-      - Implementation options: Ralph Loop (Goose), Tactical Domain, custom agents
-    - Communication: MCP filesystem (model-independent)
-    - Tactical Domain: Execute: code generation
-      - Implementation options: Ralph Loop (Goose), Tactical Domain, custom agents
-    - Communication: MCP filesystem (model-independent)
+  - §1.1.4 Architecture
+    - Claude Desktop (domain 1): Plan and control: design, change, test and launching of code generation
+    - Claude Code (domain 2): Execute: code generation
   - §1.1.5 Forbidden
     - Both domains: Unrequested creation, addition, removal or change of source code and documents is forbidden
   - §1.1.6 Constraints
-    - Strategic Domain: Does not exceed language model context resource budget when communicating with Tactical Domain
+    - Claude Desktop: Does not exceed language model context resource budget when communicating with Claude Code
   - §1.1.7 Control
-    - Strategic Domain: Strategic coordination and validation authority
-    - Strategic Domain: Analyzes requirements and formulates design specifications
-    - Strategic Domain: Creates T04 prompts with complete technical context
-    - Strategic Domain: Validates Tactical Domain implementation for protocol compliance
-    - Strategic Domain: Coordinates quality assurance and integration verification
-    - Tactical Domain: Tactical implementation with project awareness
-    - Tactical Domain: Generates source code with MCP filesystem access
-    - Tactical Domain: Performs direct file operations in src/ directory
-    - Tactical Domain: Validates protocol compliance through direct file access
-    - Tactical Domain: Coordinates multi-file implementations and dependencies
+    - Claude Desktop: Strategic coordination and validation authority
+    - Claude Desktop: Analyzes requirements and formulates design specifications
+    - Claude Desktop: Creates T04 prompts with complete technical context
+    - Claude Desktop: Validates Claude Code implementation for protocol compliance
+    - Claude Desktop: Coordinates quality assurance and integration verification
+    - Claude Code: Tactical implementation with project awareness
+    - Claude Code: Generates source code with MCP filesystem access
+    - Claude Code: Performs direct file operations in src/ directory
+    - Claude Code: Validates protocol compliance through direct file access
+    - Claude Code: Coordinates multi-file implementations and dependencies
 
   - §1.1.8 Communication
-    - Both Strategic Domain and Tactical Domain have MCP filesystem access to project
-    - Model Implementation Details:
-      - Strategic Domain model specified in project configuration
-      - Tactical Domain model(s) specified in execution recipes
-      - Multi-model orchestration supported (e.g., worker/reviewer pattern)
+    - Both Claude Desktop and Claude Code have MCP filesystem access to project
     - Communication uses filesystem-based message passing (semaphores)
-    - Strategic Domain: Reads template from ai/templates/T04-prompt.md
-    - Strategic Domain: Uses T04 template to create code generation or debug prompts for Tactical Domain
-    - Strategic Domain: Embeds complete Tier 3 component design specifications and schema within prompt documents
-    - Strategic Domain: Ensures prompt documents are self-contained requiring no external file references
-    - Strategic Domain: Saves T04 prompt to workspace/prompt/prompt-\<uuid\>-\<name\>.md
-    - Strategic Domain: Provides ready-to-execute command in conversation after human approval
-    - Human: Executes provided command to invoke Tactical Domain with T04 prompt
-    - Tactical Domain: Reads T04 prompt from workspace/prompt/
-    - Tactical Domain: Analyzes project structure and existing code via MCP filesystem access
-    - Tactical Domain: Generates code, saves directly to src/ per T04 specifications
-    - Human: Notifies Strategic Domain when code generation complete
-    - Strategic Domain: Reviews generated code, proceeds with audit
+    - Claude Desktop: Reads template from ai/templates/T04-prompt.md
+    - Claude Desktop: Uses T04 template to create code generation or debug prompts for Claude Code
+    - Claude Desktop: Embeds complete Tier 3 component design specifications and schema within prompt documents
+    - Claude Desktop: Ensures prompt documents are self-contained requiring no external file references
+    - Claude Desktop: Saves T04 prompt to workspace/prompt/prompt-\<uuid\>-\<name\>.md
+    - Claude Desktop: Provides ready-to-execute command in conversation after human approval
+    - Human: Executes provided command to invoke Claude Code with T04 prompt
+    - Claude Code: Reads T04 prompt from workspace/prompt/
+    - Claude Code: Analyzes project structure and existing code via MCP filesystem access
+    - Claude Code: Generates code, saves directly to src/ per T04 specifications
+    - Human: Notifies Claude Desktop when code generation complete
+    - Claude Desktop: Reviews generated code, proceeds with audit
   - §1.1.9 Quality
     - Human review and approval of design, change and initiation of code generation is required
-    - Strategic Domain: Provides ready-to-execute command after human approval
-    - Human: Invokes Tactical Domain with provided command
-    - Human: Notifies Strategic Domain when Tactical Domain completes
-    - Strategic Domain: Reviews generated code before proceeding
+    - Claude Desktop: Provides ready-to-execute command after human approval
+    - Human: Invokes Claude Code with provided command
+    - Human: Notifies Claude Desktop when Claude Code completes
+    - Claude Desktop: Reviews generated code before proceeding
   - §1.1.10 Documents
     - Master documents: \<document class\>-\<document name\>-master.md
       - No UUID assigned (master documents are singletons per project)
       - Examples: design-myproject-master.md, trace-traceability-matrix-master.md
     - All other documents: \<document class\>-\<uuid\>-\<document name\>.md
-      - Strategic Domain: Generates 8-character UUID (first 8 hex digits of UUID v4)
+      - Claude Desktop: Generates 8-character UUID (first 8 hex digits of UUID v4)
       - Examples: change-a3f5b2c1-fix-parser.md, issue-d7e9f1a4-network-timeout.md
-    - Strategic Domain: Design documents follow tier naming convention: master_, domain_, component_ prefixes
-    - Strategic Domain: Insures related documents are Obsidian cross linked
+    - Claude Desktop: Design documents follow tier naming convention: master_, domain_, component_ prefixes
+    - Claude Desktop: Insures related documents are Obsidian cross linked
     - Document classes that require a master document are: design, audit, trace and test
     - All document classes (issue, change, prompt, test, result) contain internal iteration field starting at 1
     - Iteration increments when document enters new cycle after failed verification
     - Git commit required after iteration field modification
     - Filesystem contains only current iteration; GitHub history preserves prior iterations
     - Coupled documents maintain synchronized iteration numbers via explicit UUID references
-
-  - §1.1.11 Ralph Loop Integration
-    - Ralph Loop provides autonomous iterative code generation within governance boundaries
-    - Loop State Directory: `.goose/ralph/` (ephemeral, per-task)
-    - Loop Entry: After human approval of T04 Prompt
-    - Loop Execution: Worker/reviewer cycle until SHIP or boundary exceeded
-    - Loop Exit: Generates T06 Result (success) or T03 Issue (failure)
-    - State Files:
-      - `task.md`: Task description from T04
-      - `iteration.txt`: Current cycle number
-      - `work-summary.txt`: Worker iteration output
-      - `work-complete.txt`: Worker completion signal
-      - `review-result.txt`: SHIP or REVISE decision
-      - `review-feedback.txt`: Reviewer notes for next iteration
-      - `.ralph-complete`: Success marker
-      - `RALPH-BLOCKED.md`: Failure details
-    - Boundary Conditions:
-      - MAX_ITERATIONS: Configurable per task (default 10-50)
-      - TOKEN_BUDGET: Aggregate token limit
-      - TIME_LIMIT: Wall-clock timeout
-      - DIVERGENCE: Repeated failure detection
-    - Traceability: Loop summary captured in T06 Result document
-  - §1.1.12 Configuration Management
+  - §1.1.11 Configuration Management
     - GitHub repository is authoritative source for all project artifacts
     - Human: Tags design document commits when approved as baseline for code generation via GitHub Desktop (History → right-click commit → Create Tag → Push Tags)
-    - Strategic Domain: Performs configuration audit verifying generated code matches approved design baseline commits
-    - Strategic Domain: Uses config-audit template from workspace/audit/config-audit-template.md
-    - Strategic Domain: Verifies code matches tagged design baseline specifications
-    - Strategic Domain: Documents findings in config-audit-NNNN-YYYY-MM-DD.md
-    - Strategic Domain: Stores configuration audits in workspace/audit/
+    - Claude Desktop: Performs configuration audit verifying generated code matches approved design baseline commits
+    - Claude Desktop: Uses config-audit template from workspace/audit/config-audit-template.md
+    - Claude Desktop: Verifies code matches tagged design baseline specifications
+    - Claude Desktop: Documents findings in config-audit-NNNN-YYYY-MM-DD.md
+    - Claude Desktop: Stores configuration audits in workspace/audit/
     - Critical deviations: Creates issues via P04 for remediation
-  - §1.1.13 Versioning
+  - §1.1.12 Versioning
     - All versioning is handled via GitHub
     - Project uses Semantic Versioning per https://semver.org
     - Format: MAJOR.MINOR.PATCH (e.g., 1.0.0, 1.2.3)
@@ -155,43 +123,43 @@
     - Initial development: 0.y.z (MAJOR version zero for initial development)
     - Git tags format: vMAJOR.MINOR.PATCH (e.g., v1.0.0, v0.1.0)
     - Release notes filename: RELEASE_NOTES_vMAJOR.MINOR.PATCH.md
-  - §1.1.14 Document Lifecycle Management
-    - §1.1.14.1 Active State
+  - §1.1.13 Document Lifecycle Management
+    - §1.1.13.1 Active State
       - Active documents reside in workspace/\<class\>/
       - Active documents are mutable during iteration cycles
       - Iteration field increments with each debug/refinement cycle
       - Git commit required after each iteration increment
-    - §1.1.14.2 Closed State
+    - §1.1.13.2 Closed State
       - Upon human acceptance, documents moved to workspace/\<class\>/closed/
       - Closed documents are immutable
       - Closed documents preserve final iteration number
       - Access: Read-only reference for future work
-    - §1.1.14.3 Closure Criteria
+    - §1.1.13.3 Closure Criteria
       - Issue: Resolved and verified, corresponding change implemented and tested
       - Change: Implemented, tested, design updated, human accepted
       - Prompt: Code generated successfully, human confirmed
       - Test: Executed with passing results, result document created
       - Result: Tests passed, no issues created, acceptance confirmed
       - Audit: All critical findings resolved, high-priority findings addressed or mitigated, human approved
-    - §1.1.14.4 Archival Procedure
+    - §1.1.13.4 Archival Procedure
       - Human initiates closure after acceptance
-      - Strategic Domain verifies closure criteria met
-      - Strategic Domain moves coupled document set to respective closed/ subfolders
+      - Claude Desktop verifies closure criteria met
+      - Claude Desktop moves coupled document set to respective closed/ subfolders
       - Git commit records closure transition
       - Closed documents referenced but not modified
-    - §1.1.14.5 Closed Subfolder Structure
+    - §1.1.13.5 Closed Subfolder Structure
       - workspace/issues/closed/
       - workspace/change/closed/
       - workspace/prompt/closed/
       - workspace/audit/closed/
       - workspace/test/closed/
       - workspace/test/result/closed/
-    - §1.1.14.6 Access Constraints
+    - §1.1.13.6 Access Constraints
       - Closed documents: Read-only access for reference
       - No modifications permitted to closed documents
       - New work requires new document with new sequence number
       - Reopening closed work: Create new issue referencing closed documents
-  - §1.1.15 Logging Standards
+  - §1.1.14 Logging Standards
     - Generated applications implement environment-based log level control
     - Debug mode enables verbose logging for development and testing
     - Normal mode restricts logging to informational events only
@@ -201,16 +169,26 @@
     - Test environments use debug mode for comprehensive logging
     - Production environments use normal mode for operational efficiency
     - Log artifacts preserved for failure analysis
-  - §1.1.16 Knowledge Base
-    - Strategic Domain: Consults workspace/knowledge/ before creating documents or code
-    - Tactical Domain: Consults workspace/knowledge/ before implementing changes
+  - §1.1.15 Knowledge Base
+    - Claude Desktop: Consults workspace/knowledge/ before creating documents or code
+    - Claude Code: Consults workspace/knowledge/ before implementing changes
     - Both domains: Add newly discovered patterns and solutions to knowledge base
     - Knowledge documents contain: problem statements, solutions, examples, rationale
     - Behavioral standards: workspace/knowledge/behavioral-standards.yaml defines deterministic behavioral constraints for autonomous execution
     - Behavioral standards: Referenced in T04 prompts via behavioral_standards.source field
     - Behavioral standards: Enforcement levels (strict, advisory, disabled) control constraint application
     - Knowledge base prevents repeated problem-solving across development cycles
-  - §1.1.18 Templates
+  - §1.1.16 Logging Standards
+    - Generated applications implement environment-based log level control
+    - Debug mode enables verbose logging for development and testing
+    - Normal mode restricts logging to informational events only
+    - Flat file format recommended: timestamp level logger message
+    - Centralized log location per application requirements
+    - Log rotation policy prevents disk exhaustion
+    - Test environments use debug mode for comprehensive logging
+    - Production environments use normal mode for operational efficiency
+    - Log artifacts preserved for failure analysis
+  - §1.1.17 Templates
     - Templates T01-T06 are external documents in ai/templates/ directory
     - Template files:
       - ai/templates/T01-design.md
@@ -219,11 +197,11 @@
       - ai/templates/T04-prompt.md
       - ai/templates/T05-test.md
       - ai/templates/T06-result.md
-    - Strategic Domain: Read template from ai/templates/ before creating documents
-    - Tactical Domain: Read templates when referenced in prompt documents
+    - Claude Desktop: Read template from ai/templates/ before creating documents
+    - Claude Code: Read templates when referenced in prompt documents
     - Templates contain YAML structure and JSON Schema validation rules
-  - §1.1.19 Skills Management
-    - Tactical Domain: Utilizes skills from .claude/skills/ for reusable workflows
+  - §1.1.18 Skills Management
+    - Claude Code: Utilizes skills from .claude/skills/ for reusable workflows
     - Skills organization: governance/, testing/, validation/, audit/ subdirectories
     - Hot-reload enabled: Skill modifications activate without session restart
     - Forked contexts: Validation skills execute in isolated sub-agent contexts
@@ -235,7 +213,7 @@
       - testing/generate-pytest.md: Automated pytest generation from T05 documentation
       - validation/coupling-check.md: Verify iteration synchronization in coupled documents
       - audit/protocol-compliance.md: Check generated code against protocol requirements
-  - §1.1.20 Context Optimization
+  - §1.1.19 Context Optimization
     - CLAUDE.md location: Project root (checked into git for team sharing)
     - CLAUDE.local.md: Personal preferences (.gitignore'd)
     - Content specification:
@@ -248,9 +226,9 @@
       - Protocol compliance requirements summary
       - Platform-specific tooling and dependencies
     - Token efficiency: Externalize stable context from T04 prompts
-    - Update frequency: Modify via # key during Tactical Domain sessions
+    - Update frequency: Modify via # key during Claude Code sessions
     - Team coordination: Review CLAUDE.md changes during git commits
-    - Auto-generation: Strategic Domain creates initial CLAUDE.md during project initialization or when absent
+    - Auto-generation: Claude Desktop creates initial CLAUDE.md during project initialization or when absent
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -297,7 +275,7 @@ workspace/ai/
 workspace/proposal/
 workspace/proposal/closed/
 
-# Tactical Domain
+# Claude Code
 CLAUDE.local.md
 .claude/settings.json
 
@@ -322,14 +300,14 @@ test.txt
     └── <project name>/
         ├── ai/                       # Framework operational rules
         │   └── governance.md
-        ├── .claude/                  # Tactical Domain configuration
+        ├── .claude/                  # Claude Code configuration
         │   ├── skills/               # Project-specific skills
         │   │   ├── governance/
         │   │   ├── testing/
         │   │   ├── validation/
         │   │   └── audit/
         │   └── commands/
-        ├── CLAUDE.md                 # Tactical Domain context (team shared)
+        ├── CLAUDE.md                 # Claude Code context (team shared)
         ├── venv/                     # Python virtual environment (excluded from git)
         ├── dist/                     # Python build artefacts (excluded from git)
         ├── workspace/                # Framework execution space
@@ -425,41 +403,41 @@ exclude_lines = [
 
 #### 1.3 P02 Design
   - §1.3.1 Tier 1: System Architecture
-    - Strategic Domain: Reads template from ai/templates/T01-design.md
-    - Strategic Domain: Creates design-\<project\>-master.md from human requirements using T01 template
-    - Strategic Domain: Defines system architecture, technology stack, cross-cutting concerns
-    - Strategic Domain: Includes system-level Mermaid diagrams (architecture, component interaction, state machine, data flow)
-    - Strategic Domain: Clearly designates document as master design within document content
+    - Claude Desktop: Reads template from ai/templates/T01-design.md
+    - Claude Desktop: Creates design-\<project\>-master.md from human requirements using T01 template
+    - Claude Desktop: Defines system architecture, technology stack, cross-cutting concerns
+    - Claude Desktop: Includes system-level Mermaid diagrams (architecture, component interaction, state machine, data flow)
+    - Claude Desktop: Clearly designates document as master design within document content
   - §1.3.2 Tier 1 Review
-    - Strategic Domain: Presents master design document for human approval
-    - Strategic Domain: Documents review findings, required changes, approval decision
-    - Strategic Domain: Proceeds with Tier 2 decomposition only after approval recorded
+    - Claude Desktop: Presents master design document for human approval
+    - Claude Desktop: Documents review findings, required changes, approval decision
+    - Claude Desktop: Proceeds with Tier 2 decomposition only after approval recorded
   - §1.3.3 Tier 2: Domain Decomposition
-    - Strategic Domain: Reads template from ai/templates/T01-design.md
-    - Strategic Domain: Decomposes master into functional domains using T01 template
-    - Strategic Domain: Creates design-\<uuid\>-domain_\<name\>.md for each domain
-    - Strategic Domain: Each domain defines: boundaries, interfaces, domain patterns, responsibilities
-    - Strategic Domain: Includes domain-level Mermaid diagrams as needed
+    - Claude Desktop: Reads template from ai/templates/T01-design.md
+    - Claude Desktop: Decomposes master into functional domains using T01 template
+    - Claude Desktop: Creates design-\<uuid\>-domain_\<name\>.md for each domain
+    - Claude Desktop: Each domain defines: boundaries, interfaces, domain patterns, responsibilities
+    - Claude Desktop: Includes domain-level Mermaid diagrams as needed
   - §1.3.4 Tier 2 Review
-    - Strategic Domain: Presents domain design documents for human approval
-    - Strategic Domain: Documents review findings, required changes, approval decision
-    - Strategic Domain: Proceeds with Tier 3 decomposition only after approval recorded
+    - Claude Desktop: Presents domain design documents for human approval
+    - Claude Desktop: Documents review findings, required changes, approval decision
+    - Claude Desktop: Proceeds with Tier 3 decomposition only after approval recorded
   - §1.3.5 Tier 3: Component Decomposition
-    - Strategic Domain: Reads template from ai/templates/T01-design.md
-    - Strategic Domain: Decomposes each domain into components using T01 template
-    - Strategic Domain: Creates design-\<uuid\>-component_\<domain\>_\<name\>.md for each component
-    - Strategic Domain: Each component defines: implementation details, interfaces, processing logic, error handling
-    - Strategic Domain: Includes component-level Mermaid diagrams as needed
+    - Claude Desktop: Reads template from ai/templates/T01-design.md
+    - Claude Desktop: Decomposes each domain into components using T01 template
+    - Claude Desktop: Creates design-\<uuid\>-component_\<domain\>_\<name\>.md for each component
+    - Claude Desktop: Each component defines: implementation details, interfaces, processing logic, error handling
+    - Claude Desktop: Includes component-level Mermaid diagrams as needed
   - §1.3.6 Tier 3 Review
-    - Strategic Domain: Presents component design documents for human approval
-    - Strategic Domain: Documents review findings, required changes, approval decision
-    - Strategic Domain: Proceeds with T04 prompt creation only after approval recorded
+    - Claude Desktop: Presents component design documents for human approval
+    - Claude Desktop: Documents review findings, required changes, approval decision
+    - Claude Desktop: Proceeds with T04 prompt creation only after approval recorded
   - §1.3.7 Design Hierarchy Naming Convention
     - Tier 1: design-\<project\>-master.md (single master document)
     - Tier 2: design-\<uuid\>-domain_\<name\>.md (one per domain)
     - Tier 3: design-\<uuid\>-component_\<domain\>_\<name\>.md
   - §1.3.8 Exploration Phase
-    - Tactical Domain: Supports exploratory code generation without formal design hierarchy
+    - Claude Code: Supports exploratory code generation without formal design hierarchy
     - Use case: Proof-of-concept development, technology validation, prototype iteration
     - Documentation: Lightweight T04 prompts without coupled design documents
     - Permission scope: Limited to experimental/ directory tree
@@ -470,87 +448,87 @@ exclude_lines = [
     - Audit exemption: Exploration work excluded from P08 compliance audits
     - Git workflow: Feature branches for exploration, merge on formalization
   - §1.3.9 Cross-Linking Requirements
-    - Strategic Domain: Master lists all Tier 2 domain document references
-    - Strategic Domain: Each domain lists: master parent reference, all Tier 3 component children references
-    - Strategic Domain: Each component lists: domain parent reference, generated code file paths
-    - Strategic Domain: Uses Obsidian internal link syntax for all cross-references
+    - Claude Desktop: Master lists all Tier 2 domain document references
+    - Claude Desktop: Each domain lists: master parent reference, all Tier 3 component children references
+    - Claude Desktop: Each component lists: domain parent reference, generated code file paths
+    - Claude Desktop: Uses Obsidian internal link syntax for all cross-references
   - §1.3.10 Context Window Constraints
-    - Strategic Domain: Ensures design documents at each tier do not exceed Tactical Domain context window
-    - Strategic Domain: T04 prompts embed only Tier 3 component designs relevant to code generation task
+    - Claude Desktop: Ensures design documents at each tier do not exceed Claude Code context window
+    - Claude Desktop: T04 prompts embed only Tier 3 component designs relevant to code generation task
   - §1.3.11 Design Verification
-    - Strategic Domain: Validates design completeness at each tier before proceeding to next tier
-    - Strategic Domain: Verifies all functional requirements have corresponding design coverage
-    - Strategic Domain: Confirms all non-functional requirements addressed across design hierarchy
+    - Claude Desktop: Validates design completeness at each tier before proceeding to next tier
+    - Claude Desktop: Verifies all functional requirements have corresponding design coverage
+    - Claude Desktop: Confirms all non-functional requirements addressed across design hierarchy
   - §1.3.12 Requirements Traceability
-    - Strategic Domain: Assigns unique identifier to each functional and non-functional requirement
-    - Strategic Domain: Maps requirements through design tiers: requirement → master → domain → component
-    - Strategic Domain: Maintains bidirectional links in traceability matrix
+    - Claude Desktop: Assigns unique identifier to each functional and non-functional requirement
+    - Claude Desktop: Maps requirements through design tiers: requirement → master → domain → component
+    - Claude Desktop: Maintains bidirectional links in traceability matrix
   - §1.3.13 Requirements Validation
-    - Strategic Domain: Verifies design hierarchy satisfies all stated requirements before baseline
-    - Strategic Domain: Documents validation results in master design document
-    - Strategic Domain: Resolves discrepancies before proceeding to code generation
+    - Claude Desktop: Verifies design hierarchy satisfies all stated requirements before baseline
+    - Claude Desktop: Documents validation results in master design document
+    - Claude Desktop: Resolves discrepancies before proceeding to code generation
   - §1.3.14 Document Storage
-    - Strategic Domain: Saves all design documents in workspace/design
+    - Claude Desktop: Saves all design documents in workspace/design
   - §1.3.15 Visual Documentation Requirements
-    - Strategic Domain: Embeds Mermaid diagrams directly within design documents at all tiers
+    - Claude Desktop: Embeds Mermaid diagrams directly within design documents at all tiers
     - Tier 1 Master: System architecture, overall component relationships, system-level state machines
     - Tier 2 Domain: Domain boundaries, domain internal structure, domain interfaces
     - Tier 3 Component: Component-specific flows, detailed state machines, data transformations
-    - Strategic Domain: All diagrams use Mermaid syntax within markdown code blocks
-    - Strategic Domain: Each diagram includes: purpose statement, legend, cross-references
-    - Strategic Domain: Updates diagrams when design modifications require visual clarification
-    - Strategic Domain: Maintains diagram consistency with textual design specifications
+    - Claude Desktop: All diagrams use Mermaid syntax within markdown code blocks
+    - Claude Desktop: Each diagram includes: purpose statement, legend, cross-references
+    - Claude Desktop: Updates diagrams when design modifications require visual clarification
+    - Claude Desktop: Maintains diagram consistency with textual design specifications
 
 [Return to Table of Contents](<#table of contents>)
 
 #### 1.4 P03 Change
   - §1.4.1 Change document creation
-    - Strategic Domain: Reads template from ai/templates/T02-change.md
-    - Strategic Domain: Creates change documents exclusively from issue documents using T02 template and saves them in folder workspace/change
-    - Strategic Domain: For human-requested source code changes, first creates issue document via P04, then creates change document referencing that issue
+    - Claude Desktop: Reads template from ai/templates/T02-change.md
+    - Claude Desktop: Creates change documents exclusively from issue documents using T02 template and saves them in folder workspace/change
+    - Claude Desktop: For human-requested source code changes, first creates issue document via P04, then creates change document referencing that issue
     - Exception: Non-source-code changes (workspace/ documents per 1.4.10) may be implemented directly after human approval without issue/change documents
   - §1.4.2 Document coupling
-    - Strategic Domain: Ensures one-to-one coupling between issue and change documents
-    - Strategic Domain: Every source code change document must reference exactly one source issue document via UUID
-    - Strategic Domain: Every resolved source code issue must reference exactly one change document via UUID
-    - Strategic Domain: Prohibits multiple change documents addressing same issue or multiple issues addressed by same change
-    - Strategic Domain: Change references source issue UUID in coupled_docs.issue_ref field
-    - Strategic Domain: Change iteration number matches source issue iteration number at creation
-    - Strategic Domain: When issue iteration increments, corresponding change iteration increments synchronously
-    - Strategic Domain: Verifies iteration synchronization before workflow transitions
+    - Claude Desktop: Ensures one-to-one coupling between issue and change documents
+    - Claude Desktop: Every source code change document must reference exactly one source issue document via UUID
+    - Claude Desktop: Every resolved source code issue must reference exactly one change document via UUID
+    - Claude Desktop: Prohibits multiple change documents addressing same issue or multiple issues addressed by same change
+    - Claude Desktop: Change references source issue UUID in coupled_docs.issue_ref field
+    - Claude Desktop: Change iteration number matches source issue iteration number at creation
+    - Claude Desktop: When issue iteration increments, corresponding change iteration increments synchronously
+    - Claude Desktop: Verifies iteration synchronization before workflow transitions
   - §1.4.3 Design document updates
-    - Strategic Domain: Updates all relevant design documents after implementation
+    - Claude Desktop: Updates all relevant design documents after implementation
   - §1.4.4 Design document cross-linking
-    - Strategic Domain: Insures all design document updates contain change references and links to their source change document
+    - Claude Desktop: Insures all design document updates contain change references and links to their source change document
   - §1.4.5 Change Review
-    - Strategic Domain: Performs impact analysis before change approval
-    - Strategic Domain: Evaluates effects on dependent components, interfaces, data structures
-    - Strategic Domain: Documents impact analysis results in change document
+    - Claude Desktop: Performs impact analysis before change approval
+    - Claude Desktop: Evaluates effects on dependent components, interfaces, data structures
+    - Claude Desktop: Documents impact analysis results in change document
   - §1.4.6 Requirements Change Management
-    - Strategic Domain: Links requirement changes to affected design elements
-    - Strategic Domain: Performs impact analysis when requirements change
-    - Strategic Domain: Updates requirement traceability matrix after changes
+    - Claude Desktop: Links requirement changes to affected design elements
+    - Claude Desktop: Performs impact analysis when requirements change
+    - Claude Desktop: Updates requirement traceability matrix after changes
   - §1.4.7 Maintenance Classification
-    - Strategic Domain: Categorizes changes: corrective, adaptive, perfective, preventive
-    - Strategic Domain: Records classification in change document metadata
-    - Strategic Domain: Tracks change type distribution for process metrics
+    - Claude Desktop: Categorizes changes: corrective, adaptive, perfective, preventive
+    - Claude Desktop: Records classification in change document metadata
+    - Claude Desktop: Tracks change type distribution for process metrics
   - §1.4.8 Checkpoint Strategy
-    - Tactical Domain: Creates automatic checkpoint per file modification during code generation
-    - Tactical Domain: Checkpoint captures pre-modification state for rewind capability
-    - Tactical Domain: Failed verifications trigger rewind to checkpoint before modification
-    - Strategic Domain: Reviews checkpoint log after code generation completion
+    - Claude Code: Creates automatic checkpoint per file modification during code generation
+    - Claude Code: Checkpoint captures pre-modification state for rewind capability
+    - Claude Code: Failed verifications trigger rewind to checkpoint before modification
+    - Claude Desktop: Reviews checkpoint log after code generation completion
     - Git commit occurs at iteration boundaries after human approval
     - Checkpoint scope: Session-local, ephemeral
     - Human oversight: Maintained through iteration approval gates
     - Rollback efficiency: Eliminates manual file restoration during debug cycles
   - §1.4.9 Change Impact Analysis
-    - Strategic Domain: Evaluates change effects on system integrity, performance, security
-    - Strategic Domain: Identifies all components requiring modification
-    - Strategic Domain: Documents cascading effects in change document
+    - Claude Desktop: Evaluates change effects on system integrity, performance, security
+    - Claude Desktop: Identifies all components requiring modification
+    - Claude Desktop: Documents cascading effects in change document
   - §1.4.10 Maintenance Documentation
-    - Strategic Domain: Updates all affected documentation when changes implemented
-    - Strategic Domain: Maintains documentation currency with code state
-    - Strategic Domain: Cross-links updated documents to source change document
+    - Claude Desktop: Updates all affected documentation when changes implemented
+    - Claude Desktop: Maintains documentation currency with code state
+    - Claude Desktop: Cross-links updated documents to source change document
   - §1.4.11 Documentation domain
     - Change documentation is only required for source code changes in src/. Change documentation to documents in the workspace/ is not required and can be made directly after human approval.
 
@@ -558,50 +536,50 @@ exclude_lines = [
 
 #### 1.5 P04 Issue
   - §1.5.1 Issue creation from test results
-    - Strategic Domain: Reads template from ai/templates/T03-issue.md
-    - Strategic Domain: Creates issue documents from errors reported in workspace/test/result using T03 template and saves them in folder workspace/issues
+    - Claude Desktop: Reads template from ai/templates/T03-issue.md
+    - Claude Desktop: Creates issue documents from errors reported in workspace/test/result using T03 template and saves them in folder workspace/issues
   - §1.5.2 Reserved for future use
-    - Strategic Domain: Reserved for future use
+    - Claude Desktop: Reserved for future use
   - §1.5.3 Debug workflow
-    - Tactical Domain: Debugs issues submitted from Tactical Domain and returns change proposal to Strategic Domain
+    - Claude Code: Debugs issues submitted from Claude Code and returns change proposal to Claude Desktop
   - §1.5.4 Issue updates
-    - Strategic Domain: Reads template from ai/templates/T03-issue.md
-    - Strategic Domain: Updates issue documents from bugs using T03 template and saves them in folder workspace/issues
+    - Claude Desktop: Reads template from ai/templates/T03-issue.md
+    - Claude Desktop: Updates issue documents from bugs using T03 template and saves them in folder workspace/issues
   - §1.5.5 Non-Conformance Reporting
-    - Strategic Domain: Documents instances where generated code deviates from design specifications
-    - Strategic Domain: Records deviation type, severity, affected components
-    - Strategic Domain: Tracks non-conformance trends for process improvement
+    - Claude Desktop: Documents instances where generated code deviates from design specifications
+    - Claude Desktop: Records deviation type, severity, affected components
+    - Claude Desktop: Tracks non-conformance trends for process improvement
   - §1.5.6 Post-Implementation Review
-    - Strategic Domain: Evaluates code generation effectiveness after issue resolution
-    - Strategic Domain: Documents lessons learned
-    - Strategic Domain: Provides protocol improvement recommendations for human review (protocols immutable, human-modified only)
+    - Claude Desktop: Evaluates code generation effectiveness after issue resolution
+    - Claude Desktop: Documents lessons learned
+    - Claude Desktop: Provides protocol improvement recommendations for human review (protocols immutable, human-modified only)
   - §1.5.7 Issue-Change Coupling
-    - Strategic Domain: Updates issue document with change_ref field (UUID) when change created
-    - Strategic Domain: Sets issue status to "resolved" when corresponding change status becomes "implemented"
-    - Strategic Domain: Verifies bidirectional linkage exists: issue.change_ref ↔ change.source.reference
-    - Strategic Domain: Prevents issue closure without corresponding change document for source code issues
-    - Strategic Domain: issue.iteration must equal change.iteration throughout cycle
-    - Strategic Domain: When debugging requires new iteration, both documents increment together
-    - Strategic Domain: Git commit captures synchronized iteration state
-    - Strategic Domain: Validates iteration match before proceeding
+    - Claude Desktop: Updates issue document with change_ref field (UUID) when change created
+    - Claude Desktop: Sets issue status to "resolved" when corresponding change status becomes "implemented"
+    - Claude Desktop: Verifies bidirectional linkage exists: issue.change_ref ↔ change.source.reference
+    - Claude Desktop: Prevents issue closure without corresponding change document for source code issues
+    - Claude Desktop: issue.iteration must equal change.iteration throughout cycle
+    - Claude Desktop: When debugging requires new iteration, both documents increment together
+    - Claude Desktop: Git commit captures synchronized iteration state
+    - Claude Desktop: Validates iteration match before proceeding
     - Note: One-to-one coupling does not prevent modification of paired issue/change documents during debugging iterations
 
 [Return to Table of Contents](<#table of contents>)
 
 #### 1.6 P05 Trace
   - §1.6.1 Traceability Matrix Management
-    - Strategic Domain: Maintains traceability matrix in workspace/trace/trace-traceability-matrix-master.md
-    - Strategic Domain: Updates matrix when requirements, designs, code, or tests modified
+    - Claude Desktop: Maintains traceability matrix in workspace/trace/trace-traceability-matrix-master.md
+    - Claude Desktop: Updates matrix when requirements, designs, code, or tests modified
   - §1.6.2 Traceability Verification
-    - Strategic Domain: Verifies bidirectional links exist: requirements ↔ design ↔ code ↔ test (navigable forward and backward)
-    - Strategic Domain: Identifies and resolves traceability gaps
-    - Strategic Domain: Generates traceability reports on demand
+    - Claude Desktop: Verifies bidirectional links exist: requirements ↔ design ↔ code ↔ test (navigable forward and backward)
+    - Claude Desktop: Identifies and resolves traceability gaps
+    - Claude Desktop: Generates traceability reports on demand
   - §1.6.3 Requirements Traceability
-    - Strategic Domain: Maintains traceability matrix linking requirements through implementation
-    - Strategic Domain: Updates matrix when designs, code, or tests modified
-    - Strategic Domain: Ensures orphaned requirements or implementations identified
+    - Claude Desktop: Maintains traceability matrix linking requirements through implementation
+    - Claude Desktop: Updates matrix when designs, code, or tests modified
+    - Claude Desktop: Ensures orphaned requirements or implementations identified
   - §1.6.4 Traceability Matrix Structure
-    - Strategic Domain: Maintains single traceability matrix in workspace/trace/trace-traceability-matrix-master.md
+    - Claude Desktop: Maintains single traceability matrix in workspace/trace/trace-traceability-matrix-master.md
     - Required sections:
       - Functional Requirements: ID, Requirement, Design, Code, Test, Status
       - Non-Functional Requirements: ID, Requirement, Target, Design, Code, Test, Status
@@ -609,66 +587,66 @@ exclude_lines = [
       - Design Document Cross-Reference: Design Doc → Requirements → Code → Tests
       - Test Coverage: Test File → Requirements Verified → Code Coverage
       - Bidirectional Navigation: Forward (Req→Design→Code→Test) and Backward (Test→Code→Design→Req)
-    - Strategic Domain: Updates matrix when requirements, designs, code, or tests change
+    - Claude Desktop: Updates matrix when requirements, designs, code, or tests change
 
 [Return to Table of Contents](<#table of contents>)
 
 #### 1.7 P06 Test
   - §1.7.1 Purpose
   - §1.7.2 Test documentation
-    - Strategic Domain: Reads template from ai/templates/T05-test.md
-    - Strategic Domain: Creates test documents from source code generated by Tactical Domain using T05 template and saves them in folder workspace/test
+    - Claude Desktop: Reads template from ai/templates/T05-test.md
+    - Claude Desktop: Creates test documents from source code generated by Claude Code using T05 template and saves them in folder workspace/test
   - §1.7.3 Test Script Creation
     - Test location: tests/ directory at project root (not src/tests/)
-    - Strategic Domain: Automatic precursor to test execution
-    - Strategic Domain: Generates executable test scripts from T05 test documentation in tests/
-    - Strategic Domain: Creates unit tests for components in subdirectories (tests/\<component\>/)
-    - Strategic Domain: Uses pytest or unittest framework per pyproject.toml configuration
-    - Strategic Domain: Names test files with test_*.py convention
-    - Strategic Domain: Links test scripts to test documentation via T05 references
+    - Claude Desktop: Automatic precursor to test execution
+    - Claude Desktop: Generates executable test scripts from T05 test documentation in tests/
+    - Claude Desktop: Creates unit tests for components in subdirectories (tests/\<component\>/)
+    - Claude Desktop: Uses pytest or unittest framework per pyproject.toml configuration
+    - Claude Desktop: Names test files with test_*.py convention
+    - Claude Desktop: Links test scripts to test documentation via T05 references
     - Workflow: T05 test doc creation → pytest file generation → test execution
   - §1.7.4 Test Planning
-    - Strategic Domain: Creates comprehensive test strategy before code generation
-    - Strategic Domain: Defines test scope, approach, resources, schedule
-    - Strategic Domain: Identifies test types: unit, integration, system, acceptance
+    - Claude Desktop: Creates comprehensive test strategy before code generation
+    - Claude Desktop: Defines test scope, approach, resources, schedule
+    - Claude Desktop: Identifies test types: unit, integration, system, acceptance
   - §1.7.5 Test Case Specification
-    - Strategic Domain: Structures test cases: preconditions, inputs, expected outputs, postconditions
-    - Strategic Domain: Links test cases to requirements and design elements
-    - Strategic Domain: Includes positive, negative, boundary, edge cases
+    - Claude Desktop: Structures test cases: preconditions, inputs, expected outputs, postconditions
+    - Claude Desktop: Links test cases to requirements and design elements
+    - Claude Desktop: Includes positive, negative, boundary, edge cases
   - §1.7.6 Test Results Documentation
-    - Strategic Domain: Records test execution results in standardized format
-    - Strategic Domain: Captures: pass/fail status, defects found, coverage achieved
-    - Strategic Domain: Links failed tests to issue documents
+    - Claude Desktop: Records test execution results in standardized format
+    - Claude Desktop: Captures: pass/fail status, defects found, coverage achieved
+    - Claude Desktop: Links failed tests to issue documents
   - §1.7.7 Test Organization
-    - Strategic Domain: Maintains hierarchical test structure in tests/
-    - Strategic Domain: Separates permanent unit tests from ephemeral validation scripts
-    - Strategic Domain: Organizes unit tests by component in subdirectories
-    - Strategic Domain: Places fix validation scripts at tests/ root level
+    - Claude Desktop: Maintains hierarchical test structure in tests/
+    - Claude Desktop: Separates permanent unit tests from ephemeral validation scripts
+    - Claude Desktop: Organizes unit tests by component in subdirectories
+    - Claude Desktop: Places fix validation scripts at tests/ root level
   - §1.7.8 Test Isolation
-    - Strategic Domain: Uses temporary environments (tempfile, shutil) for test execution
-    - Strategic Domain: Ensures tests create/destroy controlled test environments
-    - Strategic Domain: Prevents test pollution through environment isolation
-    - Strategic Domain: Enables parallel test execution through isolation
+    - Claude Desktop: Uses temporary environments (tempfile, shutil) for test execution
+    - Claude Desktop: Ensures tests create/destroy controlled test environments
+    - Claude Desktop: Prevents test pollution through environment isolation
+    - Claude Desktop: Enables parallel test execution through isolation
   - §1.7.9 Dependency Mocking
-    - Strategic Domain: Uses unittest.mock to isolate component dependencies
-    - Strategic Domain: Mocks external services, file systems, network calls
-    - Strategic Domain: Verifies interface contracts without external dependencies
-    - Strategic Domain: Documents mocking strategy in test documentation
+    - Claude Desktop: Uses unittest.mock to isolate component dependencies
+    - Claude Desktop: Mocks external services, file systems, network calls
+    - Claude Desktop: Verifies interface contracts without external dependencies
+    - Claude Desktop: Documents mocking strategy in test documentation
   - §1.7.10 Regression Testing
-    - Strategic Domain: Creates targeted validation scripts for specific fixes
-    - Strategic Domain: Implements progressive validation: minimal → integration → full suite
-    - Strategic Domain: Documents validation scripts with fix references
-    - Strategic Domain: Removes validation scripts after fix verification
+    - Claude Desktop: Creates targeted validation scripts for specific fixes
+    - Claude Desktop: Implements progressive validation: minimal → integration → full suite
+    - Claude Desktop: Documents validation scripts with fix references
+    - Claude Desktop: Removes validation scripts after fix verification
   - §1.7.11 Test Lifecycle Management
-    - Strategic Domain: Distinguishes permanent regression suite from temporary validation
-    - Strategic Domain: Maintains permanent tests in tests/\<component\>/ subdirectories
-    - Strategic Domain: Archives or removes ephemeral validation scripts post-verification
-    - Strategic Domain: Updates test documentation to reflect lifecycle status
+    - Claude Desktop: Distinguishes permanent regression suite from temporary validation
+    - Claude Desktop: Maintains permanent tests in tests/\<component\>/ subdirectories
+    - Claude Desktop: Archives or removes ephemeral validation scripts post-verification
+    - Claude Desktop: Updates test documentation to reflect lifecycle status
   - §1.7.12 Test-Prompt Coupling
     - Test references source prompt UUID in coupled_docs.prompt_ref field
     - Test iteration number matches source prompt iteration number
     - Iteration synchronization maintained through debug cycles
-    - Strategic Domain verifies coupling before test execution
+    - Claude Desktop verifies coupling before test execution
   - §1.7.13 Test Result Lifecycle
     - Results named: result-<uuid>-<n>.md in workspace/test/result/
     - Result references parent test UUID in coupled_docs.test_ref field
@@ -694,7 +672,7 @@ ls -lh dist/
 pip install dist/*.whl
 ```
   - §1.7.15 Progressive Validation Strategy
-    - Strategic Domain: Implements graduated validation during debug cycles
+    - Claude Desktop: Implements graduated validation during debug cycles
     - Targeted validation: Execute minimal test to verify specific fix
     - Integration validation: Execute tests for dependent components
     - Regression validation: Execute full test suite before closure
@@ -702,7 +680,7 @@ pip install dist/*.whl
     - Permanent tests: Maintain regression suite in component subdirectories
     - Script lifecycle: Archive or remove validation scripts post-verification
     - Validation sequence mandatory before document closure
-    - **Validation Hooks (Tactical Domain):**
+    - **Validation Hooks (Claude Code):**
       - PreToolUse hook: Validates design constraints before code generation
       - PostToolUse hook: Executes targeted tests after file modification
       - Hook failures trigger checkpoint rewind automatically
@@ -718,7 +696,7 @@ pip install dist/*.whl
     - Acceptance tests: Requirement validation (milestone-based)
     - Regression tests: All unit/integration tests (permanent)
     - Performance tests: NFR validation (periodic benchmarking)
-    - Strategic Domain: Selects appropriate test type based on requirements and architecture
+    - Claude Desktop: Selects appropriate test type based on requirements and architecture
     - Test documentation specifies type in test_info.type field
   - §1.7.17 Test Execution Platforms
     - Unit tests: Development platform with comprehensive mocking
@@ -739,7 +717,7 @@ pip install dist/*.whl
       - Document platform-specific tooling and dependencies in component designs
       - Include platform requirements in test documentation
     - Cross-platform considerations:
-      - Strategic Domain: Documents platform-specific limitations in test documentation
+      - Claude Desktop: Documents platform-specific limitations in test documentation
       - Mocking strategy must isolate tests from platform differences
       - Integration/system tests require target hardware availability
 
@@ -748,27 +726,27 @@ pip install dist/*.whl
 #### 1.8 P07 Quality
   - §1.8.1 Purpose
   - §1.8.2 Code Validation
-    - Strategic Domain: Verifies generated code implements all design requirements
-    - Strategic Domain: Validates against design specifications, interface contracts, data schemas
-    - Strategic Domain: Documents validation results, discrepancies found
+    - Claude Desktop: Verifies generated code implements all design requirements
+    - Claude Desktop: Validates against design specifications, interface contracts, data schemas
+    - Claude Desktop: Documents validation results, discrepancies found
   - §1.8.3 Automated Audits
-    - Tactical Domain: Stop hook triggers automated compliance audit after code generation
+    - Claude Code: Stop hook triggers automated compliance audit after code generation
     - Audit verification: Protocol compliance, naming conventions, traceability links
-    - Compliance report: Generated in session metadata for Strategic Domain review
+    - Compliance report: Generated in session metadata for Claude Desktop review
     - Critical violations: Halt workflow, require human intervention before commit
     - Minor violations: Logged as warnings, accumulated for periodic review
     - Audit scope: Document coupling integrity, iteration synchronization, file organization
-    - Human review: Strategic Domain evaluates audit findings before approving iteration
+    - Human review: Claude Desktop evaluates audit findings before approving iteration
     - Audit integration: Complements P08 milestone audits with continuous checking
   - §1.8.7 Hook-Based Auditing
-    - Tactical Domain: Lifecycle hooks enable automated audit event capture
+    - Claude Code: Lifecycle hooks enable automated audit event capture
     - PreToolUse hook: Records design context, requirements traceability before generation
     - PostToolUse hook: Captures test results, validation outcomes after modification
     - Stop hook: Logs session metrics, checkpoint usage, validation summary
     - Audit trail: Stored in session metadata for post-execution review
     - Hook configuration: Defined in .claude/skills/audit/
     - Automated compliance: Reduces manual audit overhead for repetitive checks
-    - Human review: Session metadata reviewed by Strategic Domain after completion
+    - Human review: Session metadata reviewed by Claude Desktop after completion
     - Audit scope: File-level modifications, iteration-level decisions, session-level metrics
     - Integration: Audit events linked to git commits via timestamp correlation
 
@@ -791,13 +769,13 @@ pip install dist/*.whl
     - Traceability: Requirement ↔ design ↔ code ↔ test linkages
     - Configuration management: Code vs. baseline verification
   - §1.9.4 Audit Procedure
-    - Strategic Domain: Conducts systematic review of source code against governance requirements
-    - Strategic Domain: Documents findings with severity classification (critical, high, medium, low)
-    - Strategic Domain: Provides evidence for each finding (file paths, line numbers, specific violations)
-    - Strategic Domain: Calculates compliance metrics (percentage, deficiency counts by severity)
+    - Claude Desktop: Conducts systematic review of source code against governance requirements
+    - Claude Desktop: Documents findings with severity classification (critical, high, medium, low)
+    - Claude Desktop: Provides evidence for each finding (file paths, line numbers, specific violations)
+    - Claude Desktop: Calculates compliance metrics (percentage, deficiency counts by severity)
   - §1.9.5 Audit Deliverables
-    - Strategic Domain: Creates audit report following naming format: audit-<uuid>-<audit name>.md
-    - Strategic Domain: Stores audit reports in workspace/audit/ folder
+    - Claude Desktop: Creates audit report following naming format: audit-<uuid>-<audit name>.md
+    - Claude Desktop: Stores audit reports in workspace/audit/ folder
     - Audit report structure:
     - Executive summary with compliance status and critical issue count
     - Protocol-by-protocol compliance assessment
@@ -809,19 +787,19 @@ pip install dist/*.whl
     - Recommendations for remediation
     - Positive findings (strengths identification)
   - §1.9.6 Remediation Process
-    - Strategic Domain: Converts critical and high-priority audit findings to issue documents via P04
-    - Strategic Domain: References source code audit report in issue documents
-    - Strategic Domain: Issue resolution follows standard P04 → P03 → implementation workflow
-    - Strategic Domain: Tracks remediation progress in audit report updates
+    - Claude Desktop: Converts critical and high-priority audit findings to issue documents via P04
+    - Claude Desktop: References source code audit report in issue documents
+    - Claude Desktop: Issue resolution follows standard P04 → P03 → implementation workflow
+    - Claude Desktop: Tracks remediation progress in audit report updates
   - §1.9.7 Audit Closure
-    - Strategic Domain: Conducts follow-up audit after remediation completed
-    - Strategic Domain: Verifies all critical issues resolved
-    - Strategic Domain: Documents closure with final compliance metrics
+    - Claude Desktop: Conducts follow-up audit after remediation completed
+    - Claude Desktop: Verifies all critical issues resolved
+    - Claude Desktop: Documents closure with final compliance metrics
     - Human: Approves audit closure and authorizes proceeding to next phase
   - §1.9.8 Audit Trail
-    - Strategic Domain: Maintains chronological audit history
-    - Strategic Domain: Links related audits (initial → follow-up → closure)
-    - Strategic Domain: Preserves audit reports for process improvement analysis
+    - Claude Desktop: Maintains chronological audit history
+    - Claude Desktop: Links related audits (initial → follow-up → closure)
+    - Claude Desktop: Preserves audit reports for process improvement analysis
   - §1.9.9 Audit Closure
     - §1.9.9.1 Closure Criteria
       - All critical findings fully resolved
@@ -829,15 +807,15 @@ pip install dist/*.whl
       - Completion documented in audit report
       - Human approval obtained
     - §1.9.9.2 Closure Process
-      - Strategic Domain: Verifies all closure criteria satisfied
-      - Strategic Domain: Documents closure status with final compliance metrics
-      - Strategic Domain: Records closure date and approver
+      - Claude Desktop: Verifies all closure criteria satisfied
+      - Claude Desktop: Documents closure status with final compliance metrics
+      - Claude Desktop: Records closure date and approver
       - Human: Reviews closure documentation
       - Human: Approves audit closure or identifies remaining work
     - §1.9.9.3 Post-Closure Archival
-      - Strategic Domain: Moves closed audit report to workspace/audit/closed/
-      - Strategic Domain: Updates audit traceability links in master traceability matrix
-      - Strategic Domain: Preserves read-only access for future reference
+      - Claude Desktop: Moves closed audit report to workspace/audit/closed/
+      - Claude Desktop: Updates audit traceability links in master traceability matrix
+      - Claude Desktop: Preserves read-only access for future reference
     - §1.9.9.4 Reopening Closed Audits
       - Prohibited: Closed audits are immutable
       - New findings: Create new audit with reference to closed audit
@@ -848,37 +826,37 @@ pip install dist/*.whl
 #### 1.10 P09 Prompt
   - §1.10.1 Purpose
     - Manage creation and lifecycle of T04 prompt documents
-    - Facilitate Strategic Domain → Tactical Domain code generation communication
+    - Facilitate Claude Desktop → Claude Code code generation communication
   - §1.10.2 Prompt Creation
-    - Prompt documents are always Tactical Domain specific.
-    - Strategic Domain: Reads template from ai/templates/T04-prompt.md
-    - Strategic Domain: Creates prompt documents from design and change documents using T04 template
-    - Strategic Domain: Saves prompts with naming format prompt-<uuid>-<name>.md in workspace/prompt/
-    - Strategic Domain: UUID assignment follows workflow initiation pattern:
+    - Prompt documents are always Claude Code specific.
+    - Claude Desktop: Reads template from ai/templates/T04-prompt.md
+    - Claude Desktop: Creates prompt documents from design and change documents using T04 template
+    - Claude Desktop: Saves prompts with naming format prompt-<uuid>-<name>.md in workspace/prompt/
+    - Claude Desktop: UUID assignment follows workflow initiation pattern:
     - First document created in workflow (Issue OR Change) generates new 8-character UUID
     - All subsequently coupled documents (Change, Prompt, Test, Result) inherit that UUID
     - UUID propagates through entire document lifecycle maintaining referential integrity
-    - Strategic Domain: Rewrites prompt documents in place when revisions required
-    - Strategic Domain: Embeds complete design specifications and schema within prompt documents
-    - Strategic Domain: Ensures prompt documents are self-contained requiring no external file references
-    - Strategic Domain: Prompt references source change UUID in coupled_docs.change_ref field
-    - Strategic Domain: Prompt iteration number matches source change iteration number
-    - Strategic Domain: Iteration synchronization maintained through debug cycles
-    - Strategic Domain: Verifies coupling before prompt creation
+    - Claude Desktop: Rewrites prompt documents in place when revisions required
+    - Claude Desktop: Embeds complete design specifications and schema within prompt documents
+    - Claude Desktop: Ensures prompt documents are self-contained requiring no external file references
+    - Claude Desktop: Prompt references source change UUID in coupled_docs.change_ref field
+    - Claude Desktop: Prompt iteration number matches source change iteration number
+    - Claude Desktop: Iteration synchronization maintained through debug cycles
+    - Claude Desktop: Verifies coupling before prompt creation
     - GitHub version control maintains complete revision history
   - §1.10.3 Human Handoff
-    - Strategic Domain: Verifies CLAUDE.md exists at project root before providing command
-    - Strategic Domain: If CLAUDE.md absent, generates initial CLAUDE.md with project context
-    - Strategic Domain: Generated CLAUDE.md requires human approval before proceeding
-    - Strategic Domain: After human approval of T04 prompt, provides ready-to-execute command in conversation
+    - Claude Desktop: Verifies CLAUDE.md exists at project root before providing command
+    - Claude Desktop: If CLAUDE.md absent, generates initial CLAUDE.md with project context
+    - Claude Desktop: Generated CLAUDE.md requires human approval before proceeding
+    - Claude Desktop: After human approval of T04 prompt, provides ready-to-execute command in conversation
     - Command format includes:
       - Governance document location for context
       - Design document locations for context
       - Prompt document path for implementation
-    - Strategic Domain: Must specify complete absolute paths to all referenced documents
-    - Human: Starts Tactical Domain in project root directory
-    - Human: Pastes provided command into Tactical Domain
-    - Human: Notifies Strategic Domain when Tactical Domain execution completes
+    - Claude Desktop: Must specify complete absolute paths to all referenced documents
+    - Human: Starts Claude Code in project root directory
+    - Human: Pastes provided command into Claude Code
+    - Human: Notifies Claude Desktop when Claude Code execution completes
     - Example command structure:
 
 ```text
@@ -887,7 +865,7 @@ pip install dist/*.whl
 ```
 
   - §1.10.4 Wildcard Permissions
-    - Tactical Domain: Supports wildcard patterns in permission grants for batch operations
+    - Claude Code: Supports wildcard patterns in permission grants for batch operations
     - Permission scope: src/**/*.py enables modifications across source tree
     - Validation: PreToolUse hooks verify modifications within approved scope
     - Audit trail: All wildcard-permitted modifications logged per-file
@@ -897,8 +875,8 @@ pip install dist/*.whl
     - Constraints: Wildcard permissions limited to src/ directory tree
     - Exclusions: Configuration files, test fixtures require individual approval
   - §1.10.5 Prompt Revision
-    - Strategic Domain: Rewrites existing prompt documents when changes needed
-    - Strategic Domain: Documents revision rationale in prompt version_history section
+    - Claude Desktop: Rewrites existing prompt documents when changes needed
+    - Claude Desktop: Documents revision rationale in prompt version_history section
     - GitHub commits provide complete change tracking and rollback capability
 
 [Return to Table of Contents](<#table of contents>)
@@ -908,22 +886,22 @@ pip install dist/*.whl
     - Systematic requirements capture and validation before design
     - Establishes baseline for design decomposition and traceability
   - §1.11.2 Requirements Capture
-    - Strategic Domain: Reads template from ai/templates/T07-requirements.md
-    - Strategic Domain: Assists human through requirements elicitation
-    - Strategic Domain: Prompts for functional, non-functional, architectural requirements
-    - Strategic Domain: Validates completeness, clarity, testability
-    - Strategic Domain: Identifies conflicts and dependencies
-    - Strategic Domain: Creates requirements-<project>-master.md using T07 template
-    - Strategic Domain: Saves in workspace/requirements/
+    - Claude Desktop: Reads template from ai/templates/T07-requirements.md
+    - Claude Desktop: Assists human through requirements elicitation
+    - Claude Desktop: Prompts for functional, non-functional, architectural requirements
+    - Claude Desktop: Validates completeness, clarity, testability
+    - Claude Desktop: Identifies conflicts and dependencies
+    - Claude Desktop: Creates requirements-<project>-master.md using T07 template
+    - Claude Desktop: Saves in workspace/requirements/
   - §1.11.3 Requirements Validation
-    - Strategic Domain: Verifies each requirement has objective acceptance criteria
-    - Strategic Domain: Ensures requirements are testable and unambiguous
-    - Strategic Domain: Documents validation results in validation section
+    - Claude Desktop: Verifies each requirement has objective acceptance criteria
+    - Claude Desktop: Ensures requirements are testable and unambiguous
+    - Claude Desktop: Documents validation results in validation section
     - Human: Reviews and approves requirements baseline
   - §1.11.4 Requirements Baseline
     - Human: Approves requirements document
-    - Strategic Domain: Establishes baseline for design phase
-    - Strategic Domain: Initializes traceability matrix with requirements
+    - Claude Desktop: Establishes baseline for design phase
+    - Claude Desktop: Initializes traceability matrix with requirements
   - §1.11.5 Requirements Lifecycle
     - Active: workspace/requirements/requirements-<project>-master.md
     - Closed: workspace/requirements/closed/ after human acceptance
@@ -931,8 +909,8 @@ pip install dist/*.whl
     - No iteration numbering - git history tracks all changes
   - §1.11.6 Requirements Change Management
     - Changes trigger P03 Change workflow
-    - Strategic Domain: Performs impact analysis across design/code/test
-    - Strategic Domain: Updates traceability matrix
+    - Claude Desktop: Performs impact analysis across design/code/test
+    - Claude Desktop: Updates traceability matrix
     - Human: Approves changes
 
 [Return to Table of Contents](<#table of contents>)
@@ -942,81 +920,81 @@ pip install dist/*.whl
 ```mermaid
 flowchart TD
     Init[P01: Project Initialization] --> Start([Human: Initiate Requirements])
-    Start --> D1_Elicit[Strategic Domain: Requirements Elicitation P10]
+    Start --> D1_Elicit[Claude Desktop: Requirements Elicitation P10]
     
     D1_Elicit --> H_Req{Human: Review Requirements}
     H_Req -->|Revise| D1_Elicit
-    H_Req -->|Approve| D1_Baseline[Strategic Domain: Baseline Requirements]
-    D1_Baseline --> D1_Design[Strategic Domain: Create master design T01]
+    H_Req -->|Approve| D1_Baseline[Claude Desktop: Baseline Requirements]
+    D1_Baseline --> D1_Design[Claude Desktop: Create master design T01]
     
     D1_Design --> H1{Human: Review<br/>master design}
     H1 -->|Revise| D1_Design
-    H1 -->|Approve| D1_Decompose[Strategic Domain: Decompose to<br/>design elements T01]
+    H1 -->|Approve| D1_Decompose[Claude Desktop: Decompose to<br/>design elements T01]
     
     D1_Decompose --> H2{Human: Review<br/>design elements}
     H2 -->|Revise| D1_Decompose
-    H2 -->|Approve| Trace1[Strategic Domain: Update<br/>traceability matrix P05]
+    H2 -->|Approve| Trace1[Claude Desktop: Update<br/>traceability matrix P05]
     
     Trace1 --> D1_Baseline[Human: Tag baseline<br/>in GitHub]
     
-    D1_Baseline --> D1_Prompt[Strategic Domain: Create T04 prompt<br/>with design + schema]
+    D1_Baseline --> D1_Prompt[Claude Desktop: Create T04 prompt<br/>with design + schema]
     
     D1_Prompt --> H3{Human: Approve<br/>code generation}
     H3 -->|Revise| D1_Prompt
-    H3 -->|Approve| D1_Instruct[Strategic Domain: Create<br/>ready-to-execute command]
+    H3 -->|Approve| D1_Instruct[Claude Desktop: Create<br/>ready-to-execute command]
     
-    D1_Instruct --> H_Invoke[Human: Invoke Tactical Domain]
-    H_Invoke --> D2_Read[Tactical Domain: Read T04]
-    D2_Read --> D2_Generate[Tactical Domain: Generate code]
-    D2_Generate --> D2_Save[Tactical Domain: Save to src/]
-    D2_Save --> H_Notify[Human: Notify Strategic Domain]
-    H_Notify --> D1_Review[Strategic Domain: Review<br/>generated code]
+    D1_Instruct --> H_Invoke[Human: Invoke Claude Code]
+    H_Invoke --> D2_Read[Claude Code: Read T04]
+    D2_Read --> D2_Generate[Claude Code: Generate code]
+    D2_Generate --> D2_Save[Claude Code: Save to src/]
+    D2_Save --> H_Notify[Human: Notify Claude Desktop]
+    H_Notify --> D1_Review[Claude Desktop: Review<br/>generated code]
     
-    D1_Review --> Trace2[Strategic Domain: Update<br/>traceability matrix P05]
-    Trace2 --> D1_Audit[Strategic Domain: Config audit<br/>code vs baseline]
-    D1_Audit --> D1_Test_Doc[Strategic Domain: Create test doc T05]
+    D1_Review --> Trace2[Claude Desktop: Update<br/>traceability matrix P05]
+    Trace2 --> D1_Audit[Claude Desktop: Config audit<br/>code vs baseline]
+    D1_Audit --> D1_Test_Doc[Claude Desktop: Create test doc T05]
 
-    D1_Test_Doc --> D1_Generate_Tests[Strategic Domain: Generate pytest files from T05]
+    D1_Test_Doc --> D1_Generate_Tests[Claude Desktop: Generate pytest files from T05]
     D1_Generate_Tests --> H_Execute[Human: Execute tests]
-    H_Execute --> D1_Review_Results[Strategic Domain: Review test results]
-    D1_Review_Results --> Trace3[Strategic Domain: Update<br/>traceability matrix P05]
+    H_Execute --> D1_Review_Results[Claude Desktop: Review test results]
+    D1_Review_Results --> Trace3[Claude Desktop: Update<br/>traceability matrix P05]
     Trace3 --> Test_Result{Tests pass?}
     
-    Test_Result -->|Fail| D1_Issue[Strategic Domain: Create issue T03]
+    Test_Result -->|Fail| D1_Issue[Claude Desktop: Create issue T03]
     D1_Issue --> Issue_Type{Issue type?}
     
-    Issue_Type -->|Bug| D1_Change[Strategic Domain: Create change T02]
+    Issue_Type -->|Bug| D1_Change[Claude Desktop: Create change T02]
     D1_Change --> H4{Human: Review<br/>change}
     H4 -->|Revise| D1_Change
-    H4 -->|Approve| D1_Debug_Prompt[Strategic Domain: Create debug<br/>prompt T04]
+    H4 -->|Approve| D1_Debug_Prompt[Claude Desktop: Create debug<br/>prompt T04]
     
     D1_Debug_Prompt --> H5{Human: Approve<br/>debug}
     H5 -->|Revise| D1_Debug_Prompt
-    H5 -->|Approve| D1_Debug_Instruct[Strategic Domain: Create<br/>ready-to-execute command]
+    H5 -->|Approve| D1_Debug_Instruct[Claude Desktop: Create<br/>ready-to-execute command]
     D1_Debug_Instruct --> H_Invoke
     
-    Issue_Type -->|Design flaw| D1_Design_Change[Strategic Domain: Create change T02]
+    Issue_Type -->|Design flaw| D1_Design_Change[Claude Desktop: Create change T02]
     D1_Design_Change --> H6{Human: Review<br/>change}
     H6 -->|Revise| D1_Design_Change
-    H6 -->|Approve| D1_Update_Design[Strategic Domain: Update design]
-    D1_Update_Design --> Trace4[Strategic Domain: Update<br/>traceability matrix P05]
+    H6 -->|Approve| D1_Update_Design[Claude Desktop: Update design]
+    D1_Update_Design --> Trace4[Claude Desktop: Update<br/>traceability matrix P05]
     Trace4 --> D1_Prompt
     
     Test_Result -->|Pass| Progressive{Progressive<br/>validation<br/>complete?}
     
-    Progressive -->|Targeted only| Integration_Val[Strategic Domain: Execute<br/>integration validation]
+    Progressive -->|Targeted only| Integration_Val[Claude Desktop: Execute<br/>integration validation]
     Integration_Val --> Integration_Result{Integration<br/>tests pass?}
     Integration_Result -->|Fail| D1_Issue
     Integration_Result -->|Pass| Regression_Val
     
-    Progressive -->|Integration done| Regression_Val[Strategic Domain: Execute<br/>full regression suite]
+    Progressive -->|Integration done| Regression_Val[Claude Desktop: Execute<br/>full regression suite]
     Regression_Val --> Regression_Result{Regression<br/>tests pass?}
     Regression_Result -->|Fail| D1_Issue
     Regression_Result -->|Pass| H7
     
     Progressive -->|Full regression| H7{Human: Accept<br/>deliverable?}
     H7 -->|Reject| D1_Issue
-    H7 -->|Accept| D1_Close[Strategic Domain: Close documents<br/>Move to closed/<br/>Git commit]
+    H7 -->|Accept| D1_Close[Claude Desktop: Close documents<br/>Move to closed/<br/>Git commit]
     D1_Close --> Complete([Complete])
 ```
 
@@ -1035,20 +1013,20 @@ flowchart TD
 | 1.4     | 2025-11-06 | Integrated IEEE/ISO standards-based directives: P00 (§1.1.11-§1.1.12), P02 (§1.3.5-§1.3.8), P03 (§1.4.5-§1.4.9), P04 (§1.5.5-§1.5.6), P05 (§1.6.2-§1.6.3), P06 (§1.7.2-§1.7.4), new P07 Quality Assurance (§1.8.1) |
 | 1.5     | 2025-11-06 | Added T05 Test template and schema |
 | 1.6     | 2025-11-06 | Replaced flowchart with revised version incorporating human review checkpoints, iterative cycles, and complete workflow loops |
-| 1.7     | 2025-11-06 | Enhanced T04 Prompt template with output format controls to constrain Tactical Domain responses to code-only with minimal integration instructions |
+| 1.7     | 2025-11-06 | Enhanced T04 Prompt template with output format controls to constrain Claude Code responses to code-only with minimal integration instructions |
 | 1.8     | 2025-11-11 | Added P01 initialization square to Framework Execution Flowchart |
 | 1.9     | 2025-11-11 | Added .gitignore specification to P01.2.2 |
 | 2.0     | 2025-11-11 | Added pyproject.toml skeleton to P01.2.2 |
 | 2.1     | 2025-11-12 | Specified GitHub Desktop as tagging mechanism in P00 1.1.11 Configuration Management |
-| 2.2     | 2025-11-12 | Added P00 1.1.13 Tactical Domain Configuration and Appendix A: Tactical Domain Preset Specifications |
+| 2.2     | 2025-11-12 | Added P00 1.1.13 Claude Code Configuration and Appendix A: Claude Code Preset Specifications |
 | 2.3     | 2025-11-13 | Added tests/ subfolder to src/ directory structure in P01.2.4 |
 | 2.4     | 2025-11-13 | Enhanced P06 Test with sections 1.7.1a (test script creation), 1.7.5-1.7.9 (test organization, isolation, mocking, regression testing, lifecycle management) |
 | 2.5     | 2025-11-13 | Added audit/ subfolder to workspace directory structure in P01.2.4 |
 | 2.6     | 2025-11-13 | Added P08 Audit protocol establishing periodic compliance verification, audit deliverable requirements, and remediation workflow |
 | 2.7     | 2025-11-13 | Added audit document class to P00 1.1.10 naming convention and updated P08 1.9.5 to use sequence numbering format |
-| 2.8     | 2025-11-13 | Added P00 §1.1.3 Framework Application clarifying that Strategic Domain/2 separation applies to development workflow, not runtime architecture of generated applications. Renumbered subsequent P00 subsections §1.1.4-§1.1.13 |
+| 2.8     | 2025-11-13 | Added P00 §1.1.3 Framework Application clarifying that Claude Desktop/2 separation applies to development workflow, not runtime architecture of generated applications. Renumbered subsequent P00 subsections §1.1.4-§1.1.13 |
 | 2.9     | 2025-11-14 | Added P01 §1.2.5 traceability matrix skeleton directive and P05 §1.6.4 traceability matrix structure specification. Renumbered P01 §1.2.4 to §1.2.6 |
-| 3.0     | 2025-11-14 | Replaced MCP communication with filesystem communication for Strategic Domain↔Tactical Domain (P00 1.1.7-1.1.8-1.1.9-1.1.11); removed LM Studio references; simplified T04 template; updated flowchart; deleted Appendix A |
+| 3.0     | 2025-11-14 | Replaced MCP communication with filesystem communication for Claude Desktop↔Claude Code (P00 1.1.7-1.1.8-1.1.9-1.1.11); removed LM Studio references; simplified T04 template; updated flowchart; deleted Appendix A |
 | 3.1     | 2025-11-14 | Added P09 Prompt protocol; separated prompt management from trace; created workspace/prompt/ folder; updated P00 §1.1.10 document class list; updated P08 §1.9.3 audit scope to P00-P09 |
 | 3.2     | 2025-11-16 | Removed prompt iteration numbering (P09 §1.10.2, §1.10.5); GitHub version control replaces iteration-based versioning |
 | 3.3     | 2025-11-19 | Enhanced P00 Control (§1.1.7) and Communication (§1.1.8) with strategic/tactical clarification and MCP filesystem awareness; Added semantic versioning standard to P01 Versioning (§1.1.13); Added workspace/ai/ directory to P01 folder structure (§1.2.6) and .gitignore (§1.2.2); Added visual documentation requirements to P02 (§1.3.10) for embedded Mermaid diagrams; Enhanced T01 Design template with visual_documentation section; Enhanced T03 Issue template with prerequisites, reproducibility_conditions, prevention, and verification_enhanced sections |
@@ -1059,16 +1037,16 @@ flowchart TD
 | 3.8     | 2025-11-28 | Implemented iteration-based document coupling with lifecycle management: Added iteration field and coupled_docs section to all templates (T02-T06); Enhanced P00 §1.1.10 with iteration tracking and git commit requirements; Created P00 §1.1.13 Document Lifecycle Management defining active/closed states, closure criteria, archival procedures; Added closed/ subfolders to P01 §1.2.6; Enhanced P03 §1.4.2, P04 §1.5.7, P06 §1.7.12-§1.7.13, P09 §1.10.2 with iteration synchronization and coupling requirements; Created T06 Result template and schema |
 | 3.9     | 2025-11-28 | Added Python virtual environment and distribution build support: Added venv/, dist/ directories to P01 §1.2.6 folder structure; Added Python build artifacts to P01 §1.2.2 .gitignore (venv/, .venv/, *.pyc, __pycache__/, .pytest_cache/, dist/, build/, *.egg-info/); Created P01 §1.2.7 Virtual Environment Setup with consolidated setup script; Renamed P01 §1.2.2 to §1.2.8 Python documents containing pyproject.toml; Created P06 §1.7.14 Distribution Creation with human-executed directives for build artifact management and distribution creation after tests pass |
 | 4.0     | 2025-11-28 | Integrated traceability matrix updates into workflow flowchart: Added P05 matrix update nodes after design approval (Trace1), code generation completion (Trace2), test execution (Trace3), and change implementation (Trace4); ensures bidirectional traceability maintained throughout development lifecycle |
-| 4.1     | 2025-11-28 | Added P08 §1.9.9 Audit Closure with closure criteria, process, archival procedures, and reopening constraints; added workspace/audit/closed/ to P01 §1.2.6 folder structure; added audit closure criteria to P00 §1.1.14.3 and audit closed subfolder to P00 §1.1.14.5  |
+| 4.1     | 2025-11-28 | Added P08 §1.9.9 Audit Closure with closure criteria, process, archival procedures, and reopening constraints; added workspace/audit/closed/ to P01 §1.2.6 folder structure; added audit closure criteria to P00 §1.1.13.3 and audit closed subfolder to P00 §1.1.13.5  |
 | 4.2     | 2025-11-30 | Enhanced P06 Test with progressive validation strategy (§1.7.15), test type selection criteria (§1.7.16), platform execution specifications (§1.7.17); updated workflow flowchart to incorporate progressive validation phases and platform-specific testing requirements |
 | 4.3     | 2025-12-03 | Added workspace/proposal/ directory: Added proposal document class to P00 §1.1.10; added workspace/proposal/ and workspace/proposal/closed/ to P01 §1.2.6 folder structure; added proposal directories to P01 §1.2.2 .gitignore |
 | 4.4     | 2025-12-03 | Added P00 §1.1.14 Logging Standards: environment-based log level control, flat file format, rotation policy, test/production mode separation |
 | 4.5     | 2025-12-04 | Simplified human handoff mechanism: Replaced P00 §1.1.8 and P00 §1.1.9 instruction document creation with conversational command delivery; replaced P09 §1.10.3 Instruction Documents with Human Handoff providing ready-to-execute commands directly in conversation; removed P09 §1.10.5 Instruction Document Creation (now covered by §1.10.3); eliminates redundant prompt-NNNN-instructions.md files while maintaining domain separation |
 | 4.6     | 2025-12-04 | Added P00 §1.1.15 Knowledge Base: Both domains must consult workspace/knowledge/ when creating documents or code; established institutional knowledge capture; added knowledge/ to P01 §1.2.6 folder structure; enhanced T04 Prompt context with knowledge_references field |
-| 4.7     | 2025-12-10 | Enhanced P09 §1.10.3 Human Handoff: Replaced single command format with structured approach providing governance, design, and prompt locations to Tactical Domain; changed execution from terminal command to paste-into-Tactical Domain workflow |
+| 4.7     | 2025-12-10 | Enhanced P09 §1.10.3 Human Handoff: Replaced single command format with structured approach providing governance, design, and prompt locations to Claude Code; changed execution from terminal command to paste-into-Claude Code workflow |
 | 4.8     | 2025-12-11 | Enhanced P06 §1.7.3 Test Script Creation: clarified pytest generation as automatic precursor to test execution; added workflow sequence T05→pytest→execute; inserted D1_Generate_Tests node in flowchart between D1_Test_Doc and D1_Execute |
 | 4.9     | 2025-12-11 | Test directory relocation: Moved tests/ from src/tests/ to project root; updated P01 §1.2.6 folder structure; updated P06 §1.7.3, §1.7.7, §1.7.11 path references; resolves Python import conflicts and aligns with pytest ecosystem standards |
-| 5.0     | 2025-12-11 | Added explicit document closure node to workflow flowchart: Inserted D1_Close node between H7 acceptance and completion; ensures archival procedure execution visible in workflow; aligns flowchart with P00 §1.1.14.4 archival directives |
+| 5.0     | 2025-12-11 | Added explicit document closure node to workflow flowchart: Inserted D1_Close node between H7 acceptance and completion; ensures archival procedure execution visible in workflow; aligns flowchart with P00 §1.1.13.4 archival directives |
 | 5.1     | 2025-12-12 | Removed platform-specific assumptions from P06 §1.7.17 Test Execution Platforms: Replaced hardcoded references to Raspberry Pi, MacOS, nmcli, systemd, sockets with generic development/target deployment platform terminology; added Platform specification guidance directing platform details to project design documents; eliminates inappropriate context bleed across projects with different deployment targets |
 | 5.2     | 2025-12-12 | Enhanced T01 Design template with explicit platform specifications: Added development_environment (platform, python_version, toolchain) and target_platform (type, os, architecture, constraints) sections; updated T01 schema with corresponding validation rules; provides structured platform documentation aligned with P06 1.7.17 test execution requirements |
 | 5.3     | 2025-12-12 | Template externalization: Split T01-T06 templates into separate files in /templates/ directory; implemented UUID-based document coupling replacing NNNN sequence numbering (8-character hex format: ^[0-9a-f]{8}$); updated all protocol sections and schemas with UUID patterns; maintains backward compatibility through GitHub history |
@@ -1078,11 +1056,10 @@ flowchart TD
 | 5.7     | 2025-01-13 | Eliminated legacy 0000 sequence from master document naming: Changed from \<class\>-0000-master_\<name\>.md to \<class\>-\<name\>-master.md; Updated P00 §1.1.10, P01 §1.2.5, P02 §1.3.1/§1.3.7, P05 §1.6.4, P10 §1.11.2/§1.11.5; Suffix pattern enables clearer alphabetical sorting while maintaining master designation |
 | 5.8     | 2025-01-13 | Clarified P00 §1.1.10 document naming conventions: Explicitly separated master document naming (no UUID) from all other documents (UUID required); Added concrete examples for both patterns; Removes ambiguity about UUID assignment criteria |
 | 5.9     | 2025-01-13 | Added section symbol (§) notation throughout governance document: Replaced all section number references with § prefix for formal technical documentation aesthetics and improved reference precision; Updated all protocol sections (P00-P10), subsections, and version history references |
-| 6.0     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 1: Skills Management (P00 §1.1.18), Context Optimization (P00 §1.1.19), .claude/ directory structure (P01 §1.2.6), CLAUDE.md requirement (P09 §1.10.3 with verification and UUID format correction), .gitignore additions (P01 §1.2.2) |
-| 6.1     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 2: Checkpoint Strategy (P03 §1.4.8 with automatic rewind capability), Validation Hooks (P06 §1.7.15 PreToolUse/PostToolUse integration), Hook-Based Auditing (P07 §1.8.7 automated audit trail capture); Renumbered P03 subsections §1.4.9-§1.4.11 |
-| 6.2     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 3: Wildcard Permissions (P09 §1.10.4 batch operation support), Automated Audits (P07 §1.8.3 Stop hook compliance checking), Exploration Phase (P02 §1.3.8 lightweight prototyping workflow); Renumbered P02 subsections §1.3.9-§1.3.15; Renumbered P09 §1.10.5 |
+| 6.0     | 2025-01-28 | Added Claude Code 2.1.0 integration Phase 1: Skills Management (P00 §1.1.18), Context Optimization (P00 §1.1.19), .claude/ directory structure (P01 §1.2.6), CLAUDE.md requirement (P09 §1.10.3 with verification and UUID format correction), .gitignore additions (P01 §1.2.2) |
+| 6.1     | 2025-01-28 | Added Claude Code 2.1.0 integration Phase 2: Checkpoint Strategy (P03 §1.4.8 with automatic rewind capability), Validation Hooks (P06 §1.7.15 PreToolUse/PostToolUse integration), Hook-Based Auditing (P07 §1.8.7 automated audit trail capture); Renumbered P03 subsections §1.4.9-§1.4.11 |
+| 6.2     | 2025-01-28 | Added Claude Code 2.1.0 integration Phase 3: Wildcard Permissions (P09 §1.10.4 batch operation support), Automated Audits (P07 §1.8.3 Stop hook compliance checking), Exploration Phase (P02 §1.3.8 lightweight prototyping workflow); Renumbered P02 subsections §1.3.9-§1.3.15; Renumbered P09 §1.10.5 |
 | 6.3     | 2025-02-13 | Enhanced P00 §1.1.15 Knowledge Base with behavioral standards specification: workspace/knowledge/behavioral-standards.yaml provides machine-readable behavioral constraints for autonomous execution contexts; T04 template v1.2 adds behavioral_standards section (source, enforcement_level); Example files in doc/examples/ (YAML, JSON Schema, validation script) |
-| 6.4     | 2025-02-13 | Phase 2 refactoring: Model-agnostic terminology (Strategic/Tactical Domain), Ralph Loop Integration (§1.1.11), model implementation options (§1.1.4), multi-model orchestration support (§1.1.8), section renumbering (§1.1.12-§1.1.20), removed duplicate Logging Standards |
 
 ---
 [Return to Table of Contents](<#table of contents>)
