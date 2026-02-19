@@ -2,37 +2,49 @@
 
 ## Purpose
 
-This repository provides a governance framework for AI-assisted software development using Claude Desktop and Claude Code. The framework coordinates planning, design, and code generation through structured protocols and human-in-the-loop approval gates.
+This repository provides a model-agnostic governance framework for AI-assisted software development. The framework coordinates requirements capture, design, and code generation through structured protocols and human-in-the-loop approval gates.
 
 ## Overview
 
-`governance.md` establishes a dual-domain architecture separating strategic coordination (Claude Desktop/Domain 1) from tactical implementation (Claude Code/Domain 2). The framework uses MCP filesystem-based communication, YAML templates, and systematic documentation to maintain human authority while leveraging AI capabilities for code generation.
+`ai/governance.md` defines a dual-domain architecture separating strategic coordination (Strategic Domain) from tactical implementation (Tactical Domain). Communication between domains uses MCP filesystem-based message passing. The framework is independent of any specific AI model or toolchain; implementation profiles map abstract framework concepts to concrete tooling.
 
 ## Key Characteristics
 
 - **Protocol-driven workflow**: Eleven protocols (P00-P10) govern requirements capture, project initialization, three-tier design hierarchy, change management, issue resolution, traceability, testing, quality assurance, audit, prompting, and requirements management
-- **Human approval gates**: Strategic checkpoints requiring explicit human authorization before proceeding through requirements baseline, design tiers, code generation, or baseline modifications
+- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and OLLama via Goose
+- **Human approval gates**: Explicit human authorization required before requirements baseline, design tier transitions, code generation, and baseline modifications
 - **Three-tier design decomposition**: Master (system) → Domain (functional) → Component (implementation) with validation gates between tiers
-- **UUID-based document coupling**: 8-character hex identifiers with iteration-based synchronization through debug cycles
-- **Document lifecycle management**: Active/closed states with immutable archival and closure criteria for issues, changes, prompts, tests, results, and audits
-- **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages enabling forward and backward navigation
-- **Template-based documentation**: Seven YAML templates (T01-T07) optimized for token efficiency and LLM communication
+- **Autonomous Execution Loop (AEL)**: Optional worker/reviewer cycle via Goose/Ralph Loop for iterative code generation within governed boundaries
+- **UUID-based document coupling**: 8-character hex identifiers with iteration synchronization through debug cycles
+- **Document lifecycle management**: Active/closed states with immutable archival and closure criteria across all document classes
+- **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages
+- **Template-based documentation**: Seven YAML templates (T01-T07) for all document classes
 
 ## Getting Started
 
-You will need to configure Claude Desktop to use MCP servers Filesystem and mcp-grep.
+### Prerequisites
 
-Copy the `ai/governance.md` folder to the root of your github project. You can also copy it into your Claude Desktop project. I find this improves Claude AI's attention and adherence to the framework.
+- MCP servers: Filesystem and mcp-grep configured in your Strategic Domain tool
+- Git and GitHub Desktop (or equivalent)
+- Tooling per selected implementation profile (see `ai/implementation-profiles/`)
 
-Then review `ai/governance.md` for complete framework specification. Next, ask Claude desktop to review the governance.md document and initialise the project according to `1.2 P01 Project Initialization`. Begin with Protocol P00 (Governance) and follow the workflow flowchart in section 2.0.
+### Initialization
+
+1. Copy `ai/` to the root of your project repository
+2. Select an implementation profile from `ai/implementation-profiles/` and follow its setup instructions
+3. Ask your Strategic Domain model to read `ai/governance.md` and initialize the project per P01 (§1.2 Project Initialization)
+4. Begin with P00 (Governance) and follow the workflow flowchart in section 2.0
+
+### Implementation Profiles
+
+| Profile | Tactical Domain | AEL |
+|---|---|---|
+| `profile-claude.md` | Claude Code | Goose / Ralph Loop |
+| `profile-ollama.md` | OLLama via Goose | Goose / Ralph Loop |
 
 ## Important Notice
 
-This framework is experimental in nature, serving as a learning exercise in prompt engineering, AI-assisted development workflows, protocol-driven project management, and cross-platform embedded systems development. **Actual fitness for purpose is not guaranteed.**
-
-This project represents a first attempt at AI-supported software development using Claude Desktop and Claude Code from anthropic.com. The objective is to establish a sort of AI orchestration framework to guide software development. A kind of AI wrangler if you will.
-
-It is loosely based on https://governance.md but directed towards AI.
+This framework is experimental, serving as a learning exercise in prompt engineering, AI-assisted development workflows, and protocol-driven project management. **Actual fitness for purpose is not guaranteed.**
 
 ---
 

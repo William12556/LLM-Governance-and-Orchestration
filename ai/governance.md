@@ -52,10 +52,7 @@
     - Strategic Domain: Plan and control: design, change, test and launching of code generation
       - Implementation options: Claude Desktop, local LLM via Goose, API-based LLM
     - Tactical Domain: Execute: code generation
-      - Implementation options: Ralph Loop (Goose), Tactical Domain, custom agents
-    - Communication: MCP filesystem (model-independent)
-    - Tactical Domain: Execute: code generation
-      - Implementation options: Ralph Loop (Goose), Tactical Domain, custom agents
+      - Implementation options: Ralph Loop (Goose), custom agents, direct invocation
     - Communication: MCP filesystem (model-independent)
   - §1.1.5 Forbidden
     - Both domains: Unrequested creation, addition, removal or change of source code and documents is forbidden
@@ -114,10 +111,12 @@
     - Filesystem contains only current iteration; GitHub history preserves prior iterations
     - Coupled documents maintain synchronized iteration numbers via explicit UUID references
 
-  - §1.1.11 Ralph Loop Integration
-    - Ralph Loop provides autonomous iterative code generation within governance boundaries
+  - §1.1.11 Autonomous Execution Loop (AEL)
+    - Reference implementation: Ralph Loop via Goose
+    - AEL provides autonomous iterative code generation within governance boundaries
     - Loop State Directory: `.goose/ralph/` (ephemeral, per-task)
     - Loop Entry: After human approval of T04 Prompt
+    - Integration Scripts: Project-scoped scripts reside in `<project>/bin/`. Scripts are version-controlled project artifacts. Global installation (e.g. `~/bin/`) is not required.
     - Loop Execution: Worker/reviewer cycle until SHIP or boundary exceeded
     - Loop Exit: Generates T06 Result (success) or T03 Issue (failure)
     - State Files:
@@ -210,7 +209,7 @@
     - Behavioral standards: Referenced in T04 prompts via behavioral_standards.source field
     - Behavioral standards: Enforcement levels (strict, advisory, disabled) control constraint application
     - Knowledge base prevents repeated problem-solving across development cycles
-  - §1.1.18 Templates
+  - §1.1.17 Templates
     - Templates T01-T06 are external documents in ai/templates/ directory
     - Template files:
       - ai/templates/T01-design.md
@@ -222,22 +221,23 @@
     - Strategic Domain: Read template from ai/templates/ before creating documents
     - Tactical Domain: Read templates when referenced in prompt documents
     - Templates contain YAML structure and JSON Schema validation rules
-  - §1.1.19 Skills Management
-    - Tactical Domain: Utilizes skills from .claude/skills/ for reusable workflows
+  - §1.1.18 Skills Management
+    - Tactical Domain: Utilizes skills from <skills_dir>/ for reusable workflows
     - Skills organization: governance/, testing/, validation/, audit/ subdirectories
     - Hot-reload enabled: Skill modifications activate without session restart
     - Forked contexts: Validation skills execute in isolated sub-agent contexts
     - Lifecycle hooks: PreToolUse (schema validation), PostToolUse (compliance verification), Stop (cleanup)
     - Skills repository: Project-specific skills checked into git for team sharing
-    - Personal skills: ~/.claude/skills/ for individual workflow preferences
+    - Personal skills: ~/<skills_dir>/ for individual workflow preferences
+    - Implementation: See implementation profile in ai/implementation-profiles/
     - Common skills examples:
       - governance/validate-design.md: Schema validation before T04 prompt creation
       - testing/generate-pytest.md: Automated pytest generation from T05 documentation
       - validation/coupling-check.md: Verify iteration synchronization in coupled documents
       - audit/protocol-compliance.md: Check generated code against protocol requirements
-  - §1.1.20 Context Optimization
-    - CLAUDE.md location: Project root (checked into git for team sharing)
-    - CLAUDE.local.md: Personal preferences (.gitignore'd)
+  - §1.1.19 Context Optimization
+    - Tactical Domain context file location: Project root (checked into git for team sharing)
+    - Local context file: Personal preferences (.gitignore'd)
     - Content specification:
       - Project overview and technology stack
       - Common bash commands (build, test, lint)
@@ -248,9 +248,9 @@
       - Protocol compliance requirements summary
       - Platform-specific tooling and dependencies
     - Token efficiency: Externalize stable context from T04 prompts
-    - Update frequency: Modify via # key during Tactical Domain sessions
-    - Team coordination: Review CLAUDE.md changes during git commits
-    - Auto-generation: Strategic Domain creates initial CLAUDE.md during project initialization or when absent
+    - Team coordination: Review context file changes during git commits
+    - Auto-generation: Strategic Domain creates initial context file during project initialization or when absent
+    - Implementation: Context file name and update mechanism defined in implementation profile (ai/implementation-profiles/)
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -300,6 +300,10 @@ workspace/proposal/closed/
 # Tactical Domain
 CLAUDE.local.md
 .claude/settings.json
+.claude/commands/
+.goosehints.local
+.goose/ralph/
+.goose/recipes/
 
 # other
 10000
@@ -322,14 +326,14 @@ test.txt
     └── <project name>/
         ├── ai/                       # Framework operational rules
         │   └── governance.md
-        ├── .claude/                  # Tactical Domain configuration
-        │   ├── skills/               # Project-specific skills
+        ├── <tactical_config>/        # Tactical Domain configuration (profile-specific)
+        │   ├── <skills_dir>/         # Project-specific skills
         │   │   ├── governance/
         │   │   ├── testing/
         │   │   ├── validation/
         │   │   └── audit/
         │   └── commands/
-        ├── CLAUDE.md                 # Tactical Domain context (team shared)
+        ├── <tactical_context>        # Tactical Domain context file (team shared)
         ├── venv/                     # Python virtual environment (excluded from git)
         ├── dist/                     # Python build artefacts (excluded from git)
         ├── workspace/                # Framework execution space
@@ -355,6 +359,7 @@ test.txt
         │   │       └── closed/
         │   └── ai/                   # Optional: (excluded from git)
         ├── docs/                     # Technical Documents
+        ├── bin/                      # Project-scoped integration scripts
         ├── tests/                    # Test files (root level)
         ├── src/                      # Source code
         └── deprecated/               # Archive (excluded from git)
@@ -377,7 +382,28 @@ pip install -e .[dev]
 # Verify installation
 pip list
 ```
-  - §1.2.8 Python documents
+  - §1.2.8 Implementation Profile Setup (Human executes)
+    - Human: Select implementation profile from ai/implementation-profiles/
+    - Human: Create tactical context file at project root per selected profile
+    - **Claude profile** (Tactical Domain = Claude Code):
+      - Install Claude Code: `npm install -g @anthropic-ai/claude-code`
+      - Ensure Anthropic API key is configured
+      - Create `CLAUDE.md` at project root with project context
+      - Create `.claude/` directory structure per §1.2.6
+      - Reference: [profile-claude.md](ai/implementation-profiles/profile-claude.md)
+    - **OLLama profile** (Tactical Domain = OLLama via Goose):
+      - Install OLLama: per https://ollama.com
+      - Pull selected model: `ollama pull <model-name>`
+      - Install Goose: per https://block.github.io/goose/
+      - Configure provider in `~/.config/goose/config.yaml`
+      - Create `.goosehints` or `AGENTS.md` at project root with project context
+      - Reference: [profile-ollama.md](ai/implementation-profiles/profile-ollama.md)
+    - **AEL setup (both profiles)**:
+      - Install Goose if not already installed
+      - Install Ralph Loop recipe: `~/.config/goose/recipes/ralph-loop.sh`
+      - Reference: §1.1.11
+
+  - §1.2.9 Python documents
     - Create pyproject.toml in project root:
 ```
 [project]
@@ -708,7 +734,7 @@ pip install dist/*.whl
       - Hook failures trigger checkpoint rewind automatically
       - Design validation: Verifies requirements traceability, architecture compliance
       - Code validation: Executes pytest for modified component
-      - Hook configuration: Defined in .claude/skills/validation/
+      - Hook configuration: Defined in <skills_dir>/validation/
       - Hook scope: File-level (per modification) and iteration-level (batch)
       - Validation logs: Captured in session metadata for audit trail
   - §1.7.16 Test Type Selection
@@ -766,7 +792,7 @@ pip install dist/*.whl
     - PostToolUse hook: Captures test results, validation outcomes after modification
     - Stop hook: Logs session metrics, checkpoint usage, validation summary
     - Audit trail: Stored in session metadata for post-execution review
-    - Hook configuration: Defined in .claude/skills/audit/
+    - Hook configuration: Defined in <skills_dir>/audit/
     - Automated compliance: Reduces manual audit overhead for repetitive checks
     - Human review: Session metadata reviewed by Strategic Domain after completion
     - Audit scope: File-level modifications, iteration-level decisions, session-level metrics
@@ -867,9 +893,10 @@ pip install dist/*.whl
     - Strategic Domain: Verifies coupling before prompt creation
     - GitHub version control maintains complete revision history
   - §1.10.3 Human Handoff
-    - Strategic Domain: Verifies CLAUDE.md exists at project root before providing command
-    - Strategic Domain: If CLAUDE.md absent, generates initial CLAUDE.md with project context
-    - Strategic Domain: Generated CLAUDE.md requires human approval before proceeding
+    - Strategic Domain: Verifies tactical context file exists at project root before providing command
+    - Strategic Domain: If context file absent, generates initial context file with project context
+    - Strategic Domain: Generated context file requires human approval before proceeding
+    - Context file name: Defined in implementation profile (ai/implementation-profiles/)
     - Strategic Domain: After human approval of T04 prompt, provides ready-to-execute command in conversation
     - Command format includes:
       - Governance document location for context
@@ -1078,11 +1105,17 @@ flowchart TD
 | 5.7     | 2025-01-13 | Eliminated legacy 0000 sequence from master document naming: Changed from \<class\>-0000-master_\<name\>.md to \<class\>-\<name\>-master.md; Updated P00 §1.1.10, P01 §1.2.5, P02 §1.3.1/§1.3.7, P05 §1.6.4, P10 §1.11.2/§1.11.5; Suffix pattern enables clearer alphabetical sorting while maintaining master designation |
 | 5.8     | 2025-01-13 | Clarified P00 §1.1.10 document naming conventions: Explicitly separated master document naming (no UUID) from all other documents (UUID required); Added concrete examples for both patterns; Removes ambiguity about UUID assignment criteria |
 | 5.9     | 2025-01-13 | Added section symbol (§) notation throughout governance document: Replaced all section number references with § prefix for formal technical documentation aesthetics and improved reference precision; Updated all protocol sections (P00-P10), subsections, and version history references |
-| 6.0     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 1: Skills Management (P00 §1.1.18), Context Optimization (P00 §1.1.19), .claude/ directory structure (P01 §1.2.6), CLAUDE.md requirement (P09 §1.10.3 with verification and UUID format correction), .gitignore additions (P01 §1.2.2) |
+| 6.0     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 1: Skills Management (P00 §1.1.18→17), Context Optimization (P00 §1.1.19→18), .claude/ directory structure (P01 §1.2.6), CLAUDE.md requirement (P09 §1.10.3 with verification and UUID format correction), .gitignore additions (P01 §1.2.2) |
 | 6.1     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 2: Checkpoint Strategy (P03 §1.4.8 with automatic rewind capability), Validation Hooks (P06 §1.7.15 PreToolUse/PostToolUse integration), Hook-Based Auditing (P07 §1.8.7 automated audit trail capture); Renumbered P03 subsections §1.4.9-§1.4.11 |
 | 6.2     | 2025-01-28 | Added Tactical Domain 2.1.0 integration Phase 3: Wildcard Permissions (P09 §1.10.4 batch operation support), Automated Audits (P07 §1.8.3 Stop hook compliance checking), Exploration Phase (P02 §1.3.8 lightweight prototyping workflow); Renumbered P02 subsections §1.3.9-§1.3.15; Renumbered P09 §1.10.5 |
 | 6.3     | 2025-02-13 | Enhanced P00 §1.1.15 Knowledge Base with behavioral standards specification: workspace/knowledge/behavioral-standards.yaml provides machine-readable behavioral constraints for autonomous execution contexts; T04 template v1.2 adds behavioral_standards section (source, enforcement_level); Example files in doc/examples/ (YAML, JSON Schema, validation script) |
-| 6.4     | 2025-02-13 | Phase 2 refactoring: Model-agnostic terminology (Strategic/Tactical Domain), Ralph Loop Integration (§1.1.11), model implementation options (§1.1.4), multi-model orchestration support (§1.1.8), section renumbering (§1.1.12-§1.1.20), removed duplicate Logging Standards |
+| 6.4     | 2025-02-13 | Phase 2 refactoring: Model-agnostic terminology (Strategic/Tactical Domain), Ralph Loop Integration (§1.1.11), model implementation options (§1.1.4), multi-model orchestration support (§1.1.8), section renumbering (§1.1.12-§1.1.19), removed duplicate Logging Standards |
+| 6.5     | 2025-02-18 | Implementation profile pattern: Replaced Claude-specific references with abstract equivalents — .claude/skills/ → <skills_dir>/, CLAUDE.md → tactical context file, .claude/ → <tactical_config>/; renamed §1.1.11 to AEL; removed duplicate §1.1.4 Tactical Domain line; .gitignore Tactical Domain section replaced with profile reference; P01 §1.2.6 folder structure uses abstract placeholders; P06 §1.7.15 and P07 §1.8.7 hook paths abstracted; P09 §1.10.3 context file references abstracted; implementation profiles created in ai/implementation-profiles/ |
+| 6.6     | 2026-02-18 | Corrected path references doc/implementation-profiles/ → ai/implementation-profiles/ throughout; Added P01 §1.2.8 Implementation Profile Setup: profile selection, Claude profile (Claude Code install, CLAUDE.md, .claude/ structure), OLLama profile (OLLama install, model pull, Goose install, provider config, context file), AEL setup common to both profiles |
+| 6.7     | 2026-02-18 | Section renumbering corrections: P01 §1.2.8↔1.2.9 (Python documents) and §1.2.9↔1.2.8 (Implementation Profile Setup) to restore sequential order; P00 §1.1.18→17 (Templates), §1.1.19→18 (Skills Management), §1.1.20→19 (Context Optimization) to close gap at §1.1.17 |
+| 6.8     | 2026-02-18 | P01 §1.2.2 .gitignore: replaced profile-specific placeholder comment with explicit entries for both profiles (CLAUDE.local.md, .claude/settings.json, .goosehints.local, .goose/ralph/); removed redundant .gitignore instruction from P01 §1.2.8 |
+| 6.9     | 2026-02-18 | P01 §1.2.2 .gitignore: extended Tactical Domain section with .claude/commands/ and .goose/recipes/ to cover all known non-shared subdirectories for both profiles |
+| 7.0     | 2026-02-18 | Added `bin/` directory to P01 §1.2.6 project folder structure; added Integration Scripts directive to P00 §1.1.11 AEL: project-scoped scripts reside in `<project>/bin/`, global installation not required |
 
 ---
 [Return to Table of Contents](<#table of contents>)
