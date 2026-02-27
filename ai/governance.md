@@ -316,6 +316,11 @@ test.txt
   - §1.2.3 README
     - Create initial skeleton 'README.md' document in each folder
   - §1.2.4 Copy folder ai/ to <project name\>/ai
+    - Copy Goose recipes: copy `ai/goose/recipes/` from framework to `<project name>/ai/goose/recipes/`
+    - Configure recipe path: in `<project name>/ai/goose/recipes/ralph-loop.sh`, replace the default recipe directory fallback:
+      - Find: `RECIPE_DIR="${RALPH_RECIPE_DIR:-$HOME/.config/goose/recipes}"`
+      - Replace: `RECIPE_DIR="${RALPH_RECIPE_DIR:-/absolute/path/to/<project name>/ai/goose/recipes}"`
+      - Substitute actual absolute project path for `/absolute/path/to/<project name>`
   - §1.2.5 Traceability Matrix
      - Create skeleton trace-traceability-matrix-master.md in workspace/trace/
   - §1.2.6 Project folder structure
@@ -400,8 +405,9 @@ pip list
       - Reference: [profile-ollama.md](ai/implementation-profiles/profile-ollama.md)
     - **AEL setup (both profiles)**:
       - Install Goose if not already installed
-      - Install Ralph Loop recipe: `~/.config/goose/recipes/ralph-loop.sh`
-      - Reference: §1.1.11
+      - Recipes are project-scoped: copied and configured during §1.2.4
+      - Recipe location: `<project name>/ai/goose/recipes/`
+      - Reference: §1.1.11, §1.2.4
 
   - §1.2.9 Python documents
     - Create pyproject.toml in project root:
@@ -1116,6 +1122,7 @@ flowchart TD
 | 6.8     | 2026-02-18 | P01 §1.2.2 .gitignore: replaced profile-specific placeholder comment with explicit entries for both profiles (CLAUDE.local.md, .claude/settings.json, .goosehints.local, .goose/ralph/); removed redundant .gitignore instruction from P01 §1.2.8 |
 | 6.9     | 2026-02-18 | P01 §1.2.2 .gitignore: extended Tactical Domain section with .claude/commands/ and .goose/recipes/ to cover all known non-shared subdirectories for both profiles |
 | 7.0     | 2026-02-18 | Added `bin/` directory to P01 §1.2.6 project folder structure; added Integration Scripts directive to P00 §1.1.11 AEL: project-scoped scripts reside in `<project>/bin/`, global installation not required |
+| 7.1     | 2026-02-25 | Added Goose recipe integration to P01 §1.2.4: copy `ai/goose/recipes/` from framework to project, configure `ralph-loop.sh` with project-absolute recipe path; updated P01 §1.2.8 AEL setup to reference project-scoped recipes, removing `~/.config/goose/recipes/` install instruction |
 
 ---
 [Return to Table of Contents](<#table of contents>)
