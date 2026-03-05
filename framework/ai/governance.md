@@ -18,13 +18,13 @@
   - [P10: Requirements](<#1.11 p10 requirements>)
   
 [Templates](<#2.0 templates>)
-  - [T01: Design](templates/T01-design.md)
-  - [T02: Change](templates/T02-change.md)
-  - [T03: Issue](templates/T03-issue.md)
-  - [T04: Prompt](templates/T04-prompt.md)
-  - [T05: Test](templates/T05-test.md)
-  - [T06: Result](templates/T06-result.md)
-  - [T07: Requirements](templates/T07-requirements.md)
+  - [T01: Design](T01-design.md)
+  - [T02: Change](T02-change.md)
+  - [T03: Issue](T03-issue.md)
+  - [T04: Prompt](T04-prompt.md)
+  - [T05: Test](T05-test.md)
+  - [T06: Result](T06-result.md)
+  - [T07: Requirements](T07-requirements.md)
   
 [Workflow](<#2.0 workflow>)
 
@@ -229,7 +229,7 @@
     - Lifecycle hooks: PreToolUse (schema validation), PostToolUse (compliance verification), Stop (cleanup)
     - Skills repository: Project-specific skills checked into git for team sharing
     - Personal skills: ~/<skills_dir>/ for individual workflow preferences
-    - Implementation: See implementation profile in ai/implementation-profiles/
+    - Implementation: See implementation profile in ai/profiles/
     - Common skills examples:
       - governance/validate-design.md: Schema validation before T04 prompt creation
       - testing/generate-pytest.md: Automated pytest generation from T05 documentation
@@ -250,7 +250,7 @@
     - Token efficiency: Externalize stable context from T04 prompts
     - Team coordination: Review context file changes during git commits
     - Auto-generation: Strategic Domain creates initial context file during project initialization or when absent
-    - Implementation: Context file name and update mechanism defined in implementation profile (ai/implementation-profiles/)
+    - Implementation: Context file name and update mechanism defined in implementation profile (ai/profiles/)
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -315,8 +315,9 @@ test.txt
 
   - §1.2.3 README
     - Create initial skeleton 'README.md' document in each folder
-  - §1.2.4 Copy folder ai/ to <project name\>/ai
-    - Copy Goose recipes: copy `ai/goose/recipes/` from framework to `<project name>/ai/goose/recipes/`
+  - §1.2.4 Initialize project from skel/
+    - Human: Copy `skel/` from the framework repository to the desired parent directory
+    - Human: Rename the copied directory to `<project name>`
     - Configure recipe path: in `<project name>/ai/goose/recipes/ralph-loop.sh`, replace the default recipe directory fallback:
       - Find: `RECIPE_DIR="${RALPH_RECIPE_DIR:-$HOME/.config/goose/recipes}"`
       - Replace: `RECIPE_DIR="${RALPH_RECIPE_DIR:-/absolute/path/to/<project name>/ai/goose/recipes}"`
@@ -388,21 +389,21 @@ pip install -e .[dev]
 pip list
 ```
   - §1.2.8 Implementation Profile Setup (Human executes)
-    - Human: Select implementation profile from ai/implementation-profiles/
+    - Human: Select implementation profile from ai/profiles/
     - Human: Create tactical context file at project root per selected profile
     - **Claude profile** (Tactical Domain = Claude Code):
       - Install Claude Code: `npm install -g @anthropic-ai/claude-code`
       - Ensure Anthropic API key is configured
       - Create `CLAUDE.md` at project root with project context
       - Create `.claude/` directory structure per §1.2.6
-      - Reference: [profile-claude.md](ai/implementation-profiles/profile-claude.md)
+      - Reference: [claude.md](claude.md)
     - **OLLama profile** (Tactical Domain = OLLama via Goose):
       - Install OLLama: per https://ollama.com
       - Pull selected model: `ollama pull <model-name>`
       - Install Goose: per https://block.github.io/goose/
       - Configure provider in `~/.config/goose/config.yaml`
       - Create `.goosehints` or `AGENTS.md` at project root with project context
-      - Reference: [profile-ollama.md](ai/implementation-profiles/profile-ollama.md)
+      - Reference: [ollama.md](ollama.md)
     - **AEL setup (both profiles)**:
       - Install Goose if not already installed
       - Recipes are project-scoped: copied and configured during §1.2.4
@@ -902,7 +903,7 @@ pip install dist/*.whl
     - Strategic Domain: Verifies tactical context file exists at project root before providing command
     - Strategic Domain: If context file absent, generates initial context file with project context
     - Strategic Domain: Generated context file requires human approval before proceeding
-    - Context file name: Defined in implementation profile (ai/implementation-profiles/)
+    - Context file name: Defined in implementation profile (ai/profiles/)
     - Strategic Domain: After human approval of T04 prompt, provides ready-to-execute command in conversation
     - Command format includes:
       - Governance document location for context
@@ -1123,6 +1124,8 @@ flowchart TD
 | 6.9     | 2026-02-18 | P01 §1.2.2 .gitignore: extended Tactical Domain section with .claude/commands/ and .goose/recipes/ to cover all known non-shared subdirectories for both profiles |
 | 7.0     | 2026-02-18 | Added `bin/` directory to P01 §1.2.6 project folder structure; added Integration Scripts directive to P00 §1.1.11 AEL: project-scoped scripts reside in `<project>/bin/`, global installation not required |
 | 7.1     | 2026-02-25 | Added Goose recipe integration to P01 §1.2.4: copy `ai/goose/recipes/` from framework to project, configure `ralph-loop.sh` with project-absolute recipe path; updated P01 §1.2.8 AEL setup to reference project-scoped recipes, removing `~/.config/goose/recipes/` install instruction |
+| 7.2     | 2026-03-04 | Restructured repository: meta/ → framework/, src/ → skel/; Revised P01 §1.2.4: replaced manual ai/ copy with copy-from-skel/ workflow; skel/ is the deployable project skeleton maintained in the framework repository |
+| 7.3     | 2026-03-04 | Renamed ai/implementation-profiles/ → ai/profiles/; renamed profile-claude-desktop.md → claude-desktop.md, profile-claude.md → claude.md, profile-ollama.md → ollama.md; updated all references in P00 §1.1.18, §1.1.19, P01 §1.2.8, P09 §1.10.3 |
 
 ---
 [Return to Table of Contents](<#table of contents>)

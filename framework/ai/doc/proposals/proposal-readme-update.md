@@ -28,7 +28,7 @@ The README contains the following inaccuracies and omissions relative to governa
 
 - **Claude-specific language throughout**: References "Claude Desktop and Claude Code" as the only implementation. The framework is now model-agnostic with Claude and OLLama profiles.
 - **Domain terminology**: Uses "Domain 1 / Domain 2" nomenclature. Current terminology is "Strategic Domain / Tactical Domain".
-- **Missing implementation profiles**: No mention of `ai/implementation-profiles/`, profile selection, or OLLama support.
+- **Missing implementation profiles**: No mention of `ai/profiles/`, profile selection, or OLLama support.
 - **Getting Started is outdated**: Instructs copying `ai/governance.md` folder; references only Claude Desktop and MCP configuration; omits profile setup (P01 §1.2.8) and AEL/Goose.
 - **Missing AEL**: No mention of Autonomous Execution Loop, Goose, or Ralph Loop.
 - **Informal tone**: Language inconsistent with the neutral, factual tone adopted by the framework.
@@ -98,12 +98,12 @@ to concrete tooling.
 
 - MCP servers: Filesystem and mcp-grep configured in your Strategic Domain tool
 - Git and GitHub Desktop (or equivalent)
-- Tooling per selected implementation profile (see `ai/implementation-profiles/`)
+- Tooling per selected implementation profile (see `ai/profiles/`)
 
 ### Initialization
 
 1. Copy `ai/` to the root of your project repository
-2. Select an implementation profile from `ai/implementation-profiles/` and follow its
+2. Select an implementation profile from `ai/profiles/` and follow its
    setup instructions
 3. Ask your Strategic Domain model to read `ai/governance.md` and initialize the project
    per P01 (§1.2 Project Initialization)
@@ -113,8 +113,8 @@ to concrete tooling.
 
 | Profile | Tactical Domain | AEL |
 |---|---|---|
-| `profile-claude.md` | Claude Code | Goose / Ralph Loop |
-| `profile-ollama.md` | OLLama via Goose | Goose / Ralph Loop |
+| `claude.md` | Claude Code | Goose / Ralph Loop |
+| `ollama.md` | OLLama via Goose | Goose / Ralph Loop |
 
 ## Important Notice
 

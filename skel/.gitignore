@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+dist/
+build/
+*.egg-info/
+
+# Virtual environments
+venv/
+.venv/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# macOS
+.DS_Store
+**/.DS_Store
+.zsh_history
+
+# Logs
+*.log
+**/*.log
+
+# Obsidian
+.obsidian/
+*.canvas
+
+# AI framework
+deprecated/
+workspace/admin/
+workspace/ai/
+workspace/proposal/
+workspace/proposal/closed/
+
+# Tactical Domain
+CLAUDE.local.md
+.claude/settings.json
+.claude/commands/
+.goosehints.local
+.goose/ralph/
+.goose/recipes/
+
+# other
+10000
+test.txt
+**/tmp
+*.pdf
+
+# Ralph Loop ephemeral state
+**/ralph/
+
+# Model-specific configs (local only)
+.model-config.local.yaml
