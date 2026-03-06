@@ -1,10 +1,6 @@
-# Testing Guidance for Software Development
-## LLM Orchestration Framework
+Created: 2026 March 05
 
-**Document Type:** Technical Guidance  
-**Version:** 1.0  
-**Date:** January 08, 2026  
-**Classification:** Development Standards
+# Testing Guidance for Software Development
 
 ---
 
@@ -45,7 +41,7 @@ This guidance covers:
 - Test type selection and implementation
 - Validation strategies
 - Document coupling and traceability
-- Platform-specific considerations
+- Platform considerations
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -56,7 +52,7 @@ This guidance covers:
 ### Overview
 
 ```
-Code Generation → Test Documentation → Test Script Creation → 
+Code Generation → Test Documentation → Test Script Creation →
 Execution → Results → Issue Creation (if needed) → Closure
 ```
 
@@ -64,17 +60,17 @@ Execution → Results → Issue Creation (if needed) → Closure
 
 #### 1. Test Documentation Creation (P06.2)
 
-**Actor:** Claude Desktop
+**Actor:** Strategic Domain
 
 **Process:**
 1. Read template from `ai/templates/T05-test.md`
 2. Create test document from generated source code
-3. Save to `workspace/test/test-<uuid>-<name>.md`
+3. Save to `workspace/test/test-<uuid>-<n>.md`
 4. Couple to source prompt via UUID reference
 5. Match iteration numbers with source prompt
 
 **Inputs:**
-- Generated source code from Claude Code
+- Generated source code from Tactical Domain
 - Component design specifications
 - Requirements traceability
 
@@ -85,7 +81,7 @@ Execution → Results → Issue Creation (if needed) → Closure
 
 #### 2. Test Script Generation (P06.3)
 
-**Actor:** Claude Desktop
+**Actor:** Strategic Domain
 
 **Automatic:** Precedes test execution
 
@@ -150,7 +146,7 @@ pytest -v tests/
 
 #### 5. Result Documentation (P06.13)
 
-**Actor:** Claude Desktop
+**Actor:** Strategic Domain
 
 **Process:**
 1. Review test execution output
@@ -206,35 +202,31 @@ pytest -v tests/
 
 **Example Structure:**
 ```python
-# tests/protocol/test_modbus_client.py
+# tests/<component>/test_<module>.py
 
 import unittest
 from unittest.mock import Mock, patch
-from src.protocol.modbus_client import ModbusClient
+from src.<component>.<module> import <ClassName>
 
-class TestModbusClient(unittest.TestCase):
+class Test<ClassName>(unittest.TestCase):
     def setUp(self):
         """Create test fixtures with mocked dependencies."""
-        self.mock_connection = Mock()
-        self.client = ModbusClient(
-            host="192.168.1.100",
-            port=502,
-            unit_id=1
-        )
-    
-    def test_connect_success(self):
-        """Verify successful connection establishment."""
-        with patch('pymodbus.client.ModbusTcpClient') as mock:
-            mock.return_value.connect.return_value = True
-            result = self.client.connect()
+        self.mock_dep = Mock()
+        self.instance = <ClassName>(param="value")
+
+    def test_operation_success(self):
+        """Verify successful operation."""
+        with patch('src.<component>.<dependency>') as mock:
+            mock.return_value.method.return_value = True
+            result = self.instance.operate()
             self.assertTrue(result)
-    
-    def test_read_registers_timeout(self):
-        """Verify timeout handling during register read."""
-        with patch.object(self.client, 'read_input_registers') as mock:
+
+    def test_operation_timeout(self):
+        """Verify timeout handling."""
+        with patch.object(self.instance, 'method') as mock:
             mock.side_effect = TimeoutError()
             with self.assertRaises(TimeoutError):
-                self.client.read_registers(0x0000, 10)
+                self.instance.operate()
 ```
 
 ### Integration Tests
@@ -256,37 +248,29 @@ class TestModbusClient(unittest.TestCase):
 
 **Example Structure:**
 ```python
-# tests/integration/test_inverter_storage.py
+# tests/integration/test_<scenario>.py
 
 import pytest
-from src.inverter.solax_client import SolaxInverterClient
-from src.storage.timeseries_store import TimeSeriesStore
+from src.<domain>.<component_a> import <ClassA>
+from src.<domain>.<component_b> import <ClassB>
 
-class TestInverterStoragePipeline:
+class Test<Scenario>Pipeline:
     @pytest.fixture
-    def storage(self):
-        """Create actual storage instance."""
-        return TimeSeriesStore(connection_string="test_db")
-    
+    def component_b(self):
+        """Create actual component B instance."""
+        return <ClassB>(connection_string="test_db")
+
     @pytest.fixture
-    def client(self):
-        """Create inverter client with test configuration."""
-        return SolaxInverterClient(
-            host="192.168.1.100",
-            port=502
-        )
-    
-    def test_telemetry_persistence(self, client, storage):
-        """Verify telemetry flows from inverter to storage."""
-        # Read actual telemetry
-        metrics = client.get_all_metrics()
-        
-        # Persist to actual database
-        result = storage.write_measurement(metrics)
-        
-        # Verify retrieval
-        retrieved = storage.get_latest("test_inverter")
-        assert retrieved.pv_power_total == metrics.pv_power_total
+    def component_a(self):
+        """Create component A with test configuration."""
+        return <ClassA>(host="test_host", port=9999)
+
+    def test_data_flow(self, component_a, component_b):
+        """Verify data flows from A to B."""
+        data = component_a.get_data()
+        result = component_b.write(data)
+        retrieved = component_b.get_latest("test_key")
+        assert retrieved.value == data.value
 ```
 
 ### System Tests
@@ -308,33 +292,31 @@ class TestInverterStoragePipeline:
 
 **Example Scenario:**
 ```python
-# tests/system/test_monitoring_system.py
+# tests/system/test_<application>.py
 
 import pytest
 import subprocess
 import time
+import requests
 
-class TestMonitoringSystemDeployment:
+class Test<Application>Deployment:
     def test_full_deployment_cycle(self):
         """Verify complete system deployment and operation."""
-        # Start system services
-        subprocess.run(["systemctl", "start", "solax-monitor"])
+        # Start system services (platform-specific command)
+        subprocess.run(["<start_command>"])
         time.sleep(5)
-        
+
         # Verify service health
-        response = requests.get("http://localhost:8080/health")
+        response = requests.get("http://localhost:<port>/health")
         assert response.status_code == 200
-        
+
         # Verify data acquisition
         time.sleep(10)
-        telemetry = requests.get("http://localhost:8080/api/v1/telemetry")
-        assert telemetry.json()["pv_power_total"] > 0
-        
-        # Verify persistence
-        # Query database directly for stored measurements
-        
+        data = requests.get("http://localhost:<port>/api/v1/<resource>")
+        assert data.json()["<key>"] is not None
+
         # Cleanup
-        subprocess.run(["systemctl", "stop", "solax-monitor"])
+        subprocess.run(["<stop_command>"])
 ```
 
 ### Acceptance Tests
@@ -352,30 +334,28 @@ class TestMonitoringSystemDeployment:
 - Verify requirements satisfied
 - Obtain stakeholder acceptance
 - Validate user workflows
-- Confirm fitness for purpose
 
 **Example Structure:**
 ```python
-# tests/acceptance/test_monitoring_requirements.py
+# tests/acceptance/test_<domain>_requirements.py
 
-class TestMonitoringRequirements:
-    def test_req_da_001_polling_interval(self):
-        """REQ-DA-001: System polls at configurable intervals (min 1s)."""
-        # Configure 1-second interval
-        config = {"poll_interval": 1}
-        
-        # Start monitoring
-        # Record timestamps of telemetry updates
-        
+class Test<Domain>Requirements:
+    def test_req_001_configurable_interval(self):
+        """REQ-001: System operates at configurable intervals."""
+        # Configure interval
+        config = {"interval": 1}
+
+        # Execute operation
+        # Record timestamps
+
         # Verify interval compliance
         assert all(delta >= 1.0 for delta in intervals)
-    
+
     def test_req_nf_perf_001_latency(self):
         """REQ-NF-PERF-001: 99.9% requests within 1 second."""
-        # Execute 1000 requests
-        # Measure latency for each
-        
-        # Calculate 99.9th percentile
+        # Execute requests
+        # Measure latency
+
         p999 = calculate_percentile(latencies, 99.9)
         assert p999 <= 1.0
 ```
@@ -419,35 +399,33 @@ class TestMonitoringRequirements:
 
 **Example Structure:**
 ```python
-# tests/performance/test_polling_performance.py
+# tests/performance/test_<component>_performance.py
 
 import pytest
 import time
-from src.inverter.solax_client import SolaxInverterClient
+from src.<domain>.<module> import <ClassName>
 
-class TestPollingPerformance:
-    def test_nfr_perf_003_poll_rate(self):
-        """NFR-PERF-003: Support 1-second polling intervals."""
-        client = SolaxInverterClient(host="192.168.1.100")
-        
+class Test<ClassName>Performance:
+    def test_nfr_poll_rate(self):
+        """NFR-PERF-001: Support target operation rate."""
+        instance = <ClassName>(host="target_host")
+
         durations = []
         for _ in range(100):
             start = time.time()
-            client.get_all_metrics()
+            instance.operate()
             durations.append(time.time() - start)
-        
-        # Verify 95th percentile within 1 second
+
         p95 = sorted(durations)[95]
         assert p95 <= 1.0
-    
-    def test_nfr_perf_004_memory_footprint(self):
-        """NFR-PERF-004: Memory footprint <512MB."""
+
+    def test_nfr_memory_footprint(self):
+        """NFR-PERF-002: Memory footprint within budget."""
         import psutil
         import os
-        
+
         process = psutil.Process(os.getpid())
         memory_mb = process.memory_info().rss / 1024 / 1024
-        
         assert memory_mb < 512
 ```
 
@@ -461,23 +439,20 @@ class TestPollingPerformance:
 
 ```
 tests/
-├── protocol/                    # Unit tests for protocol layer
-│   ├── test_modbus_client.py
-│   └── test_register_decoder.py
-├── data/                        # Unit tests for data layer
-│   ├── test_validator.py
-│   └── test_metrics_calculator.py
-├── storage/                     # Unit tests for storage layer
-│   └── test_timeseries_store.py
+├── <component_a>/               # Unit tests for component A
+│   ├── test_<module>.py
+│   └── test_<module_b>.py
+├── <component_b>/               # Unit tests for component B
+│   └── test_<module>.py
 ├── integration/                 # Integration tests
-│   └── test_end_to_end_flow.py
+│   └── test_<scenario>.py
 ├── system/                      # System tests
-│   └── test_deployment.py
+│   └── test_<application>.py
 ├── acceptance/                  # Acceptance tests
-│   └── test_requirements.py
+│   └── test_<domain>_requirements.py
 ├── performance/                 # Performance tests
-│   └── test_nfr_validation.py
-└── test_validation_script.py   # Ephemeral validation (removed post-verification)
+│   └── test_<component>_performance.py
+└── test_validation_<uuid>.py    # Ephemeral validation (removed post-verification)
 ```
 
 ### Permanent vs. Ephemeral Tests
@@ -533,16 +508,12 @@ Progressive validation employs graduated testing during debug cycles:
 ```python
 # tests/test_validation_a1b2c3d4.py
 
-def test_battery_power_sign_correction():
-    """Validate issue a1b2c3d4: Battery power sign correction."""
-    client = SolaxInverterClient(host="test_host")
-    metrics = client.get_battery_metrics()
-    
-    # Positive current = charging
-    assert metrics.current > 0 implies metrics.power > 0
-    
-    # Negative current = discharging
-    assert metrics.current < 0 implies metrics.power < 0
+def test_<specific_fix>():
+    """Validate issue a1b2c3d4: <description>."""
+    instance = <ClassName>(param="test_value")
+    result = instance.operate()
+
+    assert result.value > 0
 ```
 
 **When to Use:**
@@ -561,11 +532,11 @@ def test_battery_power_sign_correction():
 
 **Example:**
 ```bash
-# Execute data layer tests (affected)
-pytest tests/data/
+# Execute affected component tests
+pytest tests/<component_a>/
 
-# Execute storage layer tests (dependent)
-pytest tests/storage/
+# Execute dependent component tests
+pytest tests/<component_b>/
 
 # Execute integration tests
 pytest tests/integration/
@@ -590,9 +561,6 @@ pytest tests/integration/
 ```bash
 # Execute complete test suite
 pytest tests/ --cov=src --cov-report=html
-
-# Review coverage report
-open htmlcov/index.html
 ```
 
 **When to Use:**
@@ -682,11 +650,11 @@ class TestFileOperations:
     def setUp(self):
         """Create temporary test environment."""
         self.test_dir = tempfile.mkdtemp()
-    
+
     def tearDown(self):
         """Clean up test environment."""
         shutil.rmtree(self.test_dir)
-    
+
     def test_file_creation(self):
         """Test operates in isolated directory."""
         test_file = os.path.join(self.test_dir, "test.txt")
@@ -701,21 +669,20 @@ class TestFileOperations:
 
 **Example:**
 ```python
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
-class TestInverterClient:
-    def test_read_registers_with_mock(self):
-        """Test register reading without actual Modbus connection."""
-        with patch('pymodbus.client.ModbusTcpClient') as mock_client:
-            # Configure mock behavior
-            mock_client.return_value.read_input_registers.return_value = Mock(
-                registers=[2301, 2299, 2305]  # Simulated values
+class TestComponent:
+    def test_operation_with_mock(self):
+        """Test operation without actual external dependency."""
+        with patch('src.<module>.<ExternalClass>') as mock_dep:
+            mock_dep.return_value.method.return_value = Mock(
+                data=[1, 2, 3]
             )
-            
-            client = ModbusClient(host="test_host")
-            result = client.read_registers(0x0000, 3)
-            
-            assert result == [2301, 2299, 2305]
+
+            instance = <ClassName>(host="test_host")
+            result = instance.operate()
+
+            assert result == [1, 2, 3]
 ```
 
 #### 3. Fixture Isolation
@@ -753,11 +720,11 @@ class TestConfiguration:
     def setUp(self):
         """Save original configuration."""
         self.original_config = Config.get_instance().copy()
-    
+
     def tearDown(self):
         """Restore original configuration."""
         Config.get_instance().restore(self.original_config)
-    
+
     def test_config_modification(self):
         """Test can modify config without affecting other tests."""
         Config.get_instance().set("key", "value")
@@ -790,7 +757,7 @@ pytest -n 4 tests/
 - Unit test execution
 
 **Target Deployment Platform:**
-- Raspberry Pi 4 / Industrial PC
+- Defined in project design documents
 - Actual system services
 - Integration/system testing
 - Performance validation
@@ -798,7 +765,7 @@ pytest -n 4 tests/
 ### Test Type Distribution
 
 | Test Type | Development Platform | Target Platform |
-|-----------|---------------------|-----------------|
+|---|---|---|
 | Unit | ✓ (Primary) | Optional |
 | Integration | ✓ (Mocked) | ✓ (Required) |
 | System | ✗ | ✓ (Exclusive) |
@@ -810,15 +777,17 @@ pytest -n 4 tests/
 
 **Development Platform:**
 - Comprehensive mocking of system dependencies
-- Simulated hardware interfaces
+- Simulated external interfaces
 - Fast test execution
 - Continuous integration friendly
 
 **Target Platform:**
-- Actual Modbus TCP connections
-- Real database instances
-- Authentic network latency
+- Actual external service connections
+- Real subsystem instances
+- Authentic network conditions
 - Production-equivalent configuration
+
+Specific platform details (OS, hardware, tooling) are defined in project design documents per P06 §1.7.17.
 
 ### Cross-Platform Testing Strategy
 
@@ -833,14 +802,12 @@ pytest -n 4 tests/
 **Limited Target Hardware:**
 - Prioritize unit tests with mocking
 - Schedule integration testing windows
-- Use virtual environments when possible
 - Document platform-specific constraints
 
 **Continuous Target Access:**
 - Integrate target platform into CI/CD
 - Execute integration tests automatically
 - Perform continuous performance monitoring
-- Maintain target platform health
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -859,7 +826,7 @@ pytest -n 4 tests/
 
 **Example:**
 ```yaml
-# test-12345678-modbus_client.md
+# test-12345678-<component>.md
 coupled_docs:
   prompt_ref: "abcd1234"  # UUID of source prompt
   iteration: 1
@@ -904,7 +871,7 @@ Document closure
 
 ### Coupling Verification
 
-Claude Desktop verifies:
+Strategic Domain verifies:
 - UUID references are valid
 - Iteration numbers synchronized
 - Bidirectional linkage exists
@@ -918,8 +885,8 @@ Claude Desktop verifies:
 
 ### Traceability Matrix Updates
 
-After test execution, Claude Desktop updates traceability matrix (P05) in:
-`workspace/trace/trace-0000-master_traceability-matrix.md`
+After test execution, Strategic Domain updates the traceability matrix (P05) in:
+`workspace/trace/trace-<name>-master.md`
 
 ### Required Linkages
 
@@ -936,30 +903,30 @@ After test execution, Claude Desktop updates traceability matrix (P05) in:
 #### 1. Functional Requirements
 
 | Req ID | Requirement | Design | Code | Test | Status |
-|--------|-------------|--------|------|------|--------|
-| REQ-DA-001 | Poll telemetry at 1s intervals | design-master | src/client.py | test-12345678 | ✓ |
+|---|---|---|---|---|---|
+| REQ-001 | \<requirement description\> | design-\<name\>-master | src/\<module\>.py | test-\<uuid\> | ✓ |
 
 #### 2. Non-Functional Requirements
 
 | Req ID | Requirement | Target | Design | Code | Test | Status |
-|--------|-------------|--------|--------|------|------|--------|
-| NFR-PERF-001 | 99.9% requests <1s | <1s | design-master | src/client.py | test-perf-001 | ✓ |
+|---|---|---|---|---|---|---|
+| NFR-PERF-001 | \<nfr description\> | \<target\> | design-\<name\>-master | src/\<module\>.py | test-\<uuid\> | ✓ |
 
 #### 3. Component Mapping
 
 | Component | Requirements | Design | Source | Test |
-|-----------|--------------|--------|--------|------|
-| ModbusClient | REQ-DA-001, REQ-DA-004 | design-component-protocol | src/protocol/client.py | test-12345678 |
+|---|---|---|---|---|
+| \<ComponentName\> | REQ-001, REQ-002 | design-component-\<name\> | src/\<module\>.py | test-\<uuid\> |
 
 #### 4. Test Coverage
 
 | Test File | Requirements Verified | Code Coverage |
-|-----------|----------------------|---------------|
-| test-12345678 | REQ-DA-001, REQ-DA-004 | 87% |
+|---|---|---|
+| test-\<uuid\> | REQ-001, REQ-002 | \<n\>% |
 
 ### Coverage Metrics
 
-Claude Desktop tracks:
+Strategic Domain tracks:
 - **Requirement Coverage:** Percentage of requirements with tests
 - **Code Coverage:** Percentage of code exercised by tests
 - **Branch Coverage:** Percentage of code branches tested
@@ -967,7 +934,7 @@ Claude Desktop tracks:
 
 ### Gap Identification
 
-Claude Desktop identifies:
+Strategic Domain identifies:
 - Requirements without test coverage
 - Code without test coverage
 - Tests without requirement linkage
@@ -1007,7 +974,7 @@ Claude Desktop identifies:
 
 1. **Interface Mocking:** Mock at interface boundaries
 2. **Behavior Verification:** Verify mock interactions when appropriate
-3. **Minimal Mocking:** Mock only what's necessary
+3. **Minimal Mocking:** Mock only what is necessary
 4. **Realistic Behavior:** Mocks behave like real components
 5. **Mock Cleanup:** Reset mocks between tests
 
@@ -1042,7 +1009,7 @@ Claude Desktop identifies:
 ## Glossary
 
 | Term | Definition |
-|------|------------|
+|---|---|
 | **Acceptance Test** | Validation test with stakeholder involvement verifying requirements satisfaction |
 | **Assertion** | Statement verifying expected test outcome |
 | **Code Coverage** | Metric measuring percentage of code exercised by tests |
@@ -1056,7 +1023,7 @@ Claude Desktop identifies:
 | **Progressive Validation** | Graduated testing strategy: targeted → integration → regression |
 | **Regression Test** | Permanent test preventing reintroduction of defects |
 | **System Test** | End-to-end test of complete application deployment |
-| **Target Platform** | Deployment hardware (e.g., Raspberry Pi 4) |
+| **Target Platform** | Deployment environment defined in project design documents |
 | **Traceability** | Bidirectional linking between requirements, design, code, tests |
 | **Unit Test** | Test verifying single component in isolation |
 | **Validation Script** | Temporary test verifying specific fix |
@@ -1068,9 +1035,10 @@ Claude Desktop identifies:
 ## Version History
 
 | Version | Date | Description |
-|---------|------|-------------|
+|---|---|---|
 | 1.0 | 2026-01-08 | Initial testing guidance document |
+| 1.1 | 2026-03-05 | Relocated from issues/ to examples/; replaced project-specific content with generic equivalents; replaced Claude Desktop/Claude Code actor labels with Strategic/Tactical Domain; genericised all code examples, directory structures, and traceability matrix entries; updated Platform Considerations to remove hardcoded platform references |
 
 ---
 
-**Copyright:** Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
+Copyright (c) 2025 William Watson. This work is licensed under the MIT License.

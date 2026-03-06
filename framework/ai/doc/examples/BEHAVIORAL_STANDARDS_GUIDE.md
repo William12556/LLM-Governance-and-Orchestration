@@ -35,15 +35,15 @@ This guide documents the implementation of machine-readable behavioral standards
 
 ## 2. File Locations
 
-### Framework Repository (Examples)
+### Framework Repository
 
 ```
 LLM-Governance-and-Orchestration/
-└── doc/
-    └── examples/
-        ├── behavioral-standards.yaml
-        ├── behavioral-standards.schema.json
-        └── scripts/
+└── framework/
+    └── ai/
+        └── knowledge/
+            ├── behavioral-standards.yaml
+            ├── behavioral-standards.schema.json
             └── validate-behavioral-standards.py
 ```
 
@@ -53,10 +53,10 @@ LLM-Governance-and-Orchestration/
 <project-name>/
 ├── workspace/
 │   └── knowledge/
-│       ├── behavioral-standards.yaml      # Copy from examples
+│       ├── behavioral-standards.yaml
 │       └── behavioral-standards.schema.json
 └── scripts/
-    └── validate-behavioral-standards.py   # Copy from examples
+    └── validate-behavioral-standards.py
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -72,9 +72,9 @@ LLM-Governance-and-Orchestration/
 cd /Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration
 
 # Copy to target project
-cp doc/examples/behavioral-standards.yaml <project-path>/workspace/knowledge/
-cp doc/examples/behavioral-standards.schema.json <project-path>/workspace/knowledge/
-cp doc/examples/scripts/validate-behavioral-standards.py <project-path>/scripts/
+cp framework/ai/knowledge/behavioral-standards.yaml <project-path>/workspace/knowledge/
+cp framework/ai/knowledge/behavioral-standards.schema.json <project-path>/workspace/knowledge/
+cp framework/ai/knowledge/validate-behavioral-standards.py <project-path>/scripts/
 
 # Make script executable
 chmod +x <project-path>/scripts/validate-behavioral-standards.py
@@ -261,8 +261,9 @@ loop_behavior:
 ## 7. Version History
 
 | Version | Date | Changes |
-|---------|------|---------|
+|---|---|---|
 | 1.0.0 | 2025-02-13 | Initial implementation guide |
+| 1.1.0 | 2026-03-05 | Relocated behavioral-standards.yaml, .schema.json, validate-behavioral-standards.py from doc/examples/ to framework/ai/knowledge/; updated file location diagram and installation paths accordingly |
 
 [Return to Table of Contents](<#table of contents>)
 

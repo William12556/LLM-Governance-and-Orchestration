@@ -6,7 +6,7 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 
 ## Overview
 
-`ai/governance.md` defines a dual-domain architecture separating strategic coordination (Strategic Domain) from tactical implementation (Tactical Domain). Communication between domains uses MCP filesystem-based message passing. The framework is independent of any specific AI model or toolchain; implementation profiles map abstract framework concepts to concrete tooling. The Autonomous Execution Loop (AEL) implements Geoffrey Huntley's Ralph Wiggum techniques via Goose, enabling autonomous iterative code generation within governed boundaries.
+`ai/governance.md` defines a dual-domain architecture separating strategic coordination (Strategic Domain) from tactical implementation (Tactical Domain). Communication between domains uses MCP filesystem-based message passing. The framework is independent of any specific AI model or toolchain; implementation profiles map abstract framework concepts to concrete tooling.
 
 ## Key Characteristics
 
@@ -14,7 +14,7 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 - **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and OLLama via Goose
 - **Human approval gates**: Explicit human authorization required before requirements baseline, design tier transitions, code generation, and baseline modifications
 - **Three-tier design decomposition**: Master (system) → Domain (functional) → Component (implementation) with validation gates between tiers
-- **Autonomous Execution Loop (AEL)**: Optional worker/reviewer cycle via Goose/Ralph Loop for iterative code generation within governed boundaries. The Ralph Loop implementation is based on Geoffrey Huntley's Ralph Wiggum techniques.
+- **Autonomous Execution Loop (AEL)**: Optional worker/reviewer cycle via Goose/Ralph Loop for iterative code generation within governed boundaries. Based on Geoffrey Huntley's Ralph Wiggum techniques.
 - **UUID-based document coupling**: 8-character hex identifiers with iteration synchronization through debug cycles
 - **Document lifecycle management**: Active/closed states with immutable archival and closure criteria across all document classes
 - **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages
@@ -22,10 +22,61 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 
 ## Repository Structure
 
-| Directory | Purpose |
+| Directory                              | Purpose                                                                       |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| `framework/`                           | Governance framework development (canonical source)                           |
+| `framework/ai/governance.md`           | Master governance document                                                    |
+| `framework/ai/profiles/`               | Implementation profiles (claude-desktop, claude, ollama)                      |
+| `framework/ai/templates/`              | Document templates T01–T07                                                    |
+| `framework/ai/knowledge/`              | AI-consumed operational reference documents                                   |
+| `framework/ai/goose/recipes/`          | Goose AEL recipes (ralph-loop, ralph-work, ralph-review)                      |
+| `framework/ai/doc/examples/`           | Human-facing reference material for framework adopters                        |
+| `skel/`                                | Deployable project skeleton — copy to initialize a new project                |
+| `skel/ai/`                             | Governance, templates, profiles, knowledge, and recipes for deployed projects |
+| `skel/workspace/`                      | Pre-scaffolded workspace directories (design, prompt, test, trace, etc.)      |
+| `skel/src/` `skel/tests/` `skel/docs/` | Standard project directories                                                  |
+
+## Requirements
+
+### Common
+
+| Item | Requirement |
 |---|---|
-| `framework/` | Governance framework development — protocols, templates, implementation profiles, recipes |
-| `skel/` | Deployable project skeleton — copy this directory to initialize a new project |
+| Operating system | macOS 14+ (Sonoma) recommended; Linux supported for OLLama/LM Studio backends |
+| Python | 3.11+ |
+| Git | Any recent version |
+| Strategic Domain | Claude Desktop (or equivalent frontier LLM with MCP support) |
+| MCP servers | `Filesystem` and `mcp-grep` configured in the Strategic Domain tool |
+| Goose | Required for Autonomous Execution Loop (AEL) — see [Goose Setup Guide](docs/setup-goose.md) |
+
+### Apple Silicon + MLX
+
+Required for the MLX inference backend (Tactical Domain on Apple Silicon).
+
+| Item | Requirement |
+|---|---|
+| Chip | Apple M-series (M1 or later) |
+| Unified memory | 24 GB minimum (Q8); 48 GB+ for BF16 |
+| `mlx_lm` | 0.21+ (`pip install mlx_lm`) |
+| `omlx` | Optional — replaces `mlx_lm.server`; provides TTL-based model unload for memory reclamation between sessions |
+| Model | Devstral Small 2507 — Q8 or BF16 |
+
+Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
+
+### OLLama / LM Studio (alternative platforms)
+
+For non-Apple Silicon hardware or where MLX is unavailable.
+
+| Item | Requirement |
+|---|---|
+| RAM or GPU VRAM | 24 GB minimum (Q8); 48 GB+ for BF16 |
+| OLLama | https://ollama.com — or — |
+| LM Studio | https://lmstudio.ai |
+| Model | Devstral Small 2507 — Q8 or BF16 |
+
+Full setup instructions: [OLLama + LM Studio Setup Guide](docs/setup-ollama-lmstudio.md)
+
+---
 
 ## Getting Started
 
@@ -66,6 +117,9 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 1.0 | 2026-03-04 | Initial README; repository restructured to framework/ and skel/ |
 | 1.1 | 2026-03-04 | Added Ralph Loop / Geoffrey Huntley attribution to Overview, AEL description, and References section |
 | 1.2 | 2026-03-04 | Renamed ai/implementation-profiles/ → ai/profiles/; renamed profile-*.md files to claude-desktop.md, claude.md, ollama.md |
+| 1.3 | 2026-03-05 | Expanded Repository Structure to reflect actual directory contents; removed duplicate Ralph Loop attribution from Overview; added framework/ai/doc/examples/ entry |
+| 1.4 | 2026-03-05 | Added Requirements section; created docs/ directory with setup guides for Goose, Apple Silicon + MLX, and OLLama + LM Studio |
+| 1.5 | 2026-03-05 | Added omlx as optional Apple Silicon + MLX requirement for TTL-based memory management |
 
 ---
 
