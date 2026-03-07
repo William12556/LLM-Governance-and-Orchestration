@@ -68,20 +68,33 @@ Run `goose configure` to set up providers interactively, or edit `config.yaml` d
 
 ### MLX Backend
 
-**Prerequisite:** `mlx_lm` server running on `localhost:8080`. See [Apple Silicon + MLX Setup](setup-apple-silicon-mlx.md).
+**Prerequisite:** oMLX running on `localhost:8000`. See [Apple Silicon + MLX Setup](setup-apple-silicon-mlx.md).
 
-In Goose, configure a custom OpenAI-compatible provider named `MLX OpenAI` pointing to `http://localhost:8080/v1`. No API key is required.
+In Goose, configure a custom OpenAI-compatible provider named `MLX OpenAI` pointing to `http://localhost:8000/v1`. oMLX requires authentication for all API requests.
 
 Example `config.yaml` fragment:
 
 ```yaml
 GOOSE_PROVIDER: mlx_openai
 GOOSE_MODEL: mlx-community/Devstral-Samll-2507-8bit
+OPENAI_API_KEY: local
 ```
 
 > The provider name `mlx_openai` and its `base_url` must be registered via `goose configure` or the profiles config. Refer to Goose documentation for custom OpenAI-compatible provider registration syntax.
 
-Invoke `goose configure` and select `Add provider` → `OpenAI-compatible` → enter `http://localhost:8080/v1` as the base URL and `none` as the API key.
+Invoke `goose configure` and select `Add provider` → `OpenAI-compatible` → enter `http://localhost:8000/v1` as the base URL and `local` as the API key (matching the value in `~/.omlx/settings.json`).
+
+The custom provider JSON at `~/.config/goose/custom_providers/custom_mlx_openai.json` must include the `Authorization` header and `requires_auth: true`:
+
+```json
+{
+  "api_key_env": "OPENAI_API_KEY",
+  "headers": {"Authorization": "Bearer local"},
+  "requires_auth": true
+}
+```
+
+Replace `local` with your configured API key if different.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -177,6 +190,8 @@ A response of `OK` confirms that the provider is reachable and the model is resp
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-03-05 | Initial document |
+| 1.1 | 2026-03-06 | Updated MLX backend prerequisite from mlx_lm.server to oMLX; updated port references to 8000 |
+| 1.2 | 2026-03-06 | Corrected API key scope: oMLX requires authentication for all requests; updated MLX backend configuration; documented custom provider JSON auth fields |
 
 ---
 

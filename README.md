@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository provides a model-agnostic governance framework for AI-assisted software development. The framework coordinates requirements capture, design, and code generation through structured protocols and human-in-the-loop approval gates.
+This repository provides a model-agnostic governance framework for AI-assisted software development. The framework coordinates requirements capture, design, and code generation through structured protocols and human-in-the-loop approval gates. 
 
 ## Overview
 
@@ -57,8 +57,8 @@ Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 |---|---|
 | Chip | Apple M-series (M1 or later) |
 | Unified memory | 24 GB minimum (Q8); 48 GB+ for BF16 |
-| `mlx_lm` | 0.21+ (`pip install mlx_lm`) |
-| `omlx` | Optional — replaces `mlx_lm.server`; provides TTL-based model unload for memory reclamation between sessions |
+| `mlx_lm` | 0.21+ — required dependency of oMLX (`pip install mlx_lm`) |
+| `omlx` | Required inference server (`pip install omlx`) |
 | Model | Devstral Small 2507 — Q8 or BF16 |
 
 Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
@@ -95,10 +95,11 @@ Full setup instructions: [OLLama + LM Studio Setup Guide](docs/setup-ollama-lmst
 
 ### Implementation Profiles
 
-| Profile | Tactical Domain | AEL |
-|---|---|---|
-| `claude.md` | Claude Code | Goose / Ralph Loop |
-| `ollama.md` | OLLama via Goose | Goose / Ralph Loop |
+| Profile     | Tactical Domain        | AEL                |
+| ----------- | ---------------------- | ------------------ |
+| `claude.md` | Claude Code + Devstral | Goose / Ralph Loop |
+| `ollama.md` | OLLama + Devstral      | Goose / Ralph Loop |
+| `mlx.md`    | MLX + Devstral         | Goose / Ralph Loop |
 
 ## Important Notice
 
@@ -120,6 +121,8 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 1.3 | 2026-03-05 | Expanded Repository Structure to reflect actual directory contents; removed duplicate Ralph Loop attribution from Overview; added framework/ai/doc/examples/ entry |
 | 1.4 | 2026-03-05 | Added Requirements section; created docs/ directory with setup guides for Goose, Apple Silicon + MLX, and OLLama + LM Studio |
 | 1.5 | 2026-03-05 | Added omlx as optional Apple Silicon + MLX requirement for TTL-based memory management |
+| 1.6 | 2026-03-06 | Added mlx.md to Implementation Profiles table |
+| 1.7 | 2026-03-06 | Promoted oMLX to required inference server; updated mlx_lm to dependency role |
 
 ---
 
