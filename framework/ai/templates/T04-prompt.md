@@ -131,6 +131,24 @@ deliverable:
 success_criteria:
   - ""
 
+element_registry:
+  source: ""  # Path to name registry master (e.g., "workspace/design/design-<project>-name_registry-master.md")
+  entries:    # Relevant entries for this code generation task (copied from registry)
+    modules:
+      - name: ""
+        path: ""
+    classes:
+      - name: ""
+        module: ""
+    functions:
+      - name: ""
+        module: ""
+        signature: ""
+    constants:
+      - name: ""
+        module: ""
+        type: ""
+
 notes: ""
 
 metadata:
@@ -482,6 +500,56 @@ properties:
     items:
       type: string
   
+  element_registry:
+    type: object
+    properties:
+      source:
+        type: string
+        description: "Path to name registry master document"
+      entries:
+        type: object
+        properties:
+          modules:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                path:
+                  type: string
+          classes:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                module:
+                  type: string
+          functions:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                module:
+                  type: string
+                signature:
+                  type: string
+          constants:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                module:
+                  type: string
+                type:
+                  type: string
+  
   notes:
     type: string
   
@@ -511,6 +579,7 @@ properties:
 | 1.1     | 2025-12-12 | UUID pattern migration: Replaced NNNN sequence numbering with 8-character UUID format (^[0-9a-f]{8}$) in all fields |
 | 1.2     | 2025-02-13 | Added behavioral_standards section for autonomous loop execution behavioral constraints |
 | 1.3     | 2025-02-13 | Added tactical_execution section for Ralph Loop integration: mode selection, worker/reviewer model specification, iteration limits, boundary conditions |
+| 1.4     | 2026-03-12 | Added element_registry field with source reference and scoped entries for canonical naming contract |
 
 ---
 

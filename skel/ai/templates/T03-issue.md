@@ -91,13 +91,13 @@ verification:
   closure_notes: ""
 
 prevention:
-  preventive_measures: ""
-  process_improvements: ""
+  preventive_measures: ""  # How to prevent similar issues in future
+  process_improvements: ""  # Process changes to prevent recurrence
 
 verification_enhanced:
   verification_steps:
-    - ""
-  verification_results: ""
+    - ""  # Step-by-step verification procedures
+  verification_results: ""  # Detailed results of verification testing
 
 traceability:
   design_refs:
@@ -108,6 +108,7 @@ traceability:
     - ""
 
 notes: ""
+
 
 loop_context:
   was_loop_execution: false
@@ -145,23 +146,52 @@ required:
 properties:
   issue_info:
     type: object
-    required: [id, title, date, status, severity, type, iteration]
+    required:
+      - id
+      - title
+      - date
+      - status
+      - severity
+      - type
+      - iteration
     properties:
       id:
         type: string
         pattern: "^issue-[0-9a-f]{8}$"
+      title:
+        type: string
+      date:
+        type: string
+      reporter:
+        type: string
       status:
         type: string
-        enum: [open, investigating, resolved, verified, closed, deferred]
+        enum:
+          - open
+          - investigating
+          - resolved
+          - verified
+          - closed
+          - deferred
       severity:
         type: string
-        enum: [critical, high, medium, low]
+        enum:
+          - critical
+          - high
+          - medium
+          - low
       type:
         type: string
-        enum: [bug, defect, error, performance, security]
+        enum:
+          - bug
+          - defect
+          - error
+          - performance
+          - security
       iteration:
         type: integer
         minimum: 1
+        description: "Increments with each debug cycle"
       coupled_docs:
         type: object
         properties:
@@ -171,6 +201,171 @@ properties:
           change_iteration:
             type: integer
             minimum: 1
+  
+  source:
+    type: object
+    required:
+      - origin
+      - description
+    properties:
+      origin:
+        type: string
+        enum:
+          - test_result
+          - user_report
+          - code_review
+          - monitoring
+      test_ref:
+        type: string
+      description:
+        type: string
+  
+  affected_scope:
+    type: object
+    required:
+      - components
+    properties:
+      components:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            file_path:
+              type: string
+      designs:
+        type: array
+        items:
+          type: object
+          properties:
+            design_ref:
+              type: string
+      version:
+        type: string
+  
+  reproduction:
+    type: object
+    properties:
+      steps:
+        type: array
+        items:
+          type: string
+      frequency:
+        type: string
+        enum:
+          - always
+          - intermittent
+          - once
+      preconditions:
+        type: string
+      test_data:
+        type: string
+      error_output:
+        type: string
+  
+  behavior:
+    type: object
+    required:
+      - expected
+      - actual
+    properties:
+      expected:
+        type: string
+      actual:
+        type: string
+      impact:
+        type: string
+      workaround:
+        type: string
+  
+  environment:
+    type: object
+    properties:
+      python_version:
+        type: string
+      os:
+        type: string
+      dependencies:
+        type: array
+        items:
+          type: object
+          properties:
+            library:
+              type: string
+            version:
+              type: string
+      domain:
+        type: string
+        enum:
+          - domain_1
+          - domain_2
+  
+  analysis:
+    type: object
+    properties:
+      root_cause:
+        type: string
+      technical_notes:
+        type: string
+      related_issues:
+        type: array
+        items:
+          type: object
+          properties:
+            issue_ref:
+              type: string
+            relationship:
+              type: string
+  
+  resolution:
+    type: object
+    properties:
+      assigned_to:
+        type: string
+      target_date:
+        type: string
+      approach:
+        type: string
+      change_ref:
+        type: string
+      resolved_date:
+        type: string
+      resolved_by:
+        type: string
+      fix_description:
+        type: string
+  
+  verification:
+    type: object
+    properties:
+      verified_date:
+        type: string
+      verified_by:
+        type: string
+      test_results:
+        type: string
+      closure_notes:
+        type: string
+  
+  traceability:
+    type: object
+    properties:
+      design_refs:
+        type: array
+        items:
+          type: string
+      change_refs:
+        type: array
+        items:
+          type: string
+      test_refs:
+        type: array
+        items:
+          type: string
+  
+  notes:
+    type: string
 
   loop_context:
     type: object
@@ -181,17 +376,43 @@ properties:
         type: integer
       failure_mode:
         type: string
-        enum: [boundary_exceeded, divergence, critical_error]
+        enum:
+          - boundary_exceeded
+          - divergence
+          - critical_error
       last_review_feedback:
         type: string
-
+  
+  version_history:
+    type: array
+    items:
+      type: object
+      properties:
+        version:
+          type: string
+        date:
+          type: string
+        author:
+          type: string
+        changes:
+          type: array
+          items:
+            type: string
+  
   metadata:
     type: object
-    required: [template_version, schema_type]
+    required:
+      - template_version
+      - schema_type
     properties:
+      copyright:
+        type: string
+      template_version:
+        type: string
       schema_type:
         type: string
-        enum: [t03_issue]
+        enum:
+          - t03_issue
 ```
 
 ---
@@ -200,8 +421,8 @@ properties:
 
 | Version | Date       | Description                          |
 | ------- | ---------- | ------------------------------------ |
-| 1.0     | 2025-12-12 | Split from governance.md into separate file |
-| 1.1     | 2025-12-12 | UUID pattern migration |
+| 1.0     | 2025-12-12 | Split from governance.md into separate file for maintainability |
+| 1.1     | 2025-12-12 | UUID pattern migration: Replaced NNNN sequence numbering with 8-character UUID format (^[0-9a-f]{8}$) in all fields |
 
 ---
 

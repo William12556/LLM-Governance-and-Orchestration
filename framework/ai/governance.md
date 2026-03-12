@@ -108,6 +108,7 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Strategic Domain: Design documents follow tier naming convention: master_, domain_, component_ prefixes
     - Strategic Domain: Insures related documents are Obsidian cross linked
     - Document classes that require a master document are: design, audit, trace and test
+    - Design class includes a dedicated name registry master: design-\<project\>-name_registry-master.md
     - All document classes (issue, change, prompt, test, result) contain internal iteration field starting at 1
     - Iteration increments when document enters new cycle after failed verification
     - Git commit required after iteration field modification
@@ -454,6 +455,7 @@ exclude_lines = [
     - Strategic Domain: Defines system architecture, technology stack, cross-cutting concerns
     - Strategic Domain: Includes system-level Mermaid diagrams (architecture, component interaction, state machine, data flow)
     - Strategic Domain: Clearly designates document as master design within document content
+    - Strategic Domain: Initialises design-\<project\>-name_registry-master.md; populates package name, top-level module names, and Mermaid class diagram skeleton
   - §1.3.2 Tier 1 Review
     - Strategic Domain: Presents master design document for human approval
     - Strategic Domain: Documents review findings, required changes, approval decision
@@ -464,6 +466,7 @@ exclude_lines = [
     - Strategic Domain: Creates design-\<uuid\>-domain_\<name\>.md for each domain
     - Strategic Domain: Each domain defines: boundaries, interfaces, domain patterns, responsibilities
     - Strategic Domain: Includes domain-level Mermaid diagrams as needed
+    - Strategic Domain: Extends name registry with domain-level module names and key class names per domain
   - §1.3.4 Tier 2 Review
     - Strategic Domain: Presents domain design documents for human approval
     - Strategic Domain: Documents review findings, required changes, approval decision
@@ -474,6 +477,7 @@ exclude_lines = [
     - Strategic Domain: Creates design-\<uuid\>-component_\<domain\>_\<name\>.md for each component
     - Strategic Domain: Each component defines: implementation details, interfaces, processing logic, error handling
     - Strategic Domain: Includes component-level Mermaid diagrams as needed
+    - Strategic Domain: Finalises name registry with all functions, constants, and complete signatures; registry is canonical before T04 creation
   - §1.3.6 Tier 3 Review
     - Strategic Domain: Presents component design documents for human approval
     - Strategic Domain: Documents review findings, required changes, approval decision
@@ -482,6 +486,7 @@ exclude_lines = [
     - Tier 1: design-\<project\>-master.md (single master document)
     - Tier 2: design-\<uuid\>-domain_\<name\>.md (one per domain)
     - Tier 3: design-\<uuid\>-component_\<domain\>_\<name\>.md
+    - Registry: design-\<project\>-name_registry-master.md (singleton, maintained across all tiers)
   - §1.3.8 Exploration Phase
     - Tactical Domain: Supports exploratory code generation without formal design hierarchy
     - Use case: Proof-of-concept development, technology validation, prototype iteration
@@ -524,6 +529,23 @@ exclude_lines = [
     - Strategic Domain: Each diagram includes: purpose statement, legend, cross-references
     - Strategic Domain: Updates diagrams when design modifications require visual clarification
     - Strategic Domain: Maintains diagram consistency with textual design specifications
+  - §1.3.16 Name Registry
+    - Strategic Domain: Creates design-\<project\>-name_registry-master.md at Tier 1 design phase
+    - Strategic Domain: Stores registry in workspace/design/
+    - Registry document contains two sections:
+      - Mermaid class diagram: visual representation of all program elements and relationships (human comprehension)
+      - YAML element table: machine-readable canonical name list (T04 prompt inclusion)
+    - YAML element table structure:
+      - naming_conventions: package naming rules, module casing, class casing, function casing, constant casing
+      - packages: name, path
+      - modules: name, import_path, package
+      - classes: name, module, base_classes
+      - functions: name, module, signature
+      - constants: name, module, type
+    - Strategic Domain: Populates incrementally — packages and modules at Tier 1, class names at Tier 2, functions and constants with full signatures at Tier 3
+    - Strategic Domain: Registry must be complete and approved before first T04 prompt creation
+    - Strategic Domain: Updates registry when design changes affect named elements
+    - Strategic Domain: Cross-links registry document to all design documents that define its elements
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -812,6 +834,7 @@ pip install dist/*.whl
     - Protocol compliance: All protocols P00-P09
     - Document compliance: Naming, formatting, cross-linking, version histories
     - Code quality: Thread safety, error handling, documentation standards
+    - Naming consistency: Generated code element names match name registry (modules, classes, functions, constants)
     - Traceability: Requirement ↔ design ↔ code ↔ test linkages
     - Configuration management: Code vs. baseline verification
   - §1.9.4 Audit Procedure
@@ -885,6 +908,7 @@ pip install dist/*.whl
     - Strategic Domain: Rewrites prompt documents in place when revisions required
     - Strategic Domain: Embeds complete design specifications and schema within prompt documents
     - Strategic Domain: Ensures prompt documents are self-contained requiring no external file references
+    - Strategic Domain: Embeds element_registry field in T04 prompt from name registry master, scoped to elements relevant to the code generation task
     - Strategic Domain: Prompt references source change UUID in coupled_docs.change_ref field
     - Strategic Domain: Prompt iteration number matches source change iteration number
     - Strategic Domain: Iteration synchronization maintained through debug cycles
@@ -1114,6 +1138,7 @@ flowchart TD
 | 7.4     | 2026-03-11 | Replaced Goose AEL with Python AEL orchestrator: removed ai/goose/, added ai/ael/ (orchestrator.py, mcp_client.py, parser.py, recipes); updated §1.1.11 state dir (.goose/ralph/ → .ael/ralph/), §1.2.2 .gitignore, §1.2.4 recipe path note, §1.2.8 AEL setup |
 | 7.5     | 2026-03-11 | Narrowed scope to Apple Silicon + MLX: removed OLLama profile setup from §1.2.8; removed Goose/OLLama from §1.1.4 implementation options; deprecated docs/setup-goose.md, docs/setup-ollama-lmstudio.md, ai/profiles/ollama.md to deprecated/ |
 | 7.6     | 2026-03-11 | Integrated AEL into workflow: replaced Tactical Domain black-box subgraph with AEL Ralph Loop + SHIP/BLOCKED decision; updated §1.1.8 command format; updated §1.1.11 Loop Exit traceability (SHIP→T06, BLOCKED→T03); updated §1.10.3 Human Handoff command format |
+| 7.7     | 2026-03-12 | Added name registry: design-\<project\>-name_registry-master.md as incremental canonical element naming contract; P02 §1.3.16 registry structure; P02 §1.3.1/§1.3.3/§1.3.5 registry directives per tier; P02 §1.3.7 registry naming convention; P00 §1.1.10 registry master notation; P08 §1.9.3 naming consistency audit scope; P09 §1.10.2 element_registry prompt directive |
 
 ---
 [Return to Table of Contents](<#table of contents>)

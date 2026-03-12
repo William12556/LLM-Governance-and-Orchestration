@@ -13,8 +13,9 @@ Created: 2026 March 05
   - [DMG Installer](<#dmg installer>)
   - [pip](<#pip>)
 - [Download Devstral](<#download devstral>)
-  - [Q8 Quantised Model](<#q8 quantised model>)
-  - [BF16 Full Precision Model](<#bf16 full precision model>)
+  - [Devstral Small 2507 Q8](<#devstral small 2507 q8>)
+  - [Devstral Small 2507 BF16](<#devstral small 2507 bf16>)
+  - [Devstral Small 2 (2512) Q8](<#devstral small 2 (2512) q8>)
 - [Start oMLX](<#start omlx>)
 - [Configure AEL](<#configure ael>)
 - [Verification](<#verification>)
@@ -86,9 +87,15 @@ omlx --help
 
 ## Download Devstral
 
-Choose Q8 or BF16 based on available unified memory.
+Choose a model based on available unified memory and performance requirements.
 
-### Q8 Quantised Model
+| Model | HuggingFace Repo | Quantisation | Memory |
+|---|---|---|---|
+| Devstral Small 2507 | `mlx-community/Devstral-Samll-2507-8bit` | Q8 | ~24 GB |
+| Devstral Small 2507 | mlx-community (see BF16 section) | BF16 | ~44 GB |
+| Devstral Small 2 (2512) | `mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit` | Q8 | ~24 GB |
+
+### Devstral Small 2507 Q8
 
 Approximately 24 GB unified memory required.
 
@@ -108,7 +115,7 @@ snapshot_download(
 
 ---
 
-### BF16 Full Precision Model
+### Devstral Small 2507 BF16
 
 Approximately 44 GB unified memory required. BF16 provides full model precision at the cost of higher memory consumption.
 
@@ -125,6 +132,24 @@ snapshot_download(
 ```
 
 > Replace `<bf16-repo-name>` with the current BF16 repository name from mlx-community. Repository names may change between model releases.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+### Devstral Small 2 (2512) Q8
+
+Approximately 24 GB unified memory required. Second-generation release; higher SWE-Bench Verified score than Small 2507.
+
+```bash
+python -c "
+from huggingface_hub import snapshot_download
+snapshot_download(
+    repo_id='mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit',
+    local_dir='~/ai-models/mlx-community/devstral-small-2-q8'
+)
+"
+```
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -242,6 +267,7 @@ A response of `OK` confirms end-to-end connectivity.
 | 1.3 | 2026-03-06 | Promoted oMLX to primary inference server; removed mlx_lm.server; updated all port references to 8000 |
 | 1.4 | 2026-03-06 | Corrected API key scope: oMLX requires authentication for all requests, not admin dashboard only; updated tables and verification curl |
 | 1.5 | 2026-03-11 | Added DMG installer as alternative to pip; replaced Goose references with AEL orchestrator; updated Configure section and Verification |
+| 1.6 | 2026-03-12 | Added Devstral Small 2 (2512) download section; restructured Download section with model summary table; renamed Q8/BF16 subsections for clarity |
 
 ---
 

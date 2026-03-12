@@ -364,6 +364,140 @@ properties:
             backward_compatible:
               type: string
   
+  dependencies:
+    type: object
+    properties:
+      internal:
+        type: array
+        items:
+          type: object
+          properties:
+            component:
+              type: string
+            impact:
+              type: string
+      external:
+        type: array
+        items:
+          type: object
+          properties:
+            library:
+              type: string
+            version_change:
+              type: string
+            impact:
+              type: string
+      required_changes:
+        type: array
+        items:
+          type: object
+          properties:
+            change_ref:
+              type: string
+            relationship:
+              type: string
+  
+  testing_requirements:
+    type: object
+    properties:
+      test_approach:
+        type: string
+      test_cases:
+        type: array
+        items:
+          type: object
+          properties:
+            scenario:
+              type: string
+            expected_result:
+              type: string
+      regression_scope:
+        type: array
+        items:
+          type: string
+      validation_criteria:
+        type: array
+        items:
+          type: string
+  
+  implementation:
+    type: object
+    properties:
+      effort_estimate:
+        type: string
+      implementation_steps:
+        type: array
+        items:
+          type: object
+          properties:
+            step:
+              type: string
+            owner:
+              type: string
+      rollback_procedure:
+        type: string
+      deployment_notes:
+        type: string
+  
+  verification:
+    type: object
+    properties:
+      implemented_date:
+        type: string
+      implemented_by:
+        type: string
+      verification_date:
+        type: string
+      verified_by:
+        type: string
+      test_results:
+        type: string
+      issues_found:
+        type: array
+        items:
+          type: object
+          properties:
+            issue_ref:
+              type: string
+  
+  traceability:
+    type: object
+    properties:
+      design_updates:
+        type: array
+        items:
+          type: object
+          properties:
+            design_ref:
+              type: string
+            sections_updated:
+              type: array
+              items:
+                type: string
+            update_date:
+              type: string
+      related_changes:
+        type: array
+        items:
+          type: object
+          properties:
+            change_ref:
+              type: string
+            relationship:
+              type: string
+      related_issues:
+        type: array
+        items:
+          type: object
+          properties:
+            issue_ref:
+              type: string
+            relationship:
+              type: string
+  
+  notes:
+    type: string
+  
   version_history:
     type: array
     items:

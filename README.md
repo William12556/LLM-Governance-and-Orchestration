@@ -59,7 +59,7 @@ Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 | Unified memory | 24 GB minimum (Q8); 48 GB+ for BF16 |
 | `mlx_lm` | 0.21+ — required dependency of oMLX (`pip install mlx_lm`) |
 | `omlx` | Required inference server (`pip install omlx`) |
-| Model | Devstral Small 2507 — Q8 or BF16 |
+| Model | Devstral Small 2507 Q8 or BF16; Devstral Small 2 (2512) Q8 |
 
 Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
 
@@ -111,6 +111,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 1.7 | 2026-03-06 | Promoted oMLX to required inference server; updated mlx_lm to dependency role |
 | 1.8 | 2026-03-11 | Replaced Goose with Python AEL orchestrator; updated repository structure, requirements, and implementation profiles table |
 | 1.9 | 2026-03-11 | Narrowed scope to Apple Silicon + MLX; deprecated Goose, OLLama, and LM Studio docs and profiles; moved to deprecated/ |
+| 2.0 | 2026-03-12 | Added Devstral Small 2 (2512) as supported model in Requirements |
 
 ---
 
