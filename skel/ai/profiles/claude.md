@@ -24,7 +24,7 @@ This profile maps governance abstract placeholders to Claude-based tooling.
 |---|---|
 | Strategic Domain | Claude Desktop (preferred) |
 | Tactical Domain | Claude Code |
-| AEL mechanism | Goose / Ralph Loop |
+| AEL mechanism | AEL orchestrator / Ralph Loop |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -77,17 +77,17 @@ Local context file: `CLAUDE.local.md` at project root (`.gitignore`'d).
 
 ## Autonomous Execution Loop
 
-**Implementation:** Goose / Ralph Loop
+**Implementation:** AEL orchestrator / Ralph Loop
 
-State directory: `.goose/ralph/` (ephemeral, per-task)
+State directory: `.ael/ralph/` (ephemeral, per-task)
 
 **Prerequisites:**
-- Goose installed: `pip install goose-ai` or per Goose documentation
-- Ralph Loop recipe: `~/.config/goose/recipes/ralph-loop.sh`
+- AEL dependencies installed: `pip install -r ai/ael/requirements.txt`
+- `ai/ael/config.yaml` configured
 
 **Invocation:**
 ```bash
-~/.config/goose/recipes/ralph-loop.sh ./workspace/prompt/prompt-<uuid>-<n>.md
+python ai/ael/src/orchestrator.py --mode loop --task workspace/prompt/prompt-<uuid>-<n>.md
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -101,7 +101,7 @@ State directory: `.goose/ralph/` (ephemeral, per-task)
 # Claude profile - Tactical Domain
 CLAUDE.local.md
 .claude/settings.json
-.goose/ralph/
+.ael/ralph/
 ```
 
 **Directory structure additions (within `<project name>/`):**
@@ -125,6 +125,7 @@ CLAUDE.local.md
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-02-18 | Initial document |
+| 1.1 | 2026-03-11 | Replaced Goose/Ralph Loop with AEL orchestrator; updated AEL section, .gitignore |
 
 ---
 

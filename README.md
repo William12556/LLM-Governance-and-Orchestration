@@ -11,10 +11,10 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 ## Key Characteristics
 
 - **Protocol-driven workflow**: Eleven protocols (P00-P10) govern requirements capture, project initialization, three-tier design hierarchy, change management, issue resolution, traceability, testing, quality assurance, audit, prompting, and requirements management
-- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and OLLama via Goose
+- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and Apple Silicon MLX
 - **Human approval gates**: Explicit human authorization required before requirements baseline, design tier transitions, code generation, and baseline modifications
 - **Three-tier design decomposition**: Master (system) → Domain (functional) → Component (implementation) with validation gates between tiers
-- **Autonomous Execution Loop (AEL)**: Optional worker/reviewer cycle via Goose/Ralph Loop for iterative code generation within governed boundaries. Based on Geoffrey Huntley's Ralph Wiggum techniques.
+- **Autonomous Execution Loop (AEL)**: Optional worker/reviewer cycle via Ralph Loop for iterative code generation within governed boundaries. Based on Geoffrey Huntley's Ralph Wiggum techniques.
 - **UUID-based document coupling**: 8-character hex identifiers with iteration synchronization through debug cycles
 - **Document lifecycle management**: Active/closed states with immutable archival and closure criteria across all document classes
 - **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages
@@ -26,10 +26,10 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 | -------------------------------------- | ----------------------------------------------------------------------------- |
 | `framework/`                           | Governance framework development (canonical source)                           |
 | `framework/ai/governance.md`           | Master governance document                                                    |
-| `framework/ai/profiles/`               | Implementation profiles (claude-desktop, claude, ollama)                      |
+| `framework/ai/profiles/`               | Implementation profiles (claude-desktop, claude, mlx)                         |
 | `framework/ai/templates/`              | Document templates T01–T07                                                    |
 | `framework/ai/knowledge/`              | AI-consumed operational reference documents                                   |
-| `framework/ai/goose/recipes/`          | Goose AEL recipes (ralph-loop, ralph-work, ralph-review)                      |
+| `framework/ai/ael/`                    | Python AEL orchestrator (orchestrator, mcp_client, parser, recipes)           |
 | `framework/ai/doc/examples/`           | Human-facing reference material for framework adopters                        |
 | `skel/`                                | Deployable project skeleton — copy to initialize a new project                |
 | `skel/ai/`                             | Governance, templates, profiles, knowledge, and recipes for deployed projects |
@@ -42,12 +42,12 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 
 | Item | Requirement |
 |---|---|
-| Operating system | macOS 14+ (Sonoma) recommended; Linux supported for OLLama/LM Studio backends |
+| Operating system | macOS 14+ (Sonoma) required (Apple Silicon) |
 | Python | 3.11+ |
 | Git | Any recent version |
 | Strategic Domain | Claude Desktop (or equivalent frontier LLM with MCP support) |
 | MCP servers | `Filesystem` and `mcp-grep` configured in the Strategic Domain tool |
-| Goose | Required for Autonomous Execution Loop (AEL) — see [Goose Setup Guide](docs/setup-goose.md) |
+| Python MCP SDK | `pip install -r ai/ael/requirements.txt` — required for AEL orchestrator |
 
 ### Apple Silicon + MLX
 
@@ -62,19 +62,6 @@ Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 | Model | Devstral Small 2507 — Q8 or BF16 |
 
 Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
-
-### OLLama / LM Studio (alternative platforms)
-
-For non-Apple Silicon hardware or where MLX is unavailable.
-
-| Item | Requirement |
-|---|---|
-| RAM or GPU VRAM | 24 GB minimum (Q8); 48 GB+ for BF16 |
-| OLLama | https://ollama.com — or — |
-| LM Studio | https://lmstudio.ai |
-| Model | Devstral Small 2507 — Q8 or BF16 |
-
-Full setup instructions: [OLLama + LM Studio Setup Guide](docs/setup-ollama-lmstudio.md)
 
 ---
 
@@ -97,9 +84,8 @@ Full setup instructions: [OLLama + LM Studio Setup Guide](docs/setup-ollama-lmst
 
 | Profile     | Tactical Domain        | AEL                |
 | ----------- | ---------------------- | ------------------ |
-| `claude.md` | Claude Code + Devstral | Goose / Ralph Loop |
-| `ollama.md` | OLLama + Devstral      | Goose / Ralph Loop |
-| `mlx.md`    | MLX + Devstral         | Goose / Ralph Loop |
+| `claude.md` | Claude Code + Devstral | AEL / Ralph Loop |
+| `mlx.md`    | MLX + Devstral         | AEL / Ralph Loop |
 
 ## Important Notice
 
@@ -123,6 +109,8 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 1.5 | 2026-03-05 | Added omlx as optional Apple Silicon + MLX requirement for TTL-based memory management |
 | 1.6 | 2026-03-06 | Added mlx.md to Implementation Profiles table |
 | 1.7 | 2026-03-06 | Promoted oMLX to required inference server; updated mlx_lm to dependency role |
+| 1.8 | 2026-03-11 | Replaced Goose with Python AEL orchestrator; updated repository structure, requirements, and implementation profiles table |
+| 1.9 | 2026-03-11 | Narrowed scope to Apple Silicon + MLX; deprecated Goose, OLLama, and LM Studio docs and profiles; moved to deprecated/ |
 
 ---
 

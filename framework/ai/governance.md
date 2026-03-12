@@ -50,9 +50,9 @@
     - Example: \<project name\> uses this framework for development but is a standalone Python application at runtime
   - §1.1.4 Architecture (Model-Agnostic)
     - Strategic Domain: Plan and control: design, change, test and launching of code generation
-      - Implementation options: Claude Desktop, local LLM via Goose, API-based LLM
+      - Implementation options: Claude Desktop, API-based LLM
     - Tactical Domain: Execute: code generation
-      - Implementation options: Ralph Loop (Goose), custom agents, direct invocation
+      - Implementation options: Ralph Loop (AEL), custom agents, direct invocation
     - Communication: MCP filesystem (model-independent)
   - §1.1.5 Forbidden
     - Both domains: Unrequested creation, addition, removal or change of source code and documents is forbidden
@@ -82,13 +82,16 @@
     - Strategic Domain: Embeds complete Tier 3 component design specifications and schema within prompt documents
     - Strategic Domain: Ensures prompt documents are self-contained requiring no external file references
     - Strategic Domain: Saves T04 prompt to workspace/prompt/prompt-\<uuid\>-\<name\>.md
-    - Strategic Domain: Provides ready-to-execute command in conversation after human approval
-    - Human: Executes provided command to invoke Tactical Domain with T04 prompt
-    - Tactical Domain: Reads T04 prompt from workspace/prompt/
-    - Tactical Domain: Analyzes project structure and existing code via MCP filesystem access
-    - Tactical Domain: Generates code, saves directly to src/ per T04 specifications
-    - Human: Notifies Strategic Domain when code generation complete
-    - Strategic Domain: Reviews generated code, proceeds with audit
+    - Strategic Domain: Provides ready-to-execute AEL command in conversation after human approval
+    - Human: Executes AEL command from project root
+    - AEL: Reads T04 prompt as task; runs worker/reviewer Ralph Loop until SHIP or BLOCKED
+    - AEL SHIP: Strategic Domain reviews generated code, proceeds with audit
+    - AEL BLOCKED: Strategic Domain creates T03 Issue from RALPH-BLOCKED.md content
+    - Command format:
+```bash
+python ai/ael/src/orchestrator.py --mode loop \
+  --task workspace/prompt/prompt-<uuid>-<n>.md
+```
   - §1.1.9 Quality
     - Human review and approval of design, change and initiation of code generation is required
     - Strategic Domain: Provides ready-to-execute command after human approval
@@ -112,13 +115,13 @@
     - Coupled documents maintain synchronized iteration numbers via explicit UUID references
 
   - §1.1.11 Autonomous Execution Loop (AEL)
-    - Reference implementation: Ralph Loop via Goose
+    - Reference implementation: Ralph Loop via Python AEL orchestrator (`ai/ael/`)
     - AEL provides autonomous iterative code generation within governance boundaries
-    - Loop State Directory: `.goose/ralph/` (ephemeral, per-task)
+    - Loop State Directory: `.ael/ralph/` (ephemeral, per-task)
     - Loop Entry: After human approval of T04 Prompt
     - Integration Scripts: Project-scoped scripts reside in `<project>/bin/`. Scripts are version-controlled project artifacts. Global installation (e.g. `~/bin/`) is not required.
     - Loop Execution: Worker/reviewer cycle until SHIP or boundary exceeded
-    - Loop Exit: Generates T06 Result (success) or T03 Issue (failure)
+    - Loop Exit: SHIP → Strategic Domain captures work-summary.txt in T06 Result; BLOCKED → Strategic Domain seeds T03 Issue from RALPH-BLOCKED.md
     - State Files:
       - `task.md`: Task description from T04
       - `iteration.txt`: Current cycle number
@@ -301,9 +304,7 @@ workspace/proposal/closed/
 CLAUDE.local.md
 .claude/settings.json
 .claude/commands/
-.goosehints.local
-.goose/ralph/
-.goose/recipes/
+.ael/ralph/
 
 # other
 10000
@@ -318,10 +319,7 @@ test.txt
   - §1.2.4 Initialize project from skel/
     - Human: Copy `skel/` from the framework repository to the desired parent directory
     - Human: Rename the copied directory to `<project name>`
-    - Configure recipe path: in `<project name>/ai/goose/recipes/ralph-loop.sh`, replace the default recipe directory fallback:
-      - Find: `RECIPE_DIR="${RALPH_RECIPE_DIR:-$HOME/.config/goose/recipes}"`
-      - Replace: `RECIPE_DIR="${RALPH_RECIPE_DIR:-/absolute/path/to/<project name>/ai/goose/recipes}"`
-      - Substitute actual absolute project path for `/absolute/path/to/<project name>`
+    - No recipe path configuration required. `ralph-loop.sh` resolves recipes relative to its own location.
   - §1.2.5 Traceability Matrix
      - Create skeleton trace-traceability-matrix-master.md in workspace/trace/
   - §1.2.6 Project folder structure
@@ -397,17 +395,10 @@ pip list
       - Create `CLAUDE.md` at project root with project context
       - Create `.claude/` directory structure per §1.2.6
       - Reference: [claude.md](claude.md)
-    - **OLLama profile** (Tactical Domain = OLLama via Goose):
-      - Install OLLama: per https://ollama.com
-      - Pull selected model: `ollama pull <model-name>`
-      - Install Goose: per https://block.github.io/goose/
-      - Configure provider in `~/.config/goose/config.yaml`
-      - Create `.goosehints` or `AGENTS.md` at project root with project context
-      - Reference: [ollama.md](ollama.md)
     - **AEL setup (both profiles)**:
-      - Install Goose if not already installed
-      - Recipes are project-scoped: copied and configured during §1.2.4
-      - Recipe location: `<project name>/ai/goose/recipes/`
+      - Install AEL dependencies: `pip install -r ai/ael/requirements.txt`
+      - Configure `ai/ael/config.yaml` with inference endpoint and MCP server definitions
+      - Recipe location: `<project name>/ai/ael/recipes/`
       - Reference: §1.1.11, §1.2.4
 
   - §1.2.9 Python documents
@@ -904,20 +895,15 @@ pip install dist/*.whl
     - Strategic Domain: If context file absent, generates initial context file with project context
     - Strategic Domain: Generated context file requires human approval before proceeding
     - Context file name: Defined in implementation profile (ai/profiles/)
-    - Strategic Domain: After human approval of T04 prompt, provides ready-to-execute command in conversation
-    - Command format includes:
-      - Governance document location for context
-      - Design document locations for context
-      - Prompt document path for implementation
-    - Strategic Domain: Must specify complete absolute paths to all referenced documents
-    - Human: Starts Tactical Domain in project root directory
-    - Human: Pastes provided command into Tactical Domain
-    - Human: Notifies Strategic Domain when Tactical Domain execution completes
-    - Example command structure:
+    - Strategic Domain: After human approval of T04 prompt, provides ready-to-execute AEL command in conversation
+    - Human: Executes command from project root directory
+    - AEL exits with SHIP (proceed to review) or BLOCKED (create T03 Issue)
+    - Human: Notifies Strategic Domain of AEL outcome
+    - Example command:
 
-```text
-  - For reference and context, governance is in '/path/to/project/ai/governance.md' and design documents are in '/path/to/project/workspace/design'
-  -  Implement prompt '/path/to/project/workspace/prompt/prompt-<uuid>-<n>.md'.'.
+```bash
+python ai/ael/src/orchestrator.py --mode loop \
+  --task workspace/prompt/prompt-<uuid>-<n>.md
 ```
 
   - §1.10.4 Wildcard Permissions
@@ -999,12 +985,11 @@ flowchart TD
     H3 -->|Revise| D1_Prompt
     H3 -->|Approve| D1_Instruct[Strategic Domain: Create<br/>ready-to-execute command]
     
-    D1_Instruct --> H_Invoke[Human: Invoke Tactical Domain]
-    H_Invoke --> D2_Read[Tactical Domain: Read T04]
-    D2_Read --> D2_Generate[Tactical Domain: Generate code]
-    D2_Generate --> D2_Save[Tactical Domain: Save to src/]
-    D2_Save --> H_Notify[Human: Notify Strategic Domain]
-    H_Notify --> D1_Review[Strategic Domain: Review<br/>generated code]
+    D1_Instruct --> H_Invoke[Human: Execute AEL command]
+    H_Invoke --> AEL_Loop[AEL: Ralph Loop<br/>worker/reviewer cycle]
+    AEL_Loop --> AEL_Result{SHIP or<br/>BLOCKED?}
+    AEL_Result -->|BLOCKED| D1_Issue
+    AEL_Result -->|SHIP| D1_Review[Strategic Domain: Review<br/>generated code]
     
     D1_Review --> Trace2[Strategic Domain: Update<br/>traceability matrix P05]
     Trace2 --> D1_Audit[Strategic Domain: Config audit<br/>code vs baseline]
@@ -1126,6 +1111,9 @@ flowchart TD
 | 7.1     | 2026-02-25 | Added Goose recipe integration to P01 §1.2.4: copy `ai/goose/recipes/` from framework to project, configure `ralph-loop.sh` with project-absolute recipe path; updated P01 §1.2.8 AEL setup to reference project-scoped recipes, removing `~/.config/goose/recipes/` install instruction |
 | 7.2     | 2026-03-04 | Restructured repository: meta/ → framework/, src/ → skel/; Revised P01 §1.2.4: replaced manual ai/ copy with copy-from-skel/ workflow; skel/ is the deployable project skeleton maintained in the framework repository |
 | 7.3     | 2026-03-04 | Renamed ai/implementation-profiles/ → ai/profiles/; renamed profile-claude-desktop.md → claude-desktop.md, profile-claude.md → claude.md, profile-ollama.md → ollama.md; updated all references in P00 §1.1.18, §1.1.19, P01 §1.2.8, P09 §1.10.3 |
+| 7.4     | 2026-03-11 | Replaced Goose AEL with Python AEL orchestrator: removed ai/goose/, added ai/ael/ (orchestrator.py, mcp_client.py, parser.py, recipes); updated §1.1.11 state dir (.goose/ralph/ → .ael/ralph/), §1.2.2 .gitignore, §1.2.4 recipe path note, §1.2.8 AEL setup |
+| 7.5     | 2026-03-11 | Narrowed scope to Apple Silicon + MLX: removed OLLama profile setup from §1.2.8; removed Goose/OLLama from §1.1.4 implementation options; deprecated docs/setup-goose.md, docs/setup-ollama-lmstudio.md, ai/profiles/ollama.md to deprecated/ |
+| 7.6     | 2026-03-11 | Integrated AEL into workflow: replaced Tactical Domain black-box subgraph with AEL Ralph Loop + SHIP/BLOCKED decision; updated §1.1.8 command format; updated §1.1.11 Loop Exit traceability (SHIP→T06, BLOCKED→T03); updated §1.10.3 Human Handoff command format |
 
 ---
 [Return to Table of Contents](<#table of contents>)

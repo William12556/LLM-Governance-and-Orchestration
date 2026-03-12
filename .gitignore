@@ -10,11 +10,6 @@ build/
 venv/
 .venv/
 
-# Distribution / packaging
-dist/
-build/
-*.egg-info/
-
 # macOS
 .DS_Store
 **/.DS_Store
@@ -29,21 +24,20 @@ build/
 *.canvas
 
 # AI framework
-deprecated/
 workspace/admin/
 workspace/ai/
 workspace/proposal/
 workspace/proposal/closed/
 
+# AEL ephemeral state
+.ael/ralph/
+
+# Model-specific configs (local only)
+.model-config.local.yaml
+
 # other
+deprecated/
 10000
 test.txt
 **/tmp
 *.pdf
-
-# Ralph Loop ephemeral state
-.goose/
-**/ralph/
-
-# Model-specific configs (local only)
-.model-config.local.yaml

@@ -48,7 +48,7 @@ Select one profile per project. Copy the profile-specific `.gitignore` additions
 |---|---|---|
 | Claude Desktop | Strategic Domain | [claude-desktop.md](claude-desktop.md) |
 | Claude Code | Tactical Domain | [claude.md](claude.md) |
-| OLLama via Goose | Tactical Domain | [ollama.md](ollama.md) |
+| Apple Silicon + MLX | Tactical Domain | [mlx_devstral_small_2507_Q8.md](mlx_devstral_small_2507_Q8.md) |
 
 Strategic Domain is not prescribed. Any frontier model with sufficient reasoning capability is suitable. Claude Desktop is the preferred Strategic Domain implementation.
 
@@ -63,6 +63,7 @@ Strategic Domain is not prescribed. Any frontier model with sufficient reasoning
 | 1.0 | 2026-02-18 | Initial document |
 | 1.1 | 2026-02-18 | Added profile-claude-desktop.md to Available Profiles table |
 | 1.2 | 2026-03-04 | Renamed folder to profiles/; renamed profile-*.md files to claude-desktop.md, claude.md, ollama.md |
+| 1.3 | 2026-03-11 | Replaced OLLama profile with Apple Silicon + MLX profile; deprecated ollama.md to deprecated/ |
 
 ---
 

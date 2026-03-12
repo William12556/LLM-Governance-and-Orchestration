@@ -186,7 +186,7 @@ Integrate into Ralph Loop entry:
 ./scripts/validate-behavioral-standards.py || exit 1
 
 # Launch loop
-goose run --recipe ralph-loop
+python ai/ael/src/orchestrator.py --mode loop
 ```
 
 ### 5.3 CI/CD Integration

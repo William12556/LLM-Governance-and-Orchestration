@@ -20,13 +20,13 @@ Created: 2026 March 06
 
 ## Overview
 
-This profile maps governance abstract placeholders to Apple Silicon MLX-based local model tooling via Goose. It requires Apple M-series hardware.
+This profile maps governance abstract placeholders to Apple Silicon MLX-based local model tooling. It requires Apple M-series hardware.
 
 | Concern | Implementation |
 |---|---|
 | Strategic Domain | Claude Desktop (preferred) |
-| Tactical Domain | Devstral Q8 via oMLX + Goose |
-| AEL mechanism | Goose / Ralph Loop |
+| Tactical Domain | Devstral Q8 via oMLX + AEL |
+| AEL mechanism | AEL orchestrator / Ralph Loop |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -36,12 +36,10 @@ This profile maps governance abstract placeholders to Apple Silicon MLX-based lo
 
 | Placeholder | Resolved Value |
 |---|---|
-| `<tactical_config>/` | `~/.config/goose/` |
-| `<skills_dir>/` | `recipes/` (within `~/.config/goose/` or `.goose/`) |
-| `<tactical_context>` | `.goosehints` or `AGENTS.md` |
-| Local context file | Not applicable (`.goosehints` is already project-scoped) |
-
-Context file priority order (Goose): `AGENTS.md` → `.goosehints` → `~/.config/goose/.goosehints`. Override via `CONTEXT_FILE_NAMES` environment variable.
+| `<tactical_config>/` | `ai/ael/` |
+| `<skills_dir>/` | `ai/ael/recipes/` |
+| `<tactical_context>` | `CLAUDE.md` or `AGENTS.md` |
+| Local context file | Not applicable |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -59,7 +57,7 @@ Any frontier model with sufficient reasoning capability may substitute. The Stra
 
 ## Tactical Domain
 
-**Implementation:** Devstral Small 2507 Q8 via oMLX and Goose
+**Implementation:** Devstral Small 2507 Q8 via oMLX + AEL orchestrator
 
 **Hardware requirement:** Apple M-series chip; 24 GB unified memory minimum (Q8 quantisation).
 
@@ -85,26 +83,14 @@ snapshot_download(
 
 Use Python 3.11+. The `huggingface-cli` may be unreliable on some macOS configurations.
 
-**Goose provider configuration** (`~/.config/goose/profiles.yaml`):
+**AEL config** (`ai/ael/config.yaml`):
 
 ```yaml
-mlx:
-  provider: openai
-  model: devstral-small
-  base_url: http://localhost:8000/v1
+omlx:
+  base_url: http://127.0.0.1:8000/v1
   api_key: local
+  default_model: Devstral-Small-2-24B-Instruct-2512
 ```
-
-Or via `~/.config/goose/config.yaml`:
-
-```yaml
-GOOSE_PROVIDER: openai
-GOOSE_MODEL: devstral-small
-OPENAI_BASE_URL: http://localhost:8000/v1
-OPENAI_API_KEY: local
-```
-
-The Goose provider name for this configuration is `MLX OpenAI` (custom OpenAI-compatible provider).
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -112,18 +98,16 @@ The Goose provider name for this configuration is `MLX OpenAI` (custom OpenAI-co
 
 ## Tool-Calling Behaviour
 
-Devstral Small 2507 Q8 via oMLX supports tool calling. Observed behaviour is consistent with the OLLama profile: autonomous tool invocation may require explicit imperative phrasing in recipe prompts.
+Devstral Small 2507 Q8 via oMLX supports tool calling. The AEL orchestrator owns the full tool dispatch loop; tool calls are parsed from model output and dispatched directly via the Python MCP SDK.
 
-**Mitigation — imperative phrasing:**
+**Prompt guidance — imperative phrasing:**
 
 | Avoid | Prefer |
 |---|---|
 | `You can use the grep tool to search` | `Use the mcp-grep__grep tool to search` |
 | `Search for X in the directory` | `Call mcp-grep__grep with pattern X and path Y` |
 
-**Mitigation — explicit tool reference in prompts:**
-
-Name the tool explicitly in each recipe prompt step. Refer to the OLLama profile for detailed examples.
+Name tools explicitly in recipe prompts.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -131,21 +115,19 @@ Name the tool explicitly in each recipe prompt step. Refer to the OLLama profile
 
 ## Autonomous Execution Loop
 
-**Implementation:** Goose / Ralph Loop
+**Implementation:** AEL orchestrator / Ralph Loop
 
-State directory: `.goose/ralph/` (ephemeral, per-task)
+State directory: `.ael/ralph/` (ephemeral, per-task)
 
 **Prerequisites:**
 - oMLX running on `localhost:8000`
-- Goose installed and configured with MLX OpenAI provider
-- Ralph Loop recipes: `recipes/ralph-loop.sh`, `recipes/ralph-work.yaml`, `recipes/ralph-review.yaml`
+- AEL dependencies installed: `pip install -r ai/ael/requirements.txt`
+- `ai/ael/config.yaml` configured
 
 **Invocation:**
 
 ```bash
-RALPH_WORKER_PROVIDER="openai" RALPH_WORKER_MODEL="devstral-small" \
-RALPH_REVIEWER_PROVIDER="openai" RALPH_REVIEWER_MODEL="devstral-small" \
-recipes/ralph-loop.sh ./workspace/prompt/prompt-<uuid>-<n>.md
+python ai/ael/src/orchestrator.py --mode loop --task workspace/prompt/prompt-<uuid>-<n>.md
 ```
 
 Worker and reviewer roles are differentiated by prompt engineering within the same model, not by separate model binaries.
@@ -173,16 +155,7 @@ BF16 may be used on hardware with 48 GB+ unified memory for higher fidelity.
 
 ```
 # MLX profile - Tactical Domain
-.goosehints.local
-.goose/ralph/
-```
-
-**Directory structure additions (within `<project name>/`):**
-
-```
-├── .goose/
-│   └── recipes/
-├── .goosehints          # or AGENTS.md
+.ael/ralph/
 ```
 
 **Setup guide:** See `framework/ai/doc/examples/` and [Apple Silicon + MLX Setup Guide](../../../docs/setup-apple-silicon-mlx.md).
@@ -198,6 +171,7 @@ BF16 may be used on hardware with 48 GB+ unified memory for higher fidelity.
 | 1.0 | 2026-03-06 | Initial document |
 | 1.1 | 2026-03-06 | Replaced mlx_lm.server with oMLX as primary inference server; updated port references to 8000 |
 | 1.2 | 2026-03-06 | Corrected API key values: oMLX requires authentication for all requests; updated api_key and OPENAI_API_KEY to `local` |
+| 1.3 | 2026-03-11 | Replaced Goose with AEL orchestrator throughout; updated Tactical Domain, Placeholder Mappings, AEL section, Project Setup; removed OLLama cross-reference |
 
 ---
 
