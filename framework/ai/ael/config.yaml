@@ -16,6 +16,11 @@ mcp_servers:
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
 
+# Inference endpoint readiness
+readiness:
+  timeout_seconds: 60
+  poll_interval_seconds: 2
+
 # Loop control
 loop:
   max_iterations: 10

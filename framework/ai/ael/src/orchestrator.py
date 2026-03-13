@@ -23,6 +23,7 @@ import asyncio
 import json
 import os
 import sys
+import time
 import uuid
 
 import yaml
@@ -54,6 +55,42 @@ def write_state(state_dir: str, filename: str, content: str) -> None:
     os.makedirs(state_dir, exist_ok=True)
     with open(os.path.join(state_dir, filename), "w") as f:
         f.write(content)
+
+
+async def await_model_ready(
+    client: AsyncOpenAI,
+    model: str,
+    timeout: float = 60.0,
+    interval: float = 2.0,
+) -> None:
+    """
+    Poll /v1/models until the target model is listed or the endpoint is
+    reachable. Raises TimeoutError if the endpoint remains unreachable.
+    """
+    deadline = time.monotonic() + timeout
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            models = await client.models.list()
+            ids = [m.id for m in models.data]
+            if model in ids:
+                print(f"{GREEN}[ael] model ready: {model}{NC}")
+                return
+            # Endpoint up; model not listed — oMLX loads on first request
+            print(f"{YELLOW}[ael] endpoint ready; '{model}' not listed — proceeding{NC}")
+            return
+        except Exception as e:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError(
+                    f"[ael] inference endpoint not reachable after {timeout}s: {e}"
+                ) from e
+            print(
+                f"{YELLOW}[ael] waiting for endpoint "
+                f"(attempt {attempt}, {remaining:.0f}s remaining): {e}{NC}"
+            )
+            await asyncio.sleep(interval)
 
 
 def clear_state(state_dir: str, *filenames: str) -> None:
@@ -243,6 +280,15 @@ async def main_async(args: argparse.Namespace) -> int:
     rev_recipe  = load_yaml(os.path.join(recipe_dir, "ralph-review.yaml"))
 
     client = AsyncOpenAI(base_url=omlx_cfg["base_url"], api_key=omlx_cfg["api_key"])
+
+    readiness = config.get("readiness", {})
+    await await_model_ready(
+        client,
+        model,
+        timeout=readiness.get("timeout_seconds", 60.0),
+        interval=readiness.get("poll_interval_seconds", 2.0),
+    )
+
     mcp    = MCPClient(config.get("mcp_servers", {}))
     await mcp.connect()
 
