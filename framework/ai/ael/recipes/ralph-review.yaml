@@ -23,6 +23,13 @@ instructions: |
   Reject incomplete work. Reject code that does not run.
 
   OUTPUT (mandatory):
-  - If approved:   echo "SHIP"   > .ael/ralph/review-result.txt
-  - If needs work: echo "REVISE" > .ael/ralph/review-result.txt
-                   echo "specific feedback" > .ael/ralph/review-feedback.txt
+  AVAILABLE TOOLS (use these exact names):
+  - roots                — get workspace root path
+  - ls                   — list directory contents
+  - read                 — read a file
+  - write                — write a file
+
+  OUTPUT (use write tool — do not use shell echo syntax):
+  - If approved:   write path=.ael/ralph/review-result.txt content=SHIP
+  - If needs work: write path=.ael/ralph/review-result.txt content=REVISE
+                   write path=.ael/ralph/review-feedback.txt content=<specific feedback>

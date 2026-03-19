@@ -576,6 +576,19 @@ exclude_lines = [
     - Strategic Domain: Cross-links updated documents to source change document
   - §1.4.11 Documentation domain
     - Change documentation is only required for source code changes in src/. Change documentation to documents in the workspace/ is not required and can be made directly after human approval.
+  - §1.4.12 Trivial Change Exemption
+    - Definitions:
+      - Trivial: the outcome is fully predictable before implementation; no analysis, experimentation, or design judgement is required to determine the correct solution.
+      - Surgical: confined to a single, well-bounded location in the codebase; does not disturb surrounding logic, interfaces, or dependent components.
+    - A qualifying change must be both trivial and surgical simultaneously. Either quality alone is insufficient.
+    - When all five criteria below are satisfied, Strategic Domain may implement directly after human approval — no T03, T02, T04, or AEL required. Git commit history is the sole audit record for exempt changes.
+    - Criteria (all must hold simultaneously):
+      - (1) Confined to a single function or entry point
+      - (2) Net line delta ≤20 lines
+      - (3) No interface changes (signatures, contracts, public APIs)
+      - (4) Unambiguous with no design decisions required
+      - (5) Human approval obtained before implementation
+    - If any criterion fails, standard T03 → T02 → T04 → AEL workflow applies.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -1052,6 +1065,7 @@ flowchart TD
 | 7.5     | 2026-03-11 | Narrowed scope to Apple Silicon + MLX: removed OLLama profile setup from §1.2.8; updated §1.1.4, §1.1.11; updated .gitignore (.goose → .ael); updated §1.2.4; deprecated ollama.md to deprecated/ |
 | 7.6     | 2026-03-11 | Integrated AEL into workflow: replaced Tactical Domain black-box subgraph with AEL Ralph Loop + SHIP/BLOCKED decision; updated §1.1.8 command format; updated §1.1.11 Loop Exit traceability (SHIP→T06, BLOCKED→T03); updated §1.10.3 Human Handoff command format |
 | 7.8     | 2026-03-14 | Added enhancement and requirement_change paths to P03 §1.4.1: creates T03 issue with type `enhancement` or `requirement_change` before T02 change document; resolves omission where T03 type enum had no accommodation for non-defect change requests |
+| 7.9     | 2026-03-18 | Added P03 §1.4.12 Trivial Change Exemption: defines trivial and surgical change criteria; when all five criteria satisfied and human approval obtained, Strategic Domain may implement directly without T03, T02, T04, or AEL; git history is sole audit record |
 
 ---
 [Return to Table of Contents](<#table of contents>)

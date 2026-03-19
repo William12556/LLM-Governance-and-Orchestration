@@ -17,5 +17,6 @@ mcp_servers:
 
 # Loop control
 loop:
-  max_iterations: 10
+  max_iterations: 5       # Ralph Loop outer iterations (work+review cycles)
+  phase_max_iterations: 20  # Inner tool-call iterations per phase
   state_dir: ".ael/ralph"

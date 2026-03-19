@@ -20,8 +20,20 @@ instructions: |
   4. List existing files to understand current state
   5. Make meaningful progress on the task
   6. Run tests or verification if applicable
-  7. Write summary: echo "what I did" > .ael/ralph/work-summary.txt
-  8. If task complete: echo "done" > .ael/ralph/work-complete.txt
+  7. Write your work summary using the write tool:
+     path: .ael/ralph/work-summary.txt
+     content: <what you accomplished>
+  8. If the task is complete, write the completion marker using the write tool:
+     path: .ael/ralph/work-complete.txt
+     content: done
+
+  AVAILABLE TOOLS (use these exact names):
+  - roots                — get workspace root path
+  - ls                   — list directory contents
+  - read                 — read a file
+  - write                — write a file
+  - edit                 — edit a file (args: path, edits array)
+  - search_and_replace   — find/replace across files
 
   BE DECISIVE. Make real progress each iteration.
   Do not re-read files you have already read unless necessary.

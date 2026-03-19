@@ -149,6 +149,14 @@ element_registry:
         module: ""
         type: ""
 
+tactical_brief: |
+  # Tactical Brief — AEL task payload (populated by Strategic Domain)
+  # Concise plain-text summary for Tactical Domain consumption.
+  # Include: file(s) to modify, constraints, implementation steps,
+  # deliverable path(s), success criteria.
+  # Omit: metadata, versioning, governance overhead.
+  # Target: ~200-400 tokens.
+
 notes: ""
 
 metadata:
@@ -550,6 +558,10 @@ properties:
                 type:
                   type: string
   
+  tactical_brief:
+    type: string
+    description: "Concise AEL task payload. Populated by Strategic Domain. Used by orchestrator in preference to full document."
+  
   notes:
     type: string
   
@@ -580,6 +592,7 @@ properties:
 | 1.2     | 2025-02-13 | Added behavioral_standards section for autonomous loop execution behavioral constraints |
 | 1.3     | 2025-02-13 | Added tactical_execution section for Ralph Loop integration: mode selection, worker/reviewer model specification, iteration limits, boundary conditions |
 | 1.4     | 2026-03-12 | Added element_registry field with source reference and scoped entries for canonical naming contract |
+| 1.5     | 2026-03-18 | Added tactical_brief field: concise AEL task payload authored by Strategic Domain; orchestrator uses brief in preference to full document to reduce model context consumption |
 
 ---
 

@@ -39,13 +39,26 @@ def parse_tool_calls(content: str) -> list[dict[str, Any]]:
             pass
 
     # Format 2: plain-text variant
+    # Use raw_decode to correctly extract nested JSON objects (handles multi-level
+    # nesting that a non-greedy regex cannot).
     results = []
-    for match in re.finditer(r"\[TOOL_CALLS\](\w+)\[ARGS\](\{.*?\})", content, re.DOTALL):
+    seen: set[tuple] = set()
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r"\[TOOL_CALLS\](\w+)\[ARGS\]", content):
         name = match.group(1)
+        start = match.end()
+        # Skip leading whitespace
+        while start < len(content) and content[start] in " \t\n":
+            start += 1
         try:
-            arguments = json.loads(match.group(2))
+            arguments, _ = decoder.raw_decode(content, start)
         except json.JSONDecodeError:
             arguments = {}
+        # Deduplicate: skip identical (name, args) pairs emitted twice in one response
+        key = (name, json.dumps(arguments, sort_keys=True))
+        if key in seen:
+            continue
+        seen.add(key)
         results.append({"name": name, "arguments": arguments})
 
     return results
