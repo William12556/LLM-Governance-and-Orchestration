@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This repository provides a model-agnostic governance framework for AI-assisted software development. The framework coordinates requirements capture, design, and code generation through structured protocols and human-in-the-loop approval gates. 
+This repository provides a model-agnostic governance framework for AI-assisted software development. The framework coordinates requirements capture, design, and code generation through structured protocols and human-in-the-loop approval gates.
+
+The framework was motivated by a practical observation: language models lose coherence when navigating large, complex projects — a known consequence of context window constraints [1][2]. Structured documentation provides a compact, navigable project representation that mitigates this. The protocol-driven workflow achieves this by decomposing work into discrete, bounded steps — each providing the model with only the structured context relevant to the current task.
 
 ## Overview
 
@@ -97,6 +99,10 @@ This framework is experimental, serving as a learning exercise in prompt enginee
 
 HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https://ghuntley.com/loop/ [Accessed 4 March 2026].
 
+[1] FACTORY.AI, 2025. *The Context Window Problem: Scaling Agents Beyond Token Limits* [online]. Available from: https://factory.ai/news/context-window-problem [Accessed 20 March 2026].
+
+[2] REDIS, 2026. *LLM context windows: what they are & how they work* [online]. Available from: https://redis.io/blog/llm-context-windows/ [Accessed 20 March 2026].
+
 ## Version History
 
 | Version | Date | Description |
@@ -112,6 +118,8 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 1.8 | 2026-03-11 | Replaced Goose with Python AEL orchestrator; updated repository structure, requirements, and implementation profiles table |
 | 1.9 | 2026-03-11 | Narrowed scope to Apple Silicon + MLX; deprecated Goose, OLLama, and LM Studio docs and profiles; moved to deprecated/ |
 | 2.0 | 2026-03-12 | Added Devstral Small 2 (2512) as supported model in Requirements |
+| 2.1 | 2026-03-20 | Added motivation paragraph to Purpose; added references [1] and [2] |
+| 2.2 | 2026-03-20 | Extended motivation paragraph with workflow rationale |
 
 ---
 
