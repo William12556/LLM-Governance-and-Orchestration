@@ -158,6 +158,8 @@ BF16 may be used on hardware with 48 GB+ unified memory for higher fidelity.
 .ael/ralph/
 ```
 
+**Setup guide:** See `framework/ai/doc/examples/` and [Apple Silicon + MLX Setup Guide](../../../docs/setup-apple-silicon-mlx.md).
+
 [Return to Table of Contents](<#table of contents>)
 
 ---

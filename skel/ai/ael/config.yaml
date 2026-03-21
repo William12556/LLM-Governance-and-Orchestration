@@ -2,7 +2,7 @@
 omlx:
   base_url: "http://127.0.0.1:8000/v1"
   api_key: "local"
-  default_model: "<model-name>"
+  default_model: "Devstral-Small-2-24B-Instruct-2512"
 
 # MCP server definitions
 mcp_servers:
@@ -11,12 +11,27 @@ mcp_servers:
     args:
       - "-y"
       - "@j0hanz/filesystem-mcp@latest"
-      - "<allowed-path>"
+      - "/Users/williamwatson/Documents/GitHub"
+      - "/Users/williamwatson/Documents/ClaudeProjects"
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
 
+# Inference endpoint readiness
+readiness:
+  timeout_seconds: 60
+  poll_interval_seconds: 2
+
 # Loop control
 loop:
-  max_iterations: 5       # Ralph Loop outer iterations (work+review cycles)
+  max_iterations: 5         # Ralph Loop outer iterations (work+review cycles)
   phase_max_iterations: 20  # Inner tool-call iterations per phase
   state_dir: ".ael/ralph"
+
+# Context budget
+# context_window: null resolves from model config.json on disk.
+# Set explicitly to override (e.g. when model is remote and not stored locally).
+context:
+  models_dir: "~/ai-models"   # set to your local model storage path
+  context_window: null      # tokens; null = read from model config.json
+  budget_warn_pct: 0.80     # print warning at this fraction of context window
+  budget_abort_pct: 0.95    # abort phase at this fraction
