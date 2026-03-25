@@ -928,6 +928,7 @@ pip install dist/*.whl
     - Strategic Domain: Populates tactical_brief field with a concise plain-text AEL task payload (~200-400 tokens); brief contains only: file(s) to modify, hard constraints, implementation steps, deliverable path(s), success criteria; all governance metadata omitted from brief
     - Strategic Domain: Checks whether context-budget.md exists in AEL state directory before authoring tactical_brief; if absent, instructs human to run `python ai/ael/src/budget.py` from project root before proceeding
     - Strategic Domain: Reads context-budget.md and adjusts brief size to fit within available context headroom
+    - Strategic Domain: Verifies tactical_brief field is non-empty before issuing AEL command; an empty or placeholder brief causes orchestrator fallback to full raw document, inflating context and risking saturation
     - Strategic Domain: Before specifying any target file path in a T04 prompt, reads the project entry point configuration (pyproject.toml [project.scripts] or equivalent) and confirms the named file is in the deployment path
     - Strategic Domain: Embeds element_registry field in T04 prompt from name registry master, scoped to elements relevant to the code generation task
     - Strategic Domain: Prompt references source change UUID in coupled_docs.change_ref field
@@ -1175,6 +1176,7 @@ flowchart TD
 | 8.0     | 2026-03-18 | Added P09 §1.10.2 tactical_brief directive: Strategic Domain populates concise AEL task payload (~200-400 tokens) in T04 prompt; orchestrator uses brief in preference to full document |
 | 8.1     | 2026-03-20 | Added context budget: AEL orchestrator resolves context window from model config.json on disk; warn/abort thresholds enforced per phase iteration; context-budget.md written to state directory at startup for Strategic Domain; P09 §1.10.2 directive: Strategic Domain reads context-budget.md before authoring tactical_brief |
 | 8.2     | 2026-03-20 | Added entry point verification directive to P04 §1.5.1 and P09 §1.10.2: Strategic Domain reads project entry point configuration (pyproject.toml [project.scripts] or equivalent) and confirms target file is in deployment path before specifying any file_path in T03 issue or T04 prompt; resolves issue c3e5b7d9 |
+| 8.3     | 2026-03-24 | Added tactical_brief verification directive to P09 §1.10.2: Strategic Domain must verify tactical_brief is non-empty before issuing AEL command; T04 template v1.6 removes governance-only fields and fixes placeholder |
 
 ---
 [Return to Table of Contents](<#table of contents>)
