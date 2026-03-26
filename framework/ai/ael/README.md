@@ -36,7 +36,8 @@ ael/
 │   ├── ralph-work.yaml  # Worker role system prompt
 │   └── ralph-review.yaml # Reviewer role system prompt
 └── src/
-    ├── orchestrator.py  # Main loop and CLI entry point (--mode worker|reviewer|loop)
+    ├── orchestrator.py  # Main loop and CLI entry point (--mode worker|reviewer|loop|reset)
+    ├── budget.py        # Context budget calculator (run before authoring T04 prompts)
     ├── mcp_client.py    # MCP stdio connection and tool dispatch
     └── parser.py        # Mistral [TOOL_CALLS] plain-text parser
 ```
@@ -90,7 +91,15 @@ mcp_servers:
 loop:
   max_iterations: 10
   state_dir: ".ael/ralph"
+
+context:
+  models_dir: "~/ai-models"   # set to your local model storage path
+  context_window: null        # null = read from model config.json on disk
+  budget_warn_pct: 0.80
+  budget_abort_pct: 0.95
 ```
+
+**`context.models_dir`** must be updated to point to your local model storage directory after deploying from skel. `budget.py` searches this directory for the model's `config.json` to determine the context window size. If your model is remote or the path cannot be resolved, set `context.context_window` to an explicit integer value instead.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -99,6 +108,9 @@ loop:
 ## Usage
 
 ```bash
+# Generate context budget report (run once at setup and after model changes)
+python ai/ael/src/budget.py
+
 # Single worker pass
 python ai/ael/src/orchestrator.py --mode worker --task workspace/prompt/prompt-abc123.md
 
@@ -108,17 +120,22 @@ python ai/ael/src/orchestrator.py --mode reviewer --task workspace/prompt/prompt
 # Full Ralph Loop (worker + reviewer cycle)
 python ai/ael/src/orchestrator.py --mode loop --task workspace/prompt/prompt-abc123.md
 python ai/ael/src/orchestrator.py --mode loop --task "implement the login module"
+
+# Reset AEL state after human acceptance
+python ai/ael/src/orchestrator.py --mode reset
 ```
 
 | Flag | Purpose |
 |---|---|
-| `--mode` | `worker` \| `reviewer` \| `loop` (default: `loop`) |
+| `--mode` | `worker` \| `reviewer` \| `loop` \| `reset` (default: `loop`) |
 | `--task` | Task string or path to task file |
 | `--model` | Model for all phases (overrides config default) |
 | `--worker-model` | Model for work phase only (loop mode) |
 | `--reviewer-model` | Model for review phase only (loop mode) |
 | `--max-iterations` | Iteration limit override |
 | `--config` | Path to config.yaml |
+
+**`budget.py`** reads `config.yaml` and the model's `config.json` from disk to compute context window size, warn/abort thresholds, and recommended `tactical_brief` sizing. It writes `.ael/ralph/context-budget.md`. The Strategic Domain reads this file before authoring any T04 prompt. If the file is absent, the Strategic Domain will instruct the human to run `budget.py` before proceeding.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -213,6 +230,9 @@ tests/test_integration.py                     SKIPPED [oMLX not reachable]
 | 1.0 | 2026-03-11 | Initial implementation; replaces Goose AEL; direct MCP + oMLX tool loop |
 | 1.1 | 2026-03-11 | Merged ralph-loop.sh into orchestrator.py; added --mode worker\|reviewer\|loop; removed shell script |
 | 1.2 | 2026-03-11 | Added tests/ directory: test_parser.py (unit), test_integration.py (Layers 2–4); added Testing section |
+| 1.3 | 2026-03-20 | Added budget.py; added --mode reset; updated Configuration and Usage sections; context.models_dir note |
+| 1.4 | 2026-03-25 | Added `format_tool_signatures()` to orchestrator.py: injects tool parameter signatures into `{{TOOLS}}` system prompt placeholder to prevent model tool-call hallucination |
+| 1.5 | 2026-03-25 | Added `mcp-grep` server to `config.yaml` MCP server definitions |
 
 ---
 

@@ -21,6 +21,34 @@ import re
 from typing import Any
 
 
+def _sanitize_json_string(s: str) -> str:
+    """
+    Replace literal newlines/carriage-returns inside JSON string literals
+    with their escape sequences. Devstral emits multi-line argument values
+    with bare newlines which cause JSONDecodeError in raw_decode.
+    """
+    result = []
+    in_string = False
+    escaped = False
+    for ch in s:
+        if escaped:
+            result.append(ch)
+            escaped = False
+        elif ch == '\\':
+            result.append(ch)
+            escaped = True
+        elif ch == '"':
+            in_string = not in_string
+            result.append(ch)
+        elif in_string and ch == '\n':
+            result.append('\\n')
+        elif in_string and ch == '\r':
+            result.append('\\r')
+        else:
+            result.append(ch)
+    return ''.join(result)
+
+
 def parse_tool_calls(content: str) -> list[dict[str, Any]]:
     """
     Extract tool calls from content string.
@@ -78,7 +106,11 @@ def parse_tool_calls(content: str) -> list[dict[str, Any]]:
         try:
             arguments, _ = decoder.raw_decode(content, start)
         except json.JSONDecodeError:
-            arguments = {}
+            try:
+                sanitized = _sanitize_json_string(content[start:])
+                arguments, _ = decoder.raw_decode(sanitized, 0)
+            except json.JSONDecodeError:
+                arguments = {}
         _append(name, arguments)
 
     return results

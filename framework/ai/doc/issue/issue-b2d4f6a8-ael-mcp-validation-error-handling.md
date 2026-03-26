@@ -26,13 +26,13 @@ issue_info:
   title: "AEL Orchestrator — MCP -32602 validation error not handled with explicit retry guidance"
   date: "2026-03-24"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "medium"
   type: "defect"
   iteration: 1
   coupled_docs:
     change_ref: ""
-    change_iteration: null
+    change_iteration: 1
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -208,8 +208,8 @@ analysis:
 
 ```yaml
 resolution:
-  assigned_to: ""
-  target_date: ""
+  assigned_to: "William Watson"
+  target_date: "2026-03-25"
   approach: >
     1. Add MCP error detection in run_phase() tool dispatch loop.
     2. Inject explicit retry user message on MCP error detection.
@@ -217,15 +217,22 @@ resolution:
     4. Apply fix to framework/ai/ael/src/orchestrator.py and
        skel/ai/ael/src/orchestrator.py. Propagate to project copies.
   change_ref: ""
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  resolved_date: "2026-03-25"
+  resolved_by: "William Watson"
+  fix_description: >
+    Added MCP error detection in run_phase() tool dispatch loop.
+    Explicit retry user message injected on each MCP error.
+    Per-phase mcp_error_count counter resets on successful tool call.
+    At mcp_error_threshold consecutive errors, RALPH-BLOCKED.md is written
+    and run_phase() returns 1. Threshold configurable via config.yaml
+    loop.mcp_error_threshold (default 3). Changes applied to framework and
+    skel orchestrator.py and config.yaml.
 
 verification:
   verified_date: ""
   verified_by: ""
   test_results: ""
-  closure_notes: ""
+  closure_notes: "Pending verification run."
 
 prevention:
   preventive_measures: >
@@ -270,6 +277,7 @@ metadata:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-03-24 | William Watson | Initial issue |
+| 1.1 | 2026-03-25 | William Watson | Resolved: MCP error handling implemented in orchestrator.py and config.yaml (framework and skel) |
 
 ---
 
