@@ -6,37 +6,81 @@ This repository provides a model-agnostic governance framework for AI-assisted s
 
 The framework was motivated by a practical observation: language models lose coherence when navigating large, complex projects — a known consequence of context window constraints [1][2]. Structured documentation provides a compact, navigable project representation that mitigates this. The protocol-driven workflow achieves this by decomposing work into discrete, bounded steps — each providing the model with only the structured context relevant to the current task.
 
-## Overview
+## Governance
 
 `ai/governance.md` defines a dual-domain architecture separating strategic coordination (Strategic Domain) from tactical implementation (Tactical Domain). Communication between domains uses MCP filesystem-based message passing. The framework is independent of any specific AI model or toolchain; implementation profiles map abstract framework concepts to concrete tooling.
 
-## Key Characteristics
-
-- **Protocol-driven workflow**: Eleven protocols (P00-P10) govern requirements capture, project initialization, three-tier design hierarchy, change management, issue resolution, traceability, testing, quality assurance, audit, prompting, and requirements management
-- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and Apple Silicon MLX
+- **Protocol-driven workflow**: Eleven protocols (P00–P10) govern requirements capture, project initialization, three-tier design hierarchy, change management, issue resolution, traceability, testing, quality assurance, audit, prompting, and requirements management
 - **Human approval gates**: Explicit human authorization required before requirements baseline, design tier transitions, code generation, and baseline modifications
 - **Three-tier design decomposition**: Master (system) → Domain (functional) → Component (implementation) with validation gates between tiers
-- **Autonomous Execution Loop (AEL)**: Optional worker/reviewer cycle via Ralph Loop for iterative code generation within governed boundaries. Based on Geoffrey Huntley's Ralph Wiggum techniques.
+- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and Apple Silicon MLX
 - **UUID-based document coupling**: 8-character hex identifiers with iteration synchronization through debug cycles
 - **Document lifecycle management**: Active/closed states with immutable archival and closure criteria across all document classes
 - **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages
-- **Template-based documentation**: Seven YAML templates (T01-T07) for all document classes
+- **Template-based documentation**: Seven YAML templates (T01–T07) for all document classes
+
+## Orchestration
+
+The Autonomous Execution Loop (AEL) implements the Ralph Loop: a worker/reviewer cycle in which the same model fulfills both roles, differentiated by prompt engineering. The loop runs iteratively until the reviewer emits `SHIP` (task complete) or `BLOCKED` (boundary exceeded). Based on Geoffrey Huntley's Ralph Wiggum techniques.
+
+`orchestrator.py` is the AEL entry point. It connects to configured MCP servers, sends tool definitions to the inference endpoint, dispatches tool calls, injects results, and iterates until no tool calls remain. It supports four execution modes:
+
+| Mode | Description |
+|---|---|
+| `loop` | Full worker/reviewer Ralph Loop cycle (standard invocation) |
+| `worker` | Single work phase pass |
+| `reviewer` | Single review phase pass |
+| `reset` | Clear state directory after human acceptance |
+
+**Configuration** — `ai/ael/config.yaml`:
+
+| Section | Purpose |
+|---|---|
+| `omlx` | Inference endpoint URL and default model |
+| `mcp_servers` | MCP server command and argument definitions |
+| `loop` | `max_iterations` (outer Ralph cycles), `phase_max_iterations` (inner tool-call iterations per phase), MCP error threshold, tool call cap |
+| `context` | Model directory path, context window size (or `null` to resolve from model `config.json`), warn/abort budget thresholds |
+
+**State directory** — `.ael/ralph/` (ephemeral, per-task):
+
+| File | Signal |
+|---|---|
+| `task.md` | Task description loaded from T04 prompt |
+| `iteration.txt` | Current Ralph Loop cycle number |
+| `work-summary.txt` | Worker phase output |
+| `work-complete.txt` | Worker completion signal |
+| `review-result.txt` | `SHIP` or `REVISE` decision |
+| `review-feedback.txt` | Reviewer notes for next worker iteration |
+| `.ralph-complete` | Success marker |
+| `RALPH-BLOCKED.md` | Failure details; seeds T03 Issue |
+
+**Invocation** (from project root, after human approval of T04 prompt):
+
+```bash
+python ai/ael/src/orchestrator.py --mode loop \
+  --task workspace/prompt/prompt-<uuid>-<n>.md
+```
 
 ## Repository Structure
 
 | Directory                              | Purpose                                                                       |
 | -------------------------------------- | ----------------------------------------------------------------------------- |
-| `framework/`                           | Governance framework development (canonical source)                           |
+| `framework/`                           | Canonical framework — governance, templates, profiles, AEL orchestrator       |
 | `framework/ai/governance.md`           | Master governance document                                                    |
 | `framework/ai/profiles/`               | Implementation profiles (claude-desktop, claude, mlx)                         |
 | `framework/ai/templates/`              | Document templates T01–T07                                                    |
-| `framework/ai/knowledge/`              | AI-consumed operational reference documents                                   |
 | `framework/ai/ael/`                    | Python AEL orchestrator (orchestrator, mcp_client, parser, recipes)           |
-| `framework/ai/doc/examples/`           | Human-facing reference material for framework adopters                        |
-| `skel/`                                | Deployable project skeleton — copy to initialize a new project                |
-| `skel/ai/`                             | Governance, templates, profiles, knowledge, and recipes for deployed projects |
+| `skel/`                                | Minimal deployable skeleton — copy to initialize a new project                |
+| `skel/ai/`                             | Governance, templates, profiles, and recipes for deployed projects            |
 | `skel/workspace/`                      | Pre-scaffolded workspace directories (design, prompt, test, trace, etc.)      |
 | `skel/src/` `skel/tests/` `skel/docs/` | Standard project directories                                                  |
+| `dev/`                                 | Framework development artefacts (requirements, design, issues, changes)       |
+| `dev/requirements/`                    | Framework-level requirements documents                                        |
+| `dev/design/`                          | Framework-level design documents                                              |
+| `docs/`                                | User-facing operational documentation                                         |
+| `docs/claude/`                         | Strategic Domain operational documents (instructions, guidelines, context)    |
+| `docs/setup-apple-silicon-mlx.md`      | Apple Silicon + MLX inference setup guide                                     |
+| `docs/software-testing-guidance.md`    | Software testing reference for framework adopters                             |
 
 ## Requirements
 
@@ -120,6 +164,8 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 2.0 | 2026-03-12 | Added Devstral Small 2 (2512) as supported model in Requirements |
 | 2.1 | 2026-03-20 | Added motivation paragraph to Purpose; added references [1] and [2] |
 | 2.2 | 2026-03-20 | Extended motivation paragraph with workflow rationale |
+| 2.3 | 2026-03-26 | Revised Repository Structure: removed stale framework/ai/doc/examples/ and framework/ai/knowledge/ entries; added dev/, dev/requirements/, dev/design/, docs/claude/; updated skel/ description; added docs/ subdirectory entries |
+| 2.4 | 2026-03-27 | Replaced Overview and Key Characteristics with Governance and Orchestration sections; Orchestration covers AEL/Ralph Loop, orchestrator.py modes, config.yaml, state directory, and invocation |
 
 ---
 

@@ -33,13 +33,14 @@ loop:
   phase_max_iterations: 20  # Inner tool-call iterations per phase
   mcp_error_threshold: 3    # Write RALPH-BLOCKED.md after this many consecutive MCP errors per phase
   max_tool_calls_per_iteration: 10  # Truncate tool calls per iteration beyond this count
+  preflight_check: false             # Evaluate success criteria before first worker iteration
   state_dir: ".ael/ralph"
 
 # Context budget
 # context_window: null resolves from model config.json on disk.
 # Set explicitly to override (e.g. when model is remote and not stored locally).
 context:
-  models_dir: "~/ai-models"   # set to your local model storage path
+  models_dir: "/Users/williamwatson/ai-models"
   context_window: null      # tokens; null = read from model config.json
   budget_warn_pct: 0.80     # print warning at this fraction of context window
   budget_abort_pct: 0.95    # abort phase at this fraction

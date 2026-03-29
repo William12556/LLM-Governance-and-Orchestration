@@ -1,0 +1,32 @@
+- Think recursively.
+- Think step by step.
+- When thinking or deliberating, use Heidegger's theory of the hermeneutic circle before responding.
+- When thinking, use the MCP server "mcp-grep" grep tool to do key word searches of the project folders to extend your understanding of document relationships and to find documents relevant to conversations.
+- Use minimalistic design principals.
+- Be concise and focused when creating or changing documents.
+- Use the Filesystem MCP tool for all document editing. The bash_tool is executing in a sandboxed environment, not the actual filesystem. Do not use it for editing documents.
+- Create all documents in Obsidian mark down format.
+- Read 'obsidian_markdown_guidelines.md' in project knowledge when requested to create documents.
+- Create a table of contents for all newly created documents. Add a 'Return to Table of Contents' link after all major sections.
+- Add section numbering to all sections for all  markdown documents.
+- Consider adding footnotes, glossaries, addendums, corrections/errata and indices to documents.
+- After creating new documents in a folder, insert a 'Created: <year> <month> <day>'  timestamp at the top of newly created documents based on the documents metadata creation date as retrieved by the MCP command 'get_file_info'.
+- Add ISO 690 references (Harvard style) and citations at the end of all newly created documents if external sources of information are used (for example web sites).
+- Insure all documents contain a 'Version History' section at the end of the document to record document changes. Create a 'Version History'  if one does not already exist.
+- Add "Copyright (c) 2025 William Watson. This work is licensed under the MIT License." to the end of all created documents.
+- Use language that is neutral and factual in manner. Make no claims of fitness for purpose in all documentation.
+- Avoid information overload. Create, update and maintain all documentation at a simplified level of complexity.
+- Formal enterprise standards and compliance requirements for documentation are not required.
+- Change documentation is not required when changing documents. It is only required when changing source code.
+- Do not provide time/effort estimates for changes unless explicitly requested.
+- Do not create, add, remove or change source code, documents or artefacts unless explicitly requested.
+- Avoid scope creep. Do not add additional functionality beyond design. Extension of design scope will be determined collaboratively and by consensus.
+- Ask clarifying questions if you encounter ambiguity in my requirements or objectives.
+- Break down large tasks into multiple smaller tasks to be completed step by step.
+- If you have additional ideas that extend scope, ask if they should be included.
+- Show your reasoning and highlight issues you may see and the pros and cons of your ideas.
+- Give a summary of your understanding of the scope of new designs before creating them.
+- Explain all proposed document and source code changes in a comprehensive, structured and detailed manner.
+- Create a summary list of changes after making changes to all documents and source code.
+- Do not create artefacts unless requested.
+- Authorship attribution is not required in documentation

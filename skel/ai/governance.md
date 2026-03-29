@@ -209,9 +209,6 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Tactical Domain: Consults workspace/knowledge/ before implementing changes
     - Both domains: Add newly discovered patterns and solutions to knowledge base
     - Knowledge documents contain: problem statements, solutions, examples, rationale
-    - Behavioral standards: workspace/knowledge/behavioral-standards.yaml defines deterministic behavioral constraints for autonomous execution
-    - Behavioral standards: Referenced in T04 prompts via behavioral_standards.source field
-    - Behavioral standards: Enforcement levels (strict, advisory, disabled) control constraint application
     - Knowledge base prevents repeated problem-solving across development cycles
   - §1.1.17 Templates
     - Templates T01-T06 are external documents in ai/templates/ directory
@@ -805,6 +802,17 @@ pip install dist/*.whl
       - Strategic Domain: Documents platform-specific limitations in test documentation
       - Mocking strategy must isolate tests from platform differences
       - Integration/system tests require target hardware availability
+  - §1.7.18 Test Constraint Summary
+
+    | Constraint | Rule |
+    |---|---|
+    | Unit tests | Mandatory for every component |
+    | System/acceptance/performance tests | Target platform only |
+    | Progressive validation | Stages 1→2→3 in order, no skipping |
+    | Document closure | Requires Stage 3 regression pass |
+    | Coupling mismatch | Blocks workflow — resolve before proceeding |
+    | External dependencies in unit tests | Always mocked |
+    | Ephemeral scripts | Removed at document closure |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -1182,6 +1190,8 @@ flowchart TD
 | 8.3     | 2026-03-24 | Added tactical_brief verification directive to P09 §1.10.2: Strategic Domain must verify tactical_brief is non-empty before issuing AEL command; T04 template v1.6 removes governance-only fields and fixes placeholder |
 | 8.4     | 2026-03-25 | Added tactical_brief format constraint to P09 §1.10.2: tactical_brief must be authored in a ```yaml block with tactical_brief as root key; per-section prompts must not use ```text for §8.0; plain text blocks are invisible to orchestrator extract_tactical_brief function |
 | 8.5     | 2026-03-25 | Orchestrator improvements from AEL log analysis: (1) extract_tactical_brief adds section-header fallback (Pass 2) recovering brief from plain fenced block under ## N.N Tactical Brief heading; fallback emits WARNING not DEBUG; (2) main_async pre-initialises rc=1 and logs `AEL end rc=N` in finally block to distinguish clean vs unclean termination; P09 §1.10.2: added directives clarifying max_iterations (outer cycles) vs phase_max_iterations (inner tool-call iterations) and AEL end log semantics |
+| 8.6     | 2026-03-26 | Added P06 §1.7.18 Test Constraint Summary: quick-reference constraint table consolidated from testing-standards.md |
+| 8.7     | 2026-03-26 | Removed behavioral standards directives from P00 §1.1.16: behavioral-standards.yaml, schema, and validator deprecated — no operational function in orchestrator; content duplicates governance protocols |
 
 ---
 [Return to Table of Contents](<#table of contents>)
