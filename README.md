@@ -13,7 +13,7 @@ The framework was motivated by a practical observation: language models lose coh
 - **Protocol-driven workflow**: Eleven protocols (P00–P10) govern requirements capture, project initialization, three-tier design hierarchy, change management, issue resolution, traceability, testing, quality assurance, audit, prompting, and requirements management
 - **Human approval gates**: Explicit human authorization required before requirements baseline, design tier transitions, code generation, and baseline modifications
 - **Three-tier design decomposition**: Master (system) → Domain (functional) → Component (implementation) with validation gates between tiers
-- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Claude Code and Apple Silicon MLX
+- **Model-agnostic architecture**: Strategic and Tactical Domain roles fulfilled by any capable LLM; implementation profiles provided for Apple Silicon MLX (primary) and Claude Code (optional)
 - **UUID-based document coupling**: 8-character hex identifiers with iteration synchronization through debug cycles
 - **Document lifecycle management**: Active/closed states with immutable archival and closure criteria across all document classes
 - **Bidirectional traceability**: Requirements ↔ Design ↔ Code ↔ Test linkages
@@ -99,13 +99,15 @@ python ai/ael/src/orchestrator.py --mode loop \
 
 Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 
-| Item | Requirement |
-|---|---|
-| Chip | Apple M-series (M1 or later) |
-| Unified memory | 24 GB minimum (Q8); 48 GB+ for BF16 |
-| `mlx_lm` | 0.21+ — required dependency of oMLX (`pip install mlx_lm`) |
-| `omlx` | Required inference server (`pip install omlx`) |
-| Model | Devstral Small 2507 Q8 or BF16; Devstral Small 2 (2512) Q8 |
+| Item           | Requirement                                                |
+| -------------- | ---------------------------------------------------------- |
+| Chip           | Apple M-series (M1 or later)                               |
+| Unified memory | 24 GB minimum (Q8); 48 GB+ for BF16                        |
+| `mlx_lm`       | 0.21+ — required dependency of oMLX (`pip install mlx_lm`) |
+| `omlx`         | Required inference server (`pip install omlx`)             |
+| Model          | Devstral Small 2 (2512) Q8                                 |
+
+Devstral Small 2 is the required Tactical Domain model. It is purpose-built for agentic coding and multi-file editing. The AEL parser (`parser.py`) is tuned to Mistral's tool-call format, which Devstral uses natively.
 
 Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
 
@@ -130,8 +132,8 @@ Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-sili
 
 | Profile     | Tactical Domain        | AEL                |
 | ----------- | ---------------------- | ------------------ |
-| `claude.md` | Claude Code + Devstral | AEL / Ralph Loop |
-| `mlx.md`    | MLX + Devstral         | AEL / Ralph Loop |
+| `claude.md` | Claude Code (optional) | Manual — human invokes per task |
+| `mlx_devstral_small_2_2512_Q8.md` | MLX + Devstral Small 2 2512 (primary) | AEL / Ralph Loop |
 
 ## Important Notice
 
@@ -166,6 +168,8 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 2.2 | 2026-03-20 | Extended motivation paragraph with workflow rationale |
 | 2.3 | 2026-03-26 | Revised Repository Structure: removed stale framework/ai/doc/examples/ and framework/ai/knowledge/ entries; added dev/, dev/requirements/, dev/design/, docs/claude/; updated skel/ description; added docs/ subdirectory entries |
 | 2.4 | 2026-03-27 | Replaced Overview and Key Characteristics with Governance and Orchestration sections; Orchestration covers AEL/Ralph Loop, orchestrator.py modes, config.yaml, state directory, and invocation |
+| 2.5 | 2026-03-31 | Added Devstral model rationale note to Apple Silicon + MLX Requirements |
+| 2.6 | 2026-03-31 | Updated Implementation Profiles table; deprecated mlx_devstral_small_2507_Q8.md; reinstated claude.md as optional Claude Code profile; updated model-agnostic architecture bullet |
 
 ---
 
