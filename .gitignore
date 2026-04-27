@@ -15,9 +15,13 @@ venv/
 **/.DS_Store
 .zsh_history
 
-# Logs
+# Logs and backups
 *.log
 **/*.log
+*.bak
+**/*.bak
+*.BAK
+**/*.BAK
 
 # Obsidian
 .obsidian/
