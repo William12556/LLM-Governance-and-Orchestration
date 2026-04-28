@@ -61,6 +61,20 @@ python ai/ael/src/orchestrator.py --mode loop \
   --task workspace/prompt/prompt-<uuid>-<n>.md
 ```
 
+### ael-mcp — Claude Desktop AEL Interface (optional)
+
+`ael-mcp` is a standalone MCP server that registers once in Claude Desktop and exposes three tools: `start_ael`, `ael_status`, and `reset_ael`. When registered, the Strategic Domain can launch and monitor AEL without human terminal access.
+
+At T04 handoff (P09 §1.10.3), the human selects the execution path:
+
+| Option | Who launches AEL | Status notification |
+|---|---|---|
+| A — Human executes (all profiles) | Human runs terminal command | Human notifies Strategic Domain |
+| B — ael-mcp (Claude Desktop profile only) | Strategic Domain calls `start_ael` | Strategic Domain calls `ael_status` on request |
+
+Repository: `https://github.com/William12556/ael-mcp`  
+Setup instructions: P01 §1.2.8 in `ai/governance.md`
+
 ## Repository Structure
 
 | Directory                              | Purpose                                                                       |
@@ -94,6 +108,7 @@ python ai/ael/src/orchestrator.py --mode loop \
 | Strategic Domain | Claude Desktop (or equivalent frontier LLM with MCP support) |
 | MCP servers | `Filesystem` and `mcp-grep` configured in the Strategic Domain tool |
 | Python MCP SDK | `pip install -r ai/ael/requirements.txt` — required for AEL orchestrator |
+| `ael-mcp` | Optional — Claude Desktop AEL interface; clone from `https://github.com/William12556/ael-mcp`; requires `mcp` Python package |
 
 ### Apple Silicon + MLX
 
@@ -170,6 +185,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 2.4 | 2026-03-27 | Replaced Overview and Key Characteristics with Governance and Orchestration sections; Orchestration covers AEL/Ralph Loop, orchestrator.py modes, config.yaml, state directory, and invocation |
 | 2.5 | 2026-03-31 | Added Devstral model rationale note to Apple Silicon + MLX Requirements |
 | 2.6 | 2026-03-31 | Updated Implementation Profiles table; deprecated mlx_devstral_small_2507_Q8.md; reinstated claude.md as optional Claude Code profile; updated model-agnostic architecture bullet |
+| 2.7 | 2026-04-28 | Added ael-mcp: Orchestration subsection (Option A/B launch table) and Requirements row |
 
 ---
 
