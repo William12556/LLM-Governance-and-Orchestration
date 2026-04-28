@@ -1,0 +1,8 @@
+{
+  "run_id": "46c6efa9-b926-4dbd-8516-ebf095efe9b9",
+  "pid": 79885,
+  "mode": "loop",
+  "task": "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/ai/ael/experiments/claude-omlx-comparison/prompt-full-T04.md",
+  "started_at": "2026-04-28T12:34:07",
+  "log_path": "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/.ael/ralph/mcp-46c6efa9.log"
+}
