@@ -121,6 +121,7 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Loop State Directory: `.ael/ralph/` (ephemeral, per-task)
     - Loop Entry: After human approval of T04 Prompt
     - Integration Scripts: Project-scoped scripts reside in `<project>/bin/`. Scripts are version-controlled project artifacts. Global installation (e.g. `~/bin/`) is not required.
+    - Claude Desktop Interface: `ael-mcp` (standalone repository) provides `start_ael`, `ael_status`, and `reset_ael` MCP tools for use within the Claude Desktop profile; registers once in Claude Desktop MCP configuration; serves all downstream projects via `project_dir` parameter; reference: §1.2.8
     - Loop Execution: Worker/reviewer cycle until SHIP or boundary exceeded
     - Loop Exit: SHIP → Strategic Domain captures work-summary.txt in T06 Result; BLOCKED → Strategic Domain seeds T03 Issue from RALPH-BLOCKED.md
     - State Files:
@@ -393,6 +394,23 @@ pip list
       - Create `CLAUDE.md` at project root with project context
       - Create `.claude/` directory structure per §1.2.6
       - Reference: [claude.md](deprecated/claude.md)
+    - **ael-mcp setup (Claude Desktop profile, optional)**:
+      - Clone: `git clone https://github.com/William12556/ael-mcp`
+      - Verify `mcp` package: `python3 -m pip show mcp`; install if absent: `pip3 install mcp`
+      - Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "ael-mcp": {
+      "command": "/path/to/python3",
+      "args": ["/path/to/ael-mcp/server.py"]
+    }
+  }
+}
+```
+      - Replace `/path/to/python3` with the interpreter that has `mcp` installed
+      - Restart Claude Desktop to load the new MCP server
+      - Reference: §1.1.11
     - **AEL setup (both profiles)**:
       - Install AEL dependencies: `pip install -r ai/ael/requirements.txt`
       - Configure `ai/ael/config.yaml` with inference endpoint and MCP server definitions
@@ -952,16 +970,26 @@ pip install dist/*.whl
     - Strategic Domain: If context file absent, generates initial context file with project context
     - Strategic Domain: Generated context file requires human approval before proceeding
     - Context file name: Defined in implementation profile (ai/profiles/)
-    - Strategic Domain: After human approval of T04 prompt, provides ready-to-execute AEL command in conversation
-    - Human: Executes command from project root directory
-    - AEL exits with SHIP (proceed to review) or BLOCKED (create T03 Issue)
-    - Human: Notifies Strategic Domain of AEL outcome
-    - Example command:
+    - Strategic Domain: After human approval of T04 prompt, presents AEL execution options; human selects preferred option:
+    - **Option A — Human executes (all profiles):**
+      - Strategic Domain: Provides ready-to-execute AEL command in conversation
+      - Human: Executes command from project root directory
+      - AEL exits with SHIP (proceed to review) or BLOCKED (create T03 Issue)
+      - Human: Notifies Strategic Domain of AEL outcome
+      - Example command:
 
 ```bash
 python ai/ael/src/orchestrator.py --mode loop \
   --task workspace/prompt/prompt-<uuid>-<n>.md
 ```
+
+    - **Option B — Strategic Domain launches via ael-mcp (Claude Desktop profile only):**
+      - Human: Chooses to delegate AEL launch to Strategic Domain
+      - Strategic Domain: Calls `start_ael` with `project_dir` and T04 prompt path as `task` parameter
+      - AEL runs detached; Strategic Domain returns `run_id`, PID, and log path
+      - Human: Requests status check when ready
+      - Strategic Domain: Calls `ael_status`; reports SHIP or BLOCKED outcome
+      - On BLOCKED: Strategic Domain reads `RALPH-BLOCKED.md` and creates T03 Issue per P04
 
   - §1.10.4 Wildcard Permissions
     - Tactical Domain: Supports wildcard patterns in permission grants for batch operations
@@ -1105,6 +1133,7 @@ See [workflow.md](workflow.md).
 | 8.6     | 2026-03-26 | Added P06 §1.7.18 Test Constraint Summary: quick-reference constraint table consolidated from testing-standards.md |
 | 8.7     | 2026-03-26 | Removed behavioral standards directives from P00 §1.1.16: behavioral-standards.yaml, schema, and validator deprecated — no operational function in orchestrator; content duplicates governance protocols |
 | 8.8     | 2026-03-29 | Extracted §2.0 Workflow flowchart to workflow.md; replaced §2.0 body with link; updated ToC entry and Prime Directive cross-reference |
+| 8.9     | 2026-04-28 | Added ael-mcp integration: P00 §1.1.11 Claude Desktop Interface directive; P09 §1.10.3 Option A/B AEL execution (human executes or Strategic Domain launches via ael-mcp); P01 §1.2.8 ael-mcp setup steps for Claude Desktop profile |
 
 ---
 [Return to Table of Contents](<#table of contents>)
