@@ -26,12 +26,12 @@ issue_info:
   title: "AEL Orchestrator — MCP stdio transport CancelledError on teardown prevents file writes"
   date: "2026-04-29"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "high"
   type: "defect"
   iteration: 1
   coupled_docs:
-    change_ref: ""
+    change_ref: "change-e3f1a2b4"
     change_iteration: 1
 ```
 
@@ -223,9 +223,13 @@ resolution:
     suppress CancelledError in close() as a minimal fix.
     Alternatively, pin/upgrade anyio to a compatible version.
   change_ref: ""
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  resolved_date: "2026-04-29"
+  resolved_by: "William Watson"
+  fix_description: >-
+    Changed except Exception to except BaseException in MCPClient.close()
+    stdio context teardown loop in framework and skel mcp_client.py.
+    CancelledError (BaseException subclass in Python 3.8+) is now suppressed
+    during shutdown. Orchestrator exits cleanly; write_file calls complete.
 
 verification:
   verified_date: ""
@@ -275,6 +279,7 @@ metadata:
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | 2026-04-29 | Initial issue |
+| 1.1 | 2026-04-29 | Resolved: BaseException handler applied to framework and skel mcp_client.py; change-e3f1a2b4 created |
 
 ---
 

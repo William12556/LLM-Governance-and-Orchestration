@@ -92,5 +92,7 @@ class MCPClient:
         for ctx in self._contexts:
             try:
                 await ctx.__aexit__(None, None, None)
-            except Exception:
+            except BaseException:
+                # CancelledError inherits BaseException (not Exception) in Python 3.8+.
+                # Suppress teardown errors — close() is shutdown-only; errors are non-recoverable.
                 pass
