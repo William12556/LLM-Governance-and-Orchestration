@@ -1,12 +1,12 @@
 # AEL Context Budget Report
 
-Generated: 2026-04-28 12:34:09
-Model: Devstral-Small-2-24B-Instruct-2512
+Generated: 2026-04-29 13:30:04
+Model: mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit
 Context window: 393,216 tokens
 
 ## Initial task load
-Estimated tokens at task start: 462 tokens (0.1% of window)
-Headroom available: 392,754 tokens
+Estimated tokens at task start: 481 tokens (0.1% of window)
+Headroom available: 392,735 tokens
 
 ## Budget thresholds
 Warn at:  314,572 tokens (80%)
@@ -14,7 +14,7 @@ Abort at: 373,555 tokens (95%)
 
 ## Iteration estimates
 Estimated accumulation per iteration: ~300 tokens
-Iterations before warn threshold:  ~1047
+Iterations before warn threshold:  ~1046
 Iterations before abort threshold: ~1243
 
 ## Guidance for Strategic Domain

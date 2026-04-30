@@ -1,0 +1,18 @@
+CSV Statistics Report (processed 5 rows)
+============================================================
+
+Column: age
+  Mean:     30.0000
+  Median:   30.0000
+  Std Dev:  3.4059
+
+Column: score
+  Mean:     87.0000
+  Median:   88.7000
+  Std Dev:  4.8908
+
+Column: height
+  Mean:     170.3800
+  Median:   170.3000
+  Std Dev:  7.2706
+

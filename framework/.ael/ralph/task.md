@@ -4,6 +4,12 @@ project_root (full absolute path): /Users/williamwatson/Documents/GitHub/LLM-Gov
 Do not use 'state_dir' or 'project_root' as literal path components.
 [END RUNTIME CONTEXT]
 
+# Tactical Brief — CSV Statistics Calculator
+
+Created: 2026 April 28
+
+---
+
 Create framework/ai/ael/experiments/claude-omlx-comparison/csv_stats.py
 
 Standard library only (csv, statistics, argparse, sys). Python 3.11.

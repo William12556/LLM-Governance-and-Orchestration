@@ -1,8 +1,8 @@
 {
-  "run_id": "46c6efa9-b926-4dbd-8516-ebf095efe9b9",
-  "pid": 79885,
+  "run_id": "6fc6bd4b-4af3-48bc-a50f-35b1efe0cec3",
+  "pid": 20008,
   "mode": "loop",
-  "task": "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/ai/ael/experiments/claude-omlx-comparison/prompt-full-T04.md",
-  "started_at": "2026-04-28T12:34:07",
-  "log_path": "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/.ael/ralph/mcp-46c6efa9.log"
+  "task": "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/ai/ael/experiments/claude-omlx-comparison/prompt-brief.md",
+  "started_at": "2026-04-29T13:30:02",
+  "log_path": "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/.ael/ralph/mcp-6fc6bd4b.log"
 }
