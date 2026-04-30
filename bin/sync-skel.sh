@@ -30,11 +30,13 @@ fi
 
 # --- Excludes --------------------------------------------------------------
 # doc/ and knowledge/ are framework-only development artefacts.
-# They must not propagate to skel/ or downstream projects.
+# ael/experiments/ contains local experiment outputs not intended for skel/downstream.
+# None of the above must propagate to skel/ or downstream projects.
 
 EXCLUDES=(
     --exclude='doc/'
     --exclude='knowledge/'
+    --exclude='ael/experiments/'
     --exclude='.DS_Store'
     --exclude='__pycache__/'
     --exclude='*.pyc'
