@@ -2,7 +2,7 @@
 omlx:
   base_url: "http://127.0.0.1:8000/v1"
   api_key: "local"
-  default_model: "Devstral-Small-2-24B-Instruct-2512"
+  default_model: "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit"
 
 # MCP server definitions
 mcp_servers:
