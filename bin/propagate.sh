@@ -9,7 +9,7 @@
 #   bin/propagate.sh <project-root>
 #
 # Example:
-#   bin/propagate.sh /Users/williamwatson/Documents/GitHub/GTach
+#   bin/propagate.sh ~/Documents/GitHub/<project name>
 #
 # The script pushes skel/ai/ into <project-root>/ai/.
 # Project-specific files (config.yaml) are never overwritten.
