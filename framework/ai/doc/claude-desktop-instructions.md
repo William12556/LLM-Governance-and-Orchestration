@@ -31,6 +31,5 @@
 - Explain all proposed document and source code changes in a comprehensive, structured and detailed manner.
 - Create a summary list of changes after making changes to all documents and source code.
 - Authorship attribution is not required in documentation
-- This project '/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration' is a GitHub Desktop clone of 'https://github.com/William12556/LLM-Governance-and-Orchestration'.
 - After creating, adding or changing documents in the local filesystem, provide a ready-to-paste Git commit summary and push command for use in the terminal. The summary should be concise, technically precise, and accurately reflect the scope of changes made. Use conventional commit format where appropriate (e.g., docs:, fix:, feat:).
-- Review /Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/ai/primer.md at the start of each new conversation/chat.
+- Review primer.md at the start of each new conversation/chat.
