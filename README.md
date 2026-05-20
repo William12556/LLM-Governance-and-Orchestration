@@ -4,7 +4,9 @@
 
 This repository provides a model-agnostic governance framework for AI-assisted software development. The framework coordinates requirements capture, design, and code generation through structured protocols and human-in-the-loop approval gates.
 
-The framework was motivated by a practical observation: language models lose coherence when navigating large, complex projects — a known consequence of context window constraints [1][2]. Structured documentation provides a compact, navigable project representation that mitigates this. The protocol-driven workflow achieves this by decomposing work into discrete, bounded steps — each providing the model with only the structured context relevant to the current task.
+For positioning context and design rationale, see [RATIONALE.md](RATIONALE.md).
+
+The framework was motivated by a practical observation: language models lose coherence when navigating large, complex projects — a known consequence of context window constraints [1][2]. Structured documentation provides a compact, navigable project representation that mitigates this. The protocol-driven workflow achieves this by decomposing work into discrete, bounded steps — each providing the model with only the structured context relevant to the current task. Tactical Domain autonomy is explicitly bounded by governance protocols and a human-approved task brief, trading open-ended autonomy for predictability and traceability.
 
 ## Governance
 
@@ -22,6 +24,8 @@ The framework was motivated by a practical observation: language models lose coh
 ## Orchestration
 
 The Autonomous Execution Loop (AEL) implements the Ralph Loop: a worker/reviewer cycle in which the same model fulfills both roles, differentiated by prompt engineering. The loop runs iteratively until the reviewer emits `SHIP` (task complete) or `BLOCKED` (boundary exceeded). Based on Geoffrey Huntley's Ralph Wiggum techniques.
+
+`orchestrator.py` is an AI agent. It perceives its environment by reading state files and tool outputs, reasons via the model  inference endpoint, acts by dispatching tool calls and writing state, and maintains persistent state in `.ael/ralph/` across iterations. The Ralph Loop constitutes a minimal two-agent system: the worker agent produces, the reviewer agent critiques, and the orchestrator arbitrates. Autonomy is constrained by the governance protocols and the T04 tactical brief — the agent cannot redefine its goal mid-run.
 
 `orchestrator.py` is the AEL entry point. It connects to configured MCP servers, sends tool definitions to the inference endpoint, dispatches tool calls, injects results, and iterates until no tool calls remain. It supports four execution modes:
 
@@ -186,7 +190,9 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 2.5 | 2026-03-31 | Added Devstral model rationale note to Apple Silicon + MLX Requirements |
 | 2.6 | 2026-03-31 | Updated Implementation Profiles table; deprecated mlx_devstral_small_2507_Q8.md; reinstated claude.md as optional Claude Code profile; updated model-agnostic architecture bullet |
 | 2.7 | 2026-04-28 | Added ael-mcp: Orchestration subsection (Option A/B launch table) and Requirements row |
+| 2.8 | 2026-05-20 | Added agent characterisation to Orchestration; added bounded autonomy rationale to Purpose; corrected copyright year |
+| 2.9 | 2026-05-20 | Added link to RATIONALE.md in Purpose section |
 
 ---
 
-Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
+Copyright (c) 2026 William Watson. MIT License.
