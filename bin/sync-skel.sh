@@ -8,7 +8,7 @@
 #   bin/sync-skel.sh
 #
 # Propagates core governance files from framework/ai/ to skel/ai/.
-# Excludes framework-only directories (doc/, knowledge/) and ephemeral files.
+# Excludes framework-only files and ephemeral artefacts.
 
 set -euo pipefail
 
@@ -29,13 +29,14 @@ if [[ ! -d "${SKEL_DST}" ]]; then
 fi
 
 # --- Excludes --------------------------------------------------------------
-# doc/ and knowledge/ are framework-only development artefacts.
+# knowledge/ is a framework-only development artefact.
+# doc/claude-desktop-instructions.md configures the Strategic Domain tool and
+#   must not propagate to downstream projects.
 # ael/experiments/ contains local experiment outputs not intended for skel/downstream.
-# None of the above must propagate to skel/ or downstream projects.
 
 EXCLUDES=(
-    --exclude='doc/'
     --exclude='knowledge/'
+    --exclude='doc/claude-desktop-instructions.md'
     --exclude='ael/experiments/'
     --exclude='.DS_Store'
     --exclude='__pycache__/'
