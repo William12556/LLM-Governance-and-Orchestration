@@ -61,9 +61,52 @@ The Autonomous Execution Loop (AEL) implements the Ralph Loop: a worker/reviewer
 **Invocation** (from project root, after human approval of T04 prompt):
 
 ```bash
+# Standard loop
 python ai/ael/src/orchestrator.py --mode loop \
   --task workspace/prompt/prompt-<uuid>-<n>.md
+
+# With wall-clock time limit (hours)
+python ai/ael/src/orchestrator.py --mode loop \
+  --task workspace/prompt/prompt-<uuid>-<n>.md \
+  --duration 12
 ```
+
+| Flag | Purpose |
+|---|---|
+| `--mode` | `worker` \| `reviewer` \| `loop` \| `reset` (default: `loop`) |
+| `--task` | Task string or path to task file |
+| `--model` | Model for all phases (overrides config default) |
+| `--worker-model` | Model for work phase only (loop mode) |
+| `--reviewer-model` | Model for review phase only (loop mode) |
+| `--max-iterations` | Outer Ralph cycle limit override |
+| `--duration` | Wall-clock time limit in hours (default: no limit) |
+| `--config` | Path to config.yaml |
+
+### Audit Loop
+
+The AEL includes a read-only codebase quality analysis capability. It uses dedicated recipes (`audit-work.yaml`, `audit-review.yaml`) in place of the standard Ralph recipes. The worker reads source files, records findings, and marks items in a traversal index. The reviewer checks finding quality and coverage. No source file is written.
+
+Audit-specific state files (pre-populated by the Strategic Domain before launch):
+
+| File | Purpose |
+|---|---|
+| `audit-index.md` | Ordered list of items to audit; worker marks each `[x]` on completion |
+| `audit-report.md` | Append-only findings accumulator |
+| `audit-uml.md` | Optional structural map of the target codebase |
+
+Audit criteria assessed per item: style, complexity, error handling, security, conformance, dead code.
+
+Invocation:
+
+```bash
+python ai/ael/src/orchestrator.py --mode loop \
+  --task workspace/prompt/<uuid>-audit.md \
+  --duration 12
+```
+
+Without `--duration` the loop runs until all items in `audit-index.md` are marked complete or `max_iterations` is exhausted. High-severity findings are promoted to T03 issues post-run via the standard P04 workflow.
+
+See `docs/guide-audit-loop.md` for an overview and `framework/ai/doc/guide-audit-loop.md` for operational detail.
 
 ### ael-mcp — Claude Desktop AEL Interface (optional)
 
@@ -99,6 +142,11 @@ Setup instructions: P01 §1.2.8 in `ai/governance.md`
 | `docs/claude/`                         | Strategic Domain operational documents (instructions, guidelines, context)    |
 | `docs/setup-apple-silicon-mlx.md`      | Apple Silicon + MLX inference setup guide                                     |
 | `docs/software-testing-guidance.md`    | Software testing reference for framework adopters                             |
+| `docs/guide-getting-started.md`        | End-to-end setup guide from clone to first AEL run                            |
+| `docs/guide-profile-selection.md`      | Profile selection guide: AEL vs Claude Code vs claude-omlx                    |
+| `docs/guide-audit-loop.md`             | Audit loop overview and usage guide                                           |
+| `framework/ai/doc/guide-audit-loop.md` | Operational audit loop guide for the Strategic Domain (downstream projects)   |
+| `framework/ai/doc/guide-ael-operations.md` | AEL operational reference for the Strategic Domain (downstream projects)  |
 
 ## Requirements
 
@@ -192,6 +240,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 2.7 | 2026-04-28 | Added ael-mcp: Orchestration subsection (Option A/B launch table) and Requirements row |
 | 2.8 | 2026-05-20 | Added agent characterisation to Orchestration; added bounded autonomy rationale to Purpose; corrected copyright year |
 | 2.9 | 2026-05-20 | Added link to RATIONALE.md in Purpose section |
+| 3.0 | 2026-06-02 | Added Audit Loop subsection; added `--duration` flag and CLI flags table to Orchestration; updated Repository Structure with new guide documents |
 
 ---
 
