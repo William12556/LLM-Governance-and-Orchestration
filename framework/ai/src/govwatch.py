@@ -381,8 +381,10 @@ class Scanner:
             if not dirpath.exists():
                 continue
             for filepath in sorted(dirpath.rglob("*.md")):
-                # Exclude any path component named 'closed'
+                # Exclude closed/ subtrees and README files
                 if "closed" in filepath.parts:
+                    continue
+                if filepath.name.upper() == "README.MD":
                     continue
                 try:
                     doc = parse_document(str(filepath))
@@ -649,11 +651,17 @@ class ComplianceEngine:
             if doc.is_master:
                 continue
             if not _FILENAME_RE.match(os.path.basename(doc.path)):
+                # Show path relative to workspace/ for clarity
+                try:
+                    idx = doc.path.index("workspace")
+                    rel = doc.path[idx:]
+                except ValueError:
+                    rel = os.path.basename(doc.path)
                 alerts.append(Alert(
                     severity="warning",
                     code="FR-02-04",
                     message="Filename does not match governance naming convention",
-                    document=os.path.basename(doc.path),
+                    document=rel,
                 ))
 
         # FR-02-05: open documents present while AEL signals SHIP → WARNING
