@@ -1122,28 +1122,20 @@ class GovwatchApp(App):
         if self._snapshot is None:
             return
         payload = self._writer.payload(self._snapshot)
-        # Strategy 1: pyperclip (cross-platform)
+        # macOS pbcopy — reliable inside a textual alternate-screen session
+        import subprocess
         try:
-            import pyperclip  # type: ignore[import]
-            pyperclip.copy(payload)
-            self.notify("Alert summary copied to clipboard.", title="Copied")
-            return
-        except Exception:  # noqa: BLE001
-            pass
-        # Strategy 2: macOS pbcopy fallback
-        try:
-            import subprocess
-            proc = subprocess.run(
+            proc = subprocess.Popen(
                 ["pbcopy"],
-                input=payload.encode("utf-8"),
-                check=True,
+                stdin=subprocess.PIPE,
             )
+            proc.communicate(input=payload.encode("utf-8"))
             self.notify("Alert summary copied to clipboard.", title="Copied")
             return
         except Exception:  # noqa: BLE001
             pass
         self.notify(
-            "Clipboard copy failed. Install pyperclip: pip install pyperclip",
+            "Clipboard copy failed: pbcopy not available on this platform.",
             title="Copy error",
             severity="error",
         )
