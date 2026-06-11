@@ -108,6 +108,23 @@ Without `--duration` the loop runs until all items in `audit-index.md` are marke
 
 See `docs/guide-audit-loop.md` for an overview and `framework/ai/doc/guide-audit-loop.md` for operational detail.
 
+### govwatch — Governance Monitoring TUI
+
+`govwatch` is a standalone read-only TUI for monitoring a downstream project's governance state. It scans `workspace/` and `.ael/ralph/` each polling cycle and reports:
+
+- Inferred workflow phase (Idle, Change cycle, Tactical execution, etc.)
+- Two-tier compliance alerts: coupling violations, UUID mismatches, invalid `tactical_brief`, naming convention failures
+- Open document registry grouped by UUID
+- Alert summary written to `dashboard-alerts.md`; clipboard copy via `C` key
+
+Invocation from project root:
+
+```bash
+python ai/src/govwatch.py [--project PATH] [--interval N]
+```
+
+See `framework/ai/doc/guide-govwatch.md` for full operational detail.
+
 ### ael-mcp — Claude Desktop AEL Interface (optional)
 
 `ael-mcp` is a standalone MCP server that registers once in Claude Desktop and exposes three tools: `start_ael`, `ael_status`, and `reset_ael`. When registered, the Strategic Domain can launch and monitor AEL without human terminal access.
@@ -146,6 +163,9 @@ Setup instructions: P01 §1.2.8 in `ai/governance.md`
 | `docs/guide-profile-selection.md`      | Profile selection guide: AEL vs Claude Code vs claude-omlx                    |
 | `docs/guide-audit-loop.md`             | Audit loop overview and usage guide                                           |
 | `framework/ai/doc/guide-audit-loop.md` | Operational audit loop guide for the Strategic Domain (downstream projects)   |
+| `framework/ai/src/govwatch.py` | Governance monitoring TUI — read-only, downstream project observer |
+| `framework/ai/src/requirements-govwatch.txt` | govwatch dependency manifest (textual, rich) |
+| `framework/ai/doc/guide-govwatch.md` | govwatch operational guide |
 | `framework/ai/doc/guide-ael-operations.md` | AEL operational reference for the Strategic Domain (downstream projects)  |
 
 ## Requirements
@@ -159,6 +179,7 @@ Setup instructions: P01 §1.2.8 in `ai/governance.md`
 | Git | Any recent version |
 | Strategic Domain | Claude Desktop (or equivalent frontier LLM with MCP support) |
 | MCP servers | `Filesystem` and `mcp-grep` configured in the Strategic Domain tool |
+| `govwatch` | `pip install -r ai/src/requirements-govwatch.txt` — required for governance monitoring TUI |
 | Python MCP SDK | `pip install -r ai/ael/requirements.txt` — required for AEL orchestrator |
 | `ael-mcp` | Optional — Claude Desktop AEL interface; clone from `https://github.com/William12556/ael-mcp`; requires `mcp` Python package |
 
@@ -241,6 +262,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 2.8 | 2026-05-20 | Added agent characterisation to Orchestration; added bounded autonomy rationale to Purpose; corrected copyright year |
 | 2.9 | 2026-05-20 | Added link to RATIONALE.md in Purpose section |
 | 3.0 | 2026-06-02 | Added Audit Loop subsection; added `--duration` flag and CLI flags table to Orchestration; updated Repository Structure with new guide documents |
+| 3.1 | 2026-06-10 | Added govwatch subsection; added govwatch entries to Repository Structure and Requirements |
 
 ---
 
