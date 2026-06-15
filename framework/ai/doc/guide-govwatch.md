@@ -24,10 +24,10 @@ Created: 2026 June 10
 `govwatch` is a read-only governance monitoring TUI for downstream projects. It
 infers the current workflow phase, runs a compliance scan over open workspace
 documents, lists open documents grouped by UUID, and emits an alert summary to
-`dashboard-alerts.md` and (on request) the clipboard.
+`ai/dashboard-alerts.md` and (on request) the clipboard.
 
 Run it from a downstream project root at any point during a development cycle.
-It writes nothing except `dashboard-alerts.md`.
+It writes nothing except `ai/dashboard-alerts.md`.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -63,7 +63,7 @@ python ai/src/govwatch.py
 | `--project PATH` | current working directory | Override the project root |
 | `--interval N` | `5` | Polling interval in seconds |
 
-govwatch validates that `workspace/` exists under the project root on startup.
+govwatch validates that `ai/workspace/` exists under the project root on startup.
 If not found, it prints a diagnostic and exits non-zero without entering the TUI.
 
 [Return to Table of Contents](<#table of contents>)
@@ -77,8 +77,8 @@ The TUI renders three panels side by side.
 ### 4.1 Workflow State
 
 Shows the inferred workflow phase (see §6.0), AEL status and iteration derived
-from `.ael/ralph/` state files, and context budget status derived from
-`.ael/ralph/context-budget.md`.
+from `ai/state/ralph/` state files, and context budget status derived from
+`ai/state/ralph/context-budget.md`.
 
 Colour coding: green = active/ok, yellow = warning, red = blocked/abort,
 dim = idle/unknown.
@@ -173,7 +173,7 @@ Conditions 2–6 evaluate only over open (non-`closed/`) documents.
 
 ## 8.0 dashboard-alerts.md
 
-govwatch overwrites `dashboard-alerts.md` in the project root on every scan
+govwatch overwrites `ai/dashboard-alerts.md` on every scan
 cycle. It is the only file govwatch writes. The format is plain markdown:
 
 ```
@@ -191,7 +191,7 @@ Budget: <ok|warn|abort|unknown>
 - [<code>] <message> (<document>)
 ```
 
-Sections with no entries show `none`. Add `dashboard-alerts.md` to the project
+Sections with no entries show `none`. Add `ai/dashboard-alerts.md` to the project
 `.gitignore` — it reflects transient state and changes on every scan.
 
 [Return to Table of Contents](<#table of contents>)
@@ -203,11 +203,11 @@ Sections with no entries show `none`. Add `dashboard-alerts.md` to the project
 | Symptom | Cause | Resolution |
 |---|---|---|
 | `ModuleNotFoundError: No module named 'textual'` | Dependencies not installed | `pip install -r ai/src/requirements-govwatch.txt` |
-| `workspace/ not found` startup error | Wrong working directory or `--project` path | Run from the project root or pass `--project <path>` |
+| `ai/workspace/ not found` startup error | Wrong working directory or `--project` path | Run from the project root or pass `--project <path>` |
 | `C` key shows "Copy error" | `pbcopy` not available | macOS only; not applicable on other platforms |
 | `WRITE-WARN` in Compliance Alerts | `dashboard-alerts.md` not writable | Check file permissions in the project root |
 | FR-02-04 for legacy filenames | Old freeform documents predate UUID convention | Expected; no action required unless remediation is desired |
-| AEL status shows `idle` when AEL is running | `.ael/ralph/` absent or state files not yet written | Normal at startup; refreshes on next poll cycle |
+| AEL status shows `idle` when AEL is running | `ai/state/ralph/` absent or state files not yet written | Normal at startup; refreshes on next poll cycle |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -218,6 +218,7 @@ Sections with no entries show `none`. Add `dashboard-alerts.md` to the project
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-06-10 | Initial guide |
+| 1.1 | 2026-06-14 | Updated paths for ai/ consolidation: output ai/dashboard-alerts.md, state ai/state/ralph/, validates ai/workspace/ |
 
 ---
 

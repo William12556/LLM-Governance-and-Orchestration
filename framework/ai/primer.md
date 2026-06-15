@@ -48,7 +48,7 @@ direct conversational access to the other.
 
 - **AEL (Autonomous Execution Loop)** — reference implementation. Runs a
   worker/reviewer cycle (Ralph Loop) until `SHIP` or `BLOCKED`. State resides
-  in `.ael/ralph/`. Requires oMLX inference endpoint and `config.yaml`.
+  in `ai/state/ralph/`. Requires oMLX inference endpoint and `config.yaml`.
 - **Claude Code** — alternative profile. Manual invocation; no automated loop.
   Uses `CLAUDE.md` as tactical context file. See `ai/profiles/claude.md`.
 
@@ -88,7 +88,7 @@ python ai/src/govwatch.py
 
 Provides: inferred workflow phase, two-tier compliance alerts (coupling
 violations, tactical_brief validity, naming convention), document registry
-grouped by UUID, and an alert summary emitted to `dashboard-alerts.md` and
+grouped by UUID, and an alert summary emitted to `ai/dashboard-alerts.md` and
 the clipboard (`C` key).
 
 See `ai/doc/guide-govwatch.md` for full operational detail.
@@ -197,8 +197,8 @@ required after each increment.
 
 | State | Location | Mutability |
 |---|---|---|
-| Active | `workspace/<class>/` | Mutable |
-| Closed | `workspace/<class>/closed/` | Immutable |
+| Active | `ai/workspace/<class>/` | Mutable |
+| Closed | `ai/workspace/<class>/closed/` | Immutable |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -213,7 +213,7 @@ required after each increment.
 - Issuing an AEL command when `tactical_brief` is empty.
 
 **Context Budget**
-- `context-budget.md` must exist in `.ael/ralph/` before authoring any T04
+- `context-budget.md` must exist in `ai/state/ralph/` before authoring any T04
   prompt. If absent, instruct human to run `python ai/ael/src/budget.py`.
 - Read budget before sizing `tactical_brief` (~200–400 tokens target).
 
@@ -229,7 +229,7 @@ required after each increment.
 
 **Change Documentation Scope**
 - Full issue/change/prompt workflow applies to `src/` changes only.
-- `workspace/` document changes may be made directly after human approval.
+- `ai/workspace/` document changes may be made directly after human approval.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -262,6 +262,7 @@ any document.
 | 0.2 | 2026-04-28 | Added ael-mcp to §2.0 Architecture; annotated §4.0 Workflow AEL step with Option A/B |
 | 0.3 | 2026-04-30 | Added §2.1 Tactical Profiles with comparison table |
 | 0.4 | 2026-06-10 | Added §2.2 Monitoring Tools (govwatch) |
+| 0.5 | 2026-06-14 | Relocated framework paths under ai/: workspace/ → ai/workspace/, state .ael/ralph/ → ai/state/ralph/, govwatch output → ai/dashboard-alerts.md |
 
 ---
 
