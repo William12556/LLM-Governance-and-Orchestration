@@ -44,6 +44,8 @@ fi
 
 EXCLUDES=(
     --exclude='config.yaml'
+    --exclude='state/'
+    --exclude='dashboard-alerts.md'
     --exclude='.DS_Store'
     --exclude='__pycache__/'
     --exclude='*.pyc'
