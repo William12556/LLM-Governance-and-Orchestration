@@ -28,12 +28,20 @@ build/
 .obsidian/
 *.canvas
 
-# AI framework
+# AI framework (consolidated under ai/)
+# Owned-project (tracked) mode is below: the framework lives in ai/ and is
+# version-controlled; only transient state and generated output are ignored.
+# Third-party fork (isolation) mode: replace this section with two lines —
+#   /ai/
+#   /CLAUDE.md
+# — to keep the framework out of the fork's history entirely.
 deprecated/
-workspace/admin/
-workspace/ai/
-workspace/proposal/
-workspace/proposal/closed/
+ai/workspace/admin/
+ai/workspace/ai/
+ai/workspace/proposal/
+ai/workspace/proposal/closed/
+ai/state/
+ai/dashboard-alerts.md
 
 # Tactical Domain
 CLAUDE.local.md
