@@ -65,7 +65,7 @@ Execution → Results → Issue Creation (if needed) → Closure
 **Process:**
 1. Read template from `ai/templates/T05-test.md`
 2. Create test document from generated source code
-3. Save to `workspace/test/test-<uuid>-<n>.md`
+3. Save to `ai/workspace/test/test-<uuid>-<n>.md`
 4. Couple to source prompt via UUID reference
 5. Match iteration numbers with source prompt
 
@@ -151,7 +151,7 @@ pytest -v tests/
 **Process:**
 1. Review test execution output
 2. Create result document using T06 template
-3. Save to `workspace/test/result/result-<uuid>-<n>.md`
+3. Save to `ai/workspace/test/result/result-<uuid>-<n>.md`
 4. Reference parent test UUID
 5. Match parent test iteration number
 
@@ -886,7 +886,7 @@ Strategic Domain verifies:
 ### Traceability Matrix Updates
 
 After test execution, Strategic Domain updates the traceability matrix (P05) in:
-`workspace/trace/trace-<name>-master.md`
+`ai/workspace/trace/trace-<name>-master.md`
 
 ### Required Linkages
 
@@ -1038,6 +1038,7 @@ Strategic Domain identifies:
 |---|---|---|
 | 1.0 | 2026-01-08 | Initial testing guidance document |
 | 1.1 | 2026-03-05 | Relocated from issues/ to examples/; replaced project-specific content with generic equivalents; replaced Claude Desktop/Claude Code actor labels with Strategic/Tactical Domain; genericised all code examples, directory structures, and traceability matrix entries; updated Platform Considerations to remove hardcoded platform references |
+| 1.2 | 2026-06-14 | Relocated workspace/ → ai/workspace/ in test, result, and trace path references |
 
 ---
 

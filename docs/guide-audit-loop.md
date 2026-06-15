@@ -85,7 +85,7 @@ Full operational instructions are in `framework/ai/doc/guide-audit-loop.md` (ava
 
 **1. Pre-audit preparation (Strategic Domain):**
 
-The Strategic Domain generates two files and places them in `.ael/ralph/` before launching:
+The Strategic Domain generates two files and places them in `ai/state/ralph/` before launching:
 
 - `audit-index.md` — ordered list of files and functions to audit, one item per line in `[ ] path :: name` format
 - `audit-uml.md` — optional Mermaid class diagram of the target codebase for structural context
@@ -105,7 +105,7 @@ loop:
 
 ```bash
 python ai/ael/src/orchestrator.py --mode loop \
-  --task workspace/prompt/<uuid>-audit.md \
+  --task ai/workspace/prompt/<uuid>-audit.md \
   --duration 12
 ```
 
@@ -117,7 +117,7 @@ Omit `--duration` to run until coverage is complete.
 
 ## 5.0 Interpreting Results
 
-Findings are written to `.ael/ralph/audit-report.md` in a structured format:
+Findings are written to `ai/state/ralph/audit-report.md` in a structured format:
 
 ```markdown
 ## src/module.py :: function_name  [iteration N]
@@ -145,7 +145,7 @@ Severity levels:
 2. High and critical severity findings → create T03 issues via P04, referencing the audit run
 3. Medium findings → record in a tracking issue or schedule for next development cycle
 4. Low findings → discretionary; may be addressed in passing or deferred
-5. Move `audit-report.md` to `workspace/audit/` and rename per naming convention
+5. Move `audit-report.md` to `ai/workspace/audit/` and rename per naming convention
 6. When remediation is complete, close the audit document per P08 §1.9.7
 
 [Return to Table of Contents](<#table of contents>)
@@ -157,6 +157,7 @@ Severity levels:
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
+| 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
 
 ---
 

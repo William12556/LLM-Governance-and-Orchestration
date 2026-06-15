@@ -83,12 +83,12 @@ The primary profile. The orchestrator (`orchestrator.py`) runs a worker/reviewer
 
 **Tactical context file:** `config.yaml` (at `ai/ael/config.yaml`)
 
-**State directory:** `.ael/ralph/`
+**State directory:** `ai/state/ralph/`
 
 **Invocation:**
 ```bash
 python ai/ael/src/orchestrator.py --mode loop \
-  --task workspace/prompt/prompt-<uuid>-<n>.md
+  --task ai/workspace/prompt/prompt-<uuid>-<n>.md
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -167,6 +167,7 @@ The AEL profile is the only profile that supports the automated audit loop (`aud
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
+| 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
 
 ---
 

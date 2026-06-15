@@ -226,7 +226,7 @@ mcp_servers:
 
 loop:
   max_iterations: 10
-  state_dir: ".ael/ralph"
+  state_dir: "ai/state/ralph"
 ```
 
 Replace `<allowed-path>` with the project root path. Replace `api_key` with your configured oMLX API key if different from `local`.
@@ -268,6 +268,7 @@ A response of `OK` confirms end-to-end connectivity.
 | 1.4 | 2026-03-06 | Corrected API key scope: oMLX requires authentication for all requests, not admin dashboard only; updated tables and verification curl |
 | 1.5 | 2026-03-11 | Added DMG installer as alternative to pip; replaced Goose references with AEL orchestrator; updated Configure section and Verification |
 | 1.6 | 2026-03-12 | Added Devstral Small 2 (2512) download section; restructured Download section with model summary table; renamed Q8/BF16 subsections for clarity |
+| 1.7 | 2026-06-14 | Updated config.yaml state_dir to ai/state/ralph |
 
 ---
 

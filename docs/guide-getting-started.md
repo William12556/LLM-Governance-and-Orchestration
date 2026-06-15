@@ -153,7 +153,7 @@ Run once after setup and after any model change:
 python ai/ael/src/budget.py
 ```
 
-This writes `.ael/ralph/context-budget.md`. The Strategic Domain reads this file before authoring T04 prompts.
+This writes `ai/state/ralph/context-budget.md`. The Strategic Domain reads this file before authoring T04 prompts.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -208,6 +208,7 @@ The Strategic Domain coordinates each step. Human approval gates are required be
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
+| 1.1 | 2026-06-14 | Updated budget output path to ai/state/ralph/context-budget.md |
 
 ---
 
