@@ -15,7 +15,7 @@ Created: 2026 March 05
 - [Download Devstral](<#download devstral>)
   - [Devstral Small 2507 Q8](<#devstral small 2507 q8>)
   - [Devstral Small 2507 BF16](<#devstral small 2507 bf16>)
-  - [Devstral Small 2 (2512) Q8](<#devstral small 2 (2512) q8>)
+  - [Devstral Small 2 (2512) 6bit](<#devstral small 2 (2512) 6bit>)
 - [Start oMLX](<#start omlx>)
 - [Configure AEL](<#configure ael>)
 - [Verification](<#verification>)
@@ -93,7 +93,7 @@ Choose a model based on available unified memory and performance requirements.
 |---|---|---|---|
 | Devstral Small 2507 | `mlx-community/Devstral-Samll-2507-8bit` | Q8 | ~24 GB |
 | Devstral Small 2507 | mlx-community (see BF16 section) | BF16 | ~44 GB |
-| Devstral Small 2 (2512) | `mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit` | Q8 | ~24 GB |
+| Devstral Small 2 (2512) | `mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit` | 6bit | ~18 GB |
 
 ### Devstral Small 2507 Q8
 
@@ -137,16 +137,16 @@ snapshot_download(
 
 ---
 
-### Devstral Small 2 (2512) Q8
+### Devstral Small 2 (2512) 6bit
 
-Approximately 24 GB unified memory required. Second-generation release; higher SWE-Bench Verified score than Small 2507.
+Approximately 18 GB unified memory required. Second-generation release; higher SWE-Bench Verified score than Small 2507.
 
 ```bash
 python -c "
 from huggingface_hub import snapshot_download
 snapshot_download(
-    repo_id='mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit',
-    local_dir='~/ai-models/mlx-community/devstral-small-2-q8'
+    repo_id='mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit',
+    local_dir='~/ai-models/mlx-community/devstral-small-2-6bit'
 )
 "
 ```
@@ -269,6 +269,7 @@ A response of `OK` confirms end-to-end connectivity.
 | 1.5 | 2026-03-11 | Added DMG installer as alternative to pip; replaced Goose references with AEL orchestrator; updated Configure section and Verification |
 | 1.6 | 2026-03-12 | Added Devstral Small 2 (2512) download section; restructured Download section with model summary table; renamed Q8/BF16 subsections for clarity |
 | 1.7 | 2026-06-14 | Updated config.yaml state_dir to ai/state/ralph |
+| 1.8 | 2026-06-16 | Updated Devstral 2512 section: Q8 → 6bit; corrected repo MLX-8Bit → MLX-6Bit; updated memory estimate |
 
 ---
 

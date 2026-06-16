@@ -115,7 +115,7 @@ See `docs/guide-audit-loop.md` for an overview and `ai/doc/guide-audit-loop.md` 
 - Inferred workflow phase (Idle, Change cycle, Tactical execution, etc.)
 - Two-tier compliance alerts: coupling violations, UUID mismatches, invalid `tactical_brief`, naming convention failures
 - Open document registry grouped by UUID
-- Alert summary written to `dashboard-alerts.md`; clipboard copy via `C` key
+- Alert summary written to `ai/dashboard-alerts.md`; clipboard copy via `C` key
 
 Invocation from project root:
 
@@ -194,10 +194,10 @@ Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 | Item           | Requirement                                                |
 | -------------- | ---------------------------------------------------------- |
 | Chip           | Apple M-series (M1 or later)                               |
-| Unified memory | 24 GB minimum (Q8); 48 GB+ for BF16                        |
+| Unified memory | 24 GB minimum (6bit); 48 GB+ for BF16                     |
 | `mlx_lm`       | 0.21+ — required dependency of oMLX (`pip install mlx_lm`) |
 | `omlx`         | Required inference server (`pip install omlx`)             |
-| Model          | Devstral Small 2 (2512) Q8                                 |
+| Model          | Devstral Small 2 (2512) 6bit                               |
 
 Devstral Small 2 is the required Tactical Domain model. It is purpose-built for agentic coding and multi-file editing. The AEL parser (`parser.py`) is tuned to Mistral's tool-call format, which Devstral uses natively.
 
@@ -268,6 +268,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 3.0 | 2026-06-02 | Added Audit Loop subsection; added `--duration` flag and CLI flags table to Orchestration; updated Repository Structure with new guide documents |
 | 3.1 | 2026-06-10 | Added govwatch subsection; added govwatch entries to Repository Structure and Requirements |
 | 3.2 | 2026-06-16 | Updated for unified ai/ model: Repository Structure, state dir, invocation paths, govwatch paths, Getting Started |
+| 3.3 | 2026-06-16 | Second-pass alignment: ai/dashboard-alerts.md prefix; model spec Q8 → 6bit |
 
 ---
 

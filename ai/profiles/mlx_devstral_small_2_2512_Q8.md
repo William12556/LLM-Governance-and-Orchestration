@@ -25,7 +25,7 @@ This profile maps governance abstract placeholders to Apple Silicon MLX-based lo
 | Concern | Implementation |
 |---|---|
 | Strategic Domain | Claude Desktop (preferred) |
-| Tactical Domain | Devstral Small 2 2512 Q8 via oMLX + AEL |
+| Tactical Domain | Devstral Small 2 2512 6bit via oMLX + AEL |
 | AEL mechanism | AEL orchestrator / Ralph Loop |
 
 [Return to Table of Contents](<#table of contents>)
@@ -57,9 +57,9 @@ Any frontier model with sufficient reasoning capability may substitute. The Stra
 
 ## Tactical Domain
 
-**Implementation:** Devstral Small 2 2512 Q8 via oMLX + AEL orchestrator
+**Implementation:** Devstral Small 2 2512 6bit via oMLX + AEL orchestrator
 
-**Hardware requirement:** Apple M-series chip; 24 GB unified memory minimum (Q8 quantisation).
+**Hardware requirement:** Apple M-series chip; 24 GB unified memory minimum (6bit quantisation).
 
 **Inference server:**
 
@@ -74,8 +74,8 @@ The server exposes an OpenAI-compatible endpoint at `http://localhost:8000/v1`.
 ```python
 from huggingface_hub import snapshot_download
 snapshot_download(
-    repo_id="mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit",
-    local_dir="/path/to/ai-models/mlx-community/devstral-small-2-q8"
+    repo_id="mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit",
+    local_dir="/path/to/ai-models/mlx-community/devstral-small-2-6bit"
 )
 ```
 
@@ -96,7 +96,7 @@ omlx:
 
 ## Tool-Calling Behaviour
 
-Devstral Small 2 2512 Q8 via oMLX supports tool calling. The AEL orchestrator owns the full tool dispatch loop; tool calls are parsed from model output and dispatched directly via the Python MCP SDK.
+Devstral Small 2 2512 6bit via oMLX supports tool calling. The AEL orchestrator owns the full tool dispatch loop; tool calls are parsed from model output and dispatched directly via the Python MCP SDK.
 
 **Prompt guidance — imperative phrasing:**
 
@@ -138,8 +138,8 @@ Worker and reviewer roles are differentiated by prompt engineering within the sa
 
 | Role | Model | Quantisation | Approx. Memory |
 |---|---|---|---|
-| Worker | Devstral Small 2 2512 | Q8 | ~24 GB |
-| Reviewer | Devstral Small 2 2512 | Q8 | ~24 GB |
+| Worker | Devstral Small 2 2512 | 6bit | ~18 GB |
+| Reviewer | Devstral Small 2 2512 | 6bit | ~18 GB |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -166,6 +166,7 @@ ai/state/ralph/
 |---|---|---|
 | 1.0 | 2026-03-12 | Initial document |
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state ai/state/ralph/, workspace/ → ai/workspace/, .gitignore additions |
+| 1.2 | 2026-06-16 | Updated Q8 → 6bit throughout; corrected model download repo and local dir |
 
 ---
 

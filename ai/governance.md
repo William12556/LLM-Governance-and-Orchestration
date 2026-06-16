@@ -206,13 +206,11 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Production environments use normal mode for operational efficiency
     - Log artifacts preserved for failure analysis
   - §1.1.16 Knowledge Base
-    - Strategic Domain: Consults ai/workspace/knowledge/ before creating documents or code
-    - Tactical Domain: Consults ai/workspace/knowledge/ before implementing changes
-    - Both domains: Add newly discovered patterns and solutions to knowledge base
-    - Knowledge documents contain: problem statements, solutions, examples, rationale
+    - Projects may optionally maintain a knowledge/ subdirectory under ai/workspace/ for institutional knowledge capture
+    - Knowledge documents may contain: problem statements, solutions, examples, rationale
     - Knowledge base prevents repeated problem-solving across development cycles
   - §1.1.17 Templates
-    - Templates T01-T06 are external documents in ai/templates/ directory
+    - Templates T01-T07 are external documents in ai/templates/ directory
     - Template files:
       - ai/templates/T01-design.md
       - ai/templates/T02-change.md
@@ -220,6 +218,7 @@ python ai/ael/src/orchestrator.py --mode loop \
       - ai/templates/T04-prompt.md
       - ai/templates/T05-test.md
       - ai/templates/T06-result.md
+      - ai/templates/T07-requirements.md
     - Strategic Domain: Read template from ai/templates/ before creating documents
     - Tactical Domain: Read templates when referenced in prompt documents
     - Templates contain YAML structure and JSON Schema validation rules
@@ -345,7 +344,7 @@ test.txt
         │       ├── design/
         │       ├── change/
         │       │   └── closed/
-        │       ├── knowledge/        # Institutional knowledge
+        │       ├── knowledge/        # Institutional knowledge (optional)
         │       ├── issues/
         │       │   └── closed/
         │       ├── proposal/         # (excluded from git)
@@ -528,7 +527,6 @@ exclude_lines = [
     - Testing: Informal validation, no formal test documentation required
     - Transition: Successful prototypes promote to formal design workflow
     - Human decision: Determines when exploration transitions to formal development
-    - Knowledge capture: Findings documented in ai/workspace/knowledge/ for reuse
     - Audit exemption: Exploration work excluded from P08 compliance audits
     - Git workflow: Feature branches for exploration, merge on formalization
   - §1.3.9 Cross-Linking Requirements
@@ -1153,6 +1151,7 @@ See [workflow.md](workflow.md).
 | 9.0     | 2026-04-30 | Added claude-omlx as Tactical Domain implementation option: §1.1.4 implementation options; §1.2.8 claude-omlx profile setup steps; fixed claude.md reference path (deprecated/ → profiles/) |
 | 9.1     | 2026-06-14 | Consolidated framework footprint under ai/: relocated workspace/ → ai/workspace/ across P00–P10 path references; loop state .ael/ralph/ → ai/state/ralph/ (§1.1.11); updated §1.2.2 .gitignore and §1.2.6 folder structure for ai/ layout; added ai/state/ and ai/dashboard-alerts.md; documented fork isolation mode; CLAUDE.md retained at project root (Claude Code profile) |
 | 9.2     | 2026-06-16 | Updated P01 §1.2.4: replaced skel/ copy workflow with bin/propagate.sh; framework is now a single unified ai/ directory |
+| 9.3     | 2026-06-16 | §1.1.17: T01-T06 → T01-T07; added T07-requirements.md to file list; §1.1.16: knowledge/ made optional; §1.2.6: knowledge/ marked optional; §1.3.8: removed mandatory knowledge/ directive |
 
 ---
 [Return to Table of Contents](<#table of contents>)
