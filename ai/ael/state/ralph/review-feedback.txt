@@ -1,1 +1,0 @@
-The state directory '/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/ai/state/ralph' does not exist or is not accessible. Please ensure the directory is correctly set up and try again.
