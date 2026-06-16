@@ -344,7 +344,6 @@ test.txt
         │       ├── design/
         │       ├── change/
         │       │   └── closed/
-        │       ├── knowledge/        # Institutional knowledge (optional)
         │       ├── issues/
         │       │   └── closed/
         │       ├── proposal/         # (excluded from git)
