@@ -322,10 +322,10 @@ test.txt
 
   - §1.2.3 README
     - Create initial skeleton 'README.md' document in each folder
-  - §1.2.4 Initialize project from skel/
-    - Human: Copy `skel/` from the framework repository to the desired parent directory
-    - Human: Rename the copied directory to `<project name>`
-    - No recipe path configuration required. `ralph-loop.sh` resolves recipes relative to its own location.
+  - §1.2.4 Initialize downstream project
+    - Human: Run `bin/propagate.sh <project-root>` from the framework repository root to push `ai/` into the downstream project directory
+    - Human: Rename the target directory to `<project name>` if not already named
+    - No recipe path configuration required. Orchestrator resolves recipes relative to its own location.
   - §1.2.5 Traceability Matrix
      - Create skeleton trace-traceability-matrix-master.md in ai/workspace/trace/
   - §1.2.6 Project folder structure
@@ -1152,6 +1152,7 @@ See [workflow.md](workflow.md).
 | 8.9     | 2026-04-28 | Added ael-mcp integration: P00 §1.1.11 Claude Desktop Interface directive; P09 §1.10.3 Option A/B AEL execution (human executes or Strategic Domain launches via ael-mcp); P01 §1.2.8 ael-mcp setup steps for Claude Desktop profile |
 | 9.0     | 2026-04-30 | Added claude-omlx as Tactical Domain implementation option: §1.1.4 implementation options; §1.2.8 claude-omlx profile setup steps; fixed claude.md reference path (deprecated/ → profiles/) |
 | 9.1     | 2026-06-14 | Consolidated framework footprint under ai/: relocated workspace/ → ai/workspace/ across P00–P10 path references; loop state .ael/ralph/ → ai/state/ralph/ (§1.1.11); updated §1.2.2 .gitignore and §1.2.6 folder structure for ai/ layout; added ai/state/ and ai/dashboard-alerts.md; documented fork isolation mode; CLAUDE.md retained at project root (Claude Code profile) |
+| 9.2     | 2026-06-16 | Updated P01 §1.2.4: replaced skel/ copy workflow with bin/propagate.sh; framework is now a single unified ai/ directory |
 
 ---
 [Return to Table of Contents](<#table of contents>)

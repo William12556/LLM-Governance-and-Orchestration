@@ -62,14 +62,15 @@ git clone https://github.com/William12556/LLM-Governance-and-Orchestration.git
 cd LLM-Governance-and-Orchestration
 ```
 
-### 3.2 Create a new project from skel/
+### 3.2 Initialise a downstream project
 
 ```bash
-cp -r skel/ /path/to/your/projects/<project-name>
+cd /path/to/LLM-Governance-and-Orchestration
+bin/propagate.sh /path/to/your/projects/<project-name>
 cd /path/to/your/projects/<project-name>
 ```
 
-The `skel/` directory is a minimal deployable skeleton containing governance documents, templates, profiles, and AEL configuration. It is the starting point for all downstream projects.
+`bin/propagate.sh` pushes the `ai/` directory into the downstream project, skipping project-local files (`config.yaml`, `workspace/`, `ael/state/`, `dashboard-alerts.md`). Run from the framework repository root.
 
 ### 3.3 Create a Python virtual environment
 
@@ -84,7 +85,7 @@ pip install -r ai/ael/requirements.txt
 ```bash
 git init
 git add .
-git commit -m "init: project from framework skel"
+git commit -m "init: project from framework ai/"
 ```
 
 [Return to Table of Contents](<#table of contents>)
@@ -209,6 +210,7 @@ The Strategic Domain coordinates each step. Human approval gates are required be
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Updated budget output path to ai/state/ralph/context-budget.md |
+| 1.2 | 2026-06-16 | Updated §3.2: replaced skel/ copy workflow with bin/propagate.sh |
 
 ---
 

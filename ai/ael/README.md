@@ -123,7 +123,7 @@ context:
   budget_abort_pct: 0.95
 ```
 
-**`context.models_dir`** must be updated to point to your local model storage directory after deploying from skel. `budget.py` searches this directory for the model's `config.json` to determine the context window size. If your model is remote or the path cannot be resolved, set `context.context_window` to an explicit integer value instead.
+**`context.models_dir`** must be updated to point to your local model storage directory. `budget.py` searches this directory for the model's `config.json` to determine the context window size. If your model is remote or the path cannot be resolved, set `context.context_window` to an explicit integer value instead.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -185,66 +185,28 @@ State files are written to `ai/state/ralph/` in the project root during loop exe
 
 ## Testing
 
-Tests are in `ael/tests/`. Two files:
+The `tests/` directory has been removed from the active `ai/ael/` structure. Test source files are retained in `deprecated/skel/ai/ael/tests/` for reference.
 
-| File | Coverage | External deps |
-|---|---|---|
-| `test_parser.py` | Layer 1 — Mistral parser unit tests | None |
-| `test_integration.py` | Layers 2–4 — oMLX smoke, tool dispatch, full loop | oMLX + MCP |
+To run tests, copy the tests directory from the deprecated skel:
+
+```bash
+cp -r deprecated/skel/ai/ael/tests ai/ael/tests
+```
+
+Then run:
+
+```bash
+# All tests
+python3.11 -m pytest ai/ael/tests/ -v
+
+# Unit tests only (no oMLX required)
+python3.11 -m pytest ai/ael/tests/test_parser.py -v
+
+# Integration tests only
+python3.11 -m pytest ai/ael/tests/test_integration.py -v
+```
 
 Integration tests skip automatically if oMLX is not reachable on `127.0.0.1:8000`.
-
-### Prerequisites
-
-```bash
-python3.11 -m pip install pytest
-# Dependencies already installed via requirements.txt
-```
-
-### Run all tests
-
-```bash
-cd /Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration
-python3.11 -m pytest framework/ai/ael/tests/ -v
-```
-
-### Run unit tests only (no oMLX required)
-
-```bash
-python3.11 -m pytest framework/ai/ael/tests/test_parser.py -v
-```
-
-### Run integration tests only
-
-```bash
-python3.11 -m pytest framework/ai/ael/tests/test_integration.py -v
-```
-
-### Run a specific test
-
-```bash
-python3.11 -m pytest framework/ai/ael/tests/test_integration.py::test_full_loop_creates_file -v
-```
-
-### Expected output (oMLX running)
-
-```
-tests/test_parser.py                          PASSED  [unit]
-tests/test_integration.py::test_omlx_models_endpoint          PASSED
-tests/test_integration.py::test_simple_completion_no_tools    PASSED
-tests/test_integration.py::test_completion_writes_work_summary PASSED
-tests/test_integration.py::test_mcp_connect_and_catalogue     PASSED
-tests/test_integration.py::test_tool_dispatch_filesystem_list PASSED
-tests/test_integration.py::test_worker_uses_tool              PASSED
-tests/test_integration.py::test_full_loop_creates_file        PASSED
-```
-
-### Expected output (oMLX not running)
-
-```
-tests/test_parser.py                          PASSED  [unit]
-tests/test_integration.py                     SKIPPED [oMLX not reachable]
-```
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -265,6 +227,7 @@ tests/test_integration.py                     SKIPPED [oMLX not reachable]
 | 1.8 | 2026-04-30 | Added Tactical Profiles section with comparison table |
 | 1.9 | 2026-06-02 | Added audit-work.yaml and audit-review.yaml to Structure and Recipes; added `--duration` and `--max-iterations` to CLI flags table |
 | 2.0 | 2026-06-14 | Relocated loop state to ai/state/ralph/ (config.yaml, profile table, usage examples); workspace/ → ai/workspace/ in command examples |
+| 2.1 | 2026-06-16 | Updated Testing section: removed stale framework/ pytest paths; tests moved to deprecated/skel/; updated Configuration note |
 
 ---
 

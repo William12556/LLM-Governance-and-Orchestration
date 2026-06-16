@@ -81,7 +81,7 @@ All items [x] → SHIP
 
 ## 4.0 Running an Audit
 
-Full operational instructions are in `framework/ai/doc/guide-audit-loop.md` (available in downstream projects as `ai/doc/guide-audit-loop.md`). A summary follows.
+Full operational instructions are in `ai/doc/guide-audit-loop.md`. A summary follows.
 
 **1. Pre-audit preparation (Strategic Domain):**
 
@@ -158,6 +158,7 @@ Severity levels:
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
+| 1.2 | 2026-06-16 | Updated guide reference: framework/ai/doc/ → ai/doc/ |
 
 ---
 

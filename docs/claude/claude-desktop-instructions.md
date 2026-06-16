@@ -39,5 +39,4 @@
 - Work in the local filesystem with Filesystem MCP server tools when creating, adding or changing documents.
 - After creating, adding or changing documents in the local filesystem, provide a ready-to-paste Git commit summary and push command for use in the terminal. The summary should be concise, technically precise, and accurately reflect the scope of changes made. Use conventional commit format where appropriate (e.g., docs:, fix:, feat:).
 - You have access to GitHub MCP server tools. Use them to check and warn if there are uncommitted documents.
-- Review /Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/framework/ai/primer.md at the start of each new conversation/chat.
-- Warn me when LLM Governance and Orchestration framework and skel version do not match.
+- Review /Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration/ai/primer.md at the start of each new conversation/chat.
