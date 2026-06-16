@@ -24,7 +24,7 @@ issue_info:
   title: "ael-mcp hardcoded state directory misaligned with ai/ consolidation"
   date: "2026-06-15"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "high"
   type: "defect"
   iteration: 1
@@ -140,15 +140,18 @@ resolution:
     "ai/state/ralph", update the ael_status docstring, and align the .ael/ralph
     references in README.md and DESIGN.md.
   change_ref: "change-c4a9f2e1"
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  resolved_date: "2026-06-15"
+  resolved_by: "William Watson"
+  fix_description: >-
+    Implemented and verified by source inspection in the ael-mcp repository:
+    server.py _STATE_REL is now "ai/state/ralph" and the ael_status docstring
+    updated; README.md and DESIGN.md references all read ai/state/ralph/.
 
 verification:
-  verified_date: ""
-  verified_by: ""
-  test_results: ""
-  closure_notes: ""
+  verified_date: "2026-06-15"
+  verified_by: "William Watson"
+  test_results: "Source inspection 2026-06-15: no .ael/ralph reference remains in server.py, README.md, or DESIGN.md"
+  closure_notes: "ael-mcp aligned with ai/-consolidated state location"
 
 traceability:
   design_refs:
@@ -173,6 +176,7 @@ metadata:
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | 2026-06-15 | Initial issue — ael-mcp state directory alignment for ai/ consolidation |
+| 1.1 | 2026-06-15 | Resolved: server.py, README.md, DESIGN.md verified on ai/state/ralph/; closed |
 
 ---
 

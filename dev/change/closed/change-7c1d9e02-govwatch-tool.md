@@ -25,7 +25,7 @@ change_info:
   title: "Implement govwatch governance monitoring tool"
   date: "2026-06-10"
   author: "William Watson"
-  status: "proposed"
+  status: "implemented"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -214,6 +214,7 @@ traceability:
 | Version | Date | Author | Changes |
 |---------|------|--------|---------|
 | 1.0 | 2026-06-10 | William Watson | Initial change — govwatch implementation, coupled to issue-7c1d9e02 |
+| 1.1 | 2026-06-15 | William Watson | Implemented: govwatch.py present in framework/ai/src/ and path-aligned to ai/ layout (change-b6e4a1c9); closed |
 
 ---
 

@@ -25,7 +25,7 @@ issue_info:
   title: "Implement govwatch governance monitoring tool"
   date: "2026-06-10"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "medium"
   type: "enhancement"
   iteration: 1
@@ -155,6 +155,7 @@ traceability:
 |---------|------|--------|---------|
 | 1.0 | 2026-06-10 | William Watson | Initial enhancement issue for govwatch implementation |
 | 1.1 | 2026-06-10 | William Watson | Set change coupling (change-7c1d9e02); deliverable is framework/ai/src/govwatch.py (removed dev/ staging language) |
+| 1.2 | 2026-06-15 | William Watson | Resolved: govwatch.py deliverable verified present in framework/ai/src/; closed |
 
 ---
 

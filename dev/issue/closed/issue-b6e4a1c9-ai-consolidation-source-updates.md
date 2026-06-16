@@ -24,7 +24,7 @@ issue_info:
   title: "Source-code and script path references for ai/ consolidation"
   date: "2026-06-15"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "medium"
   type: "enhancement"
   iteration: 1
@@ -145,15 +145,20 @@ resolution:
     framework/ and bin/ directly. skel/ai mirrors update via Phase 3
     sync-skel.sh; downstream projects update via propagate.sh.
   change_ref: "change-b6e4a1c9"
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  resolved_date: "2026-06-15"
+  resolved_by: "William Watson"
+  fix_description: >-
+    All four edits implemented and verified by source inspection: govwatch.py
+    ProjectPaths (ai/workspace, ai/state/ralph, ai/dashboard-alerts.md) plus
+    validation message and display anchor; bin/sync-skel.sh and bin/propagate.sh
+    exclude state/ and dashboard-alerts.md; test_regression.py asserts
+    skel/ai/workspace/.
 
 verification:
-  verified_date: ""
-  verified_by: ""
-  test_results: ""
-  closure_notes: ""
+  verified_date: "2026-06-15"
+  verified_by: "William Watson"
+  test_results: "Source inspection 2026-06-15; skel/ai/workspace/ present, regression assertion satisfied"
+  closure_notes: "Framework-side consolidation source updates complete; skel/downstream follow via propagation"
 
 traceability:
   design_refs:
@@ -178,6 +183,7 @@ metadata:
 | Version | Date | Description |
 |---------|------|-------------|
 | 1.0 | 2026-06-15 | Initial issue — source and script path alignment for ai/ consolidation |
+| 1.1 | 2026-06-15 | Resolved: all edits implemented and verified by source inspection; closed |
 
 ---
 
