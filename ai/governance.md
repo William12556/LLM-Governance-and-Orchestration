@@ -1,3 +1,5 @@
+Created: 2025 October 30
+
 # LLM Orchestration Framework
 
 ---
@@ -916,32 +918,28 @@ pip install dist/*.whl
     - Strategic Domain: References source code audit report in issue documents
     - Strategic Domain: Issue resolution follows standard P04 → P03 → implementation workflow
     - Strategic Domain: Tracks remediation progress in audit report updates
-  - §1.9.7 Audit Closure
-    - Strategic Domain: Conducts follow-up audit after remediation completed
-    - Strategic Domain: Verifies all critical issues resolved
-    - Strategic Domain: Documents closure with final compliance metrics
-    - Human: Approves audit closure and authorizes proceeding to next phase
-  - §1.9.8 Audit Trail
+  - §1.9.7 Audit Trail
     - Strategic Domain: Maintains chronological audit history
     - Strategic Domain: Links related audits (initial → follow-up → closure)
     - Strategic Domain: Preserves audit reports for process improvement analysis
-  - §1.9.9 Audit Closure
-    - §1.9.9.1 Closure Criteria
+  - §1.9.8 Audit Closure
+    - §1.9.8.1 Closure Criteria
       - All critical findings fully resolved
       - All high-priority findings addressed or mitigated with documented acceptance
       - Completion documented in audit report
       - Human approval obtained
-    - §1.9.9.2 Closure Process
+    - §1.9.8.2 Closure Process
+      - Strategic Domain: Conducts follow-up audit after remediation completed
       - Strategic Domain: Verifies all closure criteria satisfied
       - Strategic Domain: Documents closure status with final compliance metrics
       - Strategic Domain: Records closure date and approver
       - Human: Reviews closure documentation
-      - Human: Approves audit closure or identifies remaining work
-    - §1.9.9.3 Post-Closure Archival
+      - Human: Approves audit closure and authorizes proceeding to next phase
+    - §1.9.8.3 Post-Closure Archival
       - Strategic Domain: Moves closed audit report to ai/workspace/audit/closed/
       - Strategic Domain: Updates audit traceability links in master traceability matrix
       - Strategic Domain: Preserves read-only access for future reference
-    - §1.9.9.4 Reopening Closed Audits
+    - §1.9.8.4 Reopening Closed Audits
       - Prohibited: Closed audits are immutable
       - New findings: Create new audit with reference to closed audit
       - Follow-up verification: Covered by new audit cycle
@@ -1151,10 +1149,11 @@ See [workflow.md](workflow.md).
 | 9.1     | 2026-06-14 | Consolidated framework footprint under ai/: relocated workspace/ → ai/workspace/ across P00–P10 path references; loop state .ael/ralph/ → ai/state/ralph/ (§1.1.11); updated §1.2.2 .gitignore and §1.2.6 folder structure for ai/ layout; added ai/state/ and ai/dashboard-alerts.md; documented fork isolation mode; CLAUDE.md retained at project root (Claude Code profile) |
 | 9.2     | 2026-06-16 | Updated P01 §1.2.4: replaced skel/ copy workflow with bin/propagate.sh; framework is now a single unified ai/ directory |
 | 9.3     | 2026-06-16 | §1.1.17: T01-T06 → T01-T07; added T07-requirements.md to file list; §1.1.16: knowledge/ made optional; §1.2.6: knowledge/ marked optional; §1.3.8: removed mandatory knowledge/ directive |
+| 9.4     | 2026-06-16 | P08 §1.9: merged duplicate "Audit Closure" sections — former §1.9.7 (short form) folded into former §1.9.9 (subsectioned form); renumbered §1.9.8 Audit Trail → §1.9.7, merged Audit Closure §1.9.9 → §1.9.8 (subsections §1.9.8.1–.4); updated cross-references in ai/doc/guide-audit-loop.md and docs/guide-audit-loop.md |
 
 ---
 [Return to Table of Contents](<#table of contents>)
 
 ---
 
-Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
+Copyright (c) 2026 William Watson. MIT License.

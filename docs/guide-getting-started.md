@@ -98,7 +98,7 @@ Three implementation profiles are available. For a full comparison see [guide-pr
 
 | Profile | Tactical Domain | Best for |
 |---|---|---|
-| `mlx_devstral_small_2_2512_Q8.md` | AEL + Devstral (local) | Automated loops on Apple Silicon |
+| `mlx_devstral_small_2_2512_6bit.md` | AEL + Devstral (local) | Automated loops on Apple Silicon |
 | `claude.md` | Claude Code (Anthropic API) | Manual execution, no local GPU required |
 | `claude-omlx.md` | Claude Code CLI + Devstral (local) | Manual execution on Apple Silicon |
 
@@ -211,6 +211,7 @@ The Strategic Domain coordinates each step. Human approval gates are required be
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Updated budget output path to ai/state/ralph/context-budget.md |
 | 1.2 | 2026-06-16 | Updated §3.2: replaced skel/ copy workflow with bin/propagate.sh |
+| 1.3 | 2026-06-16 | Updated §4.0 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
 
 ---
 

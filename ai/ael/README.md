@@ -1,23 +1,25 @@
+Created: 2026 March 11
+
 # AEL — Autonomous Execution Loop
 
 ---
 
 ## Table of Contents
 
-- [Overview](<#overview>)
-- [Tactical Profiles](<#tactical profiles>)
-- [Structure](<#structure>)
-- [Requirements](<#requirements>)
-- [Installation](<#installation>)
-- [Configuration](<#configuration>)
-- [Usage](<#usage>)
-- [Recipes](<#recipes>)
-- [Testing](<#testing>)
+- [1.0 Overview](<#1.0 overview>)
+- [2.0 Tactical Profiles](<#2.0 tactical profiles>)
+- [3.0 Structure](<#3.0 structure>)
+- [4.0 Requirements](<#4.0 requirements>)
+- [5.0 Installation](<#5.0 installation>)
+- [6.0 Configuration](<#6.0 configuration>)
+- [7.0 Usage](<#7.0 usage>)
+- [8.0 Recipes](<#8.0 recipes>)
+- [9.0 Testing](<#9.0 testing>)
 - [Version History](<#version history>)
 
 ---
 
-## Overview
+## 1.0 Overview
 
 The AEL orchestrator is a standalone Python tool loop implementing the Ralph Loop pattern. It connects directly to MCP servers, sends tool definitions to an oMLX inference endpoint, parses model tool calls in both OpenAI and Mistral plain-text formats, dispatches tools, injects results into message history, and iterates until the model produces a response containing no tool calls.
 
@@ -27,7 +29,7 @@ This component replaces Goose as the Autonomous Execution Loop (AEL) for the oML
 
 ---
 
-## Tactical Profiles
+## 2.0 Tactical Profiles
 
 Three Tactical Domain profiles are available. AEL is the primary profile; the others are manual alternatives.
 
@@ -39,7 +41,7 @@ Three Tactical Domain profiles are available. AEL is the primary profile; the ot
 | Loop control | `orchestrator.py` | Human operator | Human operator |
 | Context file | `config.yaml` | `CLAUDE.md` | `CLAUDE.md` |
 | State directory | `ai/state/ralph/` | `.claude/` | `.claude/` |
-| Profile | `mlx_devstral_small_2_2512_Q8.md` | `claude.md` | `claude-omlx.md` |
+| Profile | `mlx_devstral_small_2_2512_6bit.md` | `claude.md` | `claude-omlx.md` |
 
 See `ai/profiles/` for profile documents.
 
@@ -47,7 +49,7 @@ See `ai/profiles/` for profile documents.
 
 ---
 
-## Structure
+## 3.0 Structure
 
 ```
 ael/
@@ -59,17 +61,19 @@ ael/
 │   ├── audit-work.yaml   # Audit worker role system prompt (read-only analysis)
 │   └── audit-review.yaml # Audit reviewer role system prompt (coverage + quality)
 └── src/
-    ├── orchestrator.py   # Main loop and CLI entry point (--mode worker|reviewer|loop|reset)
-    ├── budget.py         # Context budget calculator (run before authoring T04 prompts)
-    ├── mcp_client.py     # MCP stdio connection and tool dispatch
-    └── parser.py         # Mistral [TOOL_CALLS] plain-text parser
+    ├── orchestrator.py     # Main loop and CLI entry point (--mode worker|reviewer|loop|reset)
+    ├── budget.py           # Context budget calculator (run before authoring T04 prompts)
+    ├── mcp_client.py       # MCP stdio connection and tool dispatch
+    ├── parser.py           # Mistral [TOOL_CALLS] plain-text parser
+    ├── linter.py            # Layer 1 governance linter: static validation of workspace documents (naming, structure, YAML fields, UUID coupling, Obsidian links)
+    └── protocol_checker.py  # Layer 2 protocol checker: multi-document workflow invariant validation (UUID chain integrity, bidirectional coupling, one-to-one constraints, status consistency, lifecycle placement, prompt self-containment)
 ```
 
 [Return to Table of Contents](<#table of contents>)
 
 ---
 
-## Requirements
+## 4.0 Requirements
 
 - Python 3.11+
 - oMLX running on `http://127.0.0.1:8000`
@@ -80,7 +84,7 @@ ael/
 
 ---
 
-## Installation
+## 5.0 Installation
 
 Install dependencies into the project virtual environment:
 
@@ -92,7 +96,7 @@ pip install -r ai/ael/requirements.txt
 
 ---
 
-## Configuration
+## 6.0 Configuration
 
 Edit `ai/ael/config.yaml`:
 
@@ -129,7 +133,7 @@ context:
 
 ---
 
-## Usage
+## 7.0 Usage
 
 ```bash
 # Generate context budget report (run once at setup and after model changes)
@@ -166,7 +170,7 @@ python ai/ael/src/orchestrator.py --mode reset
 
 ---
 
-## Recipes
+## 8.0 Recipes
 
 Recipes are YAML files providing role-specific system prompts. The `instructions` field is injected as the system prompt for each inference call.
 
@@ -183,7 +187,7 @@ State files are written to `ai/state/ralph/` in the project root during loop exe
 
 ---
 
-## Testing
+## 9.0 Testing
 
 The `tests/` directory has been removed from the active `ai/ael/` structure. Test source files are retained in `deprecated/skel/ai/ael/tests/` for reference.
 
@@ -228,7 +232,8 @@ Integration tests skip automatically if oMLX is not reachable on `127.0.0.1:8000
 | 1.9 | 2026-06-02 | Added audit-work.yaml and audit-review.yaml to Structure and Recipes; added `--duration` and `--max-iterations` to CLI flags table |
 | 2.0 | 2026-06-14 | Relocated loop state to ai/state/ralph/ (config.yaml, profile table, usage examples); workspace/ → ai/workspace/ in command examples |
 | 2.1 | 2026-06-16 | Updated Testing section: removed stale framework/ pytest paths; tests moved to deprecated/skel/; updated Configuration note |
+| 2.2 | 2026-06-16 | Added linter.py and protocol_checker.py to §3.0 Structure; updated §2.0 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md; added section numbering throughout; added Created timestamp |
 
 ---
 
-Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
+Copyright (c) 2026 William Watson. MIT License.

@@ -225,7 +225,7 @@ Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-sili
 | Profile     | Tactical Domain        | AEL                |
 | ----------- | ---------------------- | ------------------ |
 | `claude.md` | Claude Code (optional) | Manual — human invokes per task |
-| `mlx_devstral_small_2_2512_Q8.md` | MLX + Devstral Small 2 2512 (primary) | AEL / Ralph Loop |
+| `mlx_devstral_small_2_2512_6bit.md` | MLX + Devstral Small 2 2512 (primary) | AEL / Ralph Loop |
 
 ## Important Notice
 
@@ -269,6 +269,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 3.1 | 2026-06-10 | Added govwatch subsection; added govwatch entries to Repository Structure and Requirements |
 | 3.2 | 2026-06-16 | Updated for unified ai/ model: Repository Structure, state dir, invocation paths, govwatch paths, Getting Started |
 | 3.3 | 2026-06-16 | Second-pass alignment: ai/dashboard-alerts.md prefix; model spec Q8 → 6bit |
+| 3.4 | 2026-06-16 | Updated Implementation Profiles table: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
 
 ---
 

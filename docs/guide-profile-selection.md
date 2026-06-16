@@ -25,7 +25,7 @@ Three profiles are available, defined in `ai/profiles/`:
 
 | Profile file | Tactical Domain | Execution |
 |---|---|---|
-| `mlx_devstral_small_2_2512_Q8.md` | AEL + Devstral (local, MLX) | Automated Ralph Loop |
+| `mlx_devstral_small_2_2512_6bit.md` | AEL + Devstral (local, MLX) | Automated Ralph Loop |
 | `claude.md` | Claude Code (Anthropic API) | Manual, human-directed |
 | `claude-omlx.md` | Claude Code CLI + Devstral (local, MLX) | Manual, human-directed |
 
@@ -41,7 +41,7 @@ Work through the following questions in order:
 No → use `claude.md` (Claude Code). Apple Silicon is required for local MLX inference.
 
 **Do you want automated worker/reviewer cycles without manual terminal invocations?**
-Yes → use `mlx_devstral_small_2_2512_Q8.md` (AEL). The orchestrator runs the full loop autonomously.
+Yes → use `mlx_devstral_small_2_2512_6bit.md` (AEL). The orchestrator runs the full loop autonomously.
 No → use `claude-omlx.md` if you have Apple Silicon, or `claude.md` if you have an Anthropic API key.
 
 **Do you have an Anthropic API key?**
@@ -52,7 +52,7 @@ No → you must use an MLX profile.
 
 | Situation | Profile |
 |---|---|
-| Apple Silicon 24 GB+, want automation | `mlx_devstral_small_2_2512_Q8.md` |
+| Apple Silicon 24 GB+, want automation | `mlx_devstral_small_2_2512_6bit.md` |
 | Apple Silicon 24 GB+, prefer manual control | `claude-omlx.md` |
 | Anthropic API key available, no Apple Silicon | `claude.md` |
 | Anthropic API key available, Apple Silicon | `claude.md` or either MLX profile |
@@ -65,7 +65,7 @@ No → you must use an MLX profile.
 
 ### 3.1 AEL — Automated Execution Loop
 
-**Profile file:** `ai/profiles/mlx_devstral_small_2_2512_Q8.md`
+**Profile file:** `ai/profiles/mlx_devstral_small_2_2512_6bit.md`
 
 The primary profile. The orchestrator (`orchestrator.py`) runs a worker/reviewer Ralph Loop autonomously. The Strategic Domain authors a T04 prompt and issues an AEL command; the loop runs to SHIP or BLOCKED without further human involvement per iteration.
 
@@ -168,6 +168,7 @@ The AEL profile is the only profile that supports the automated audit loop (`aud
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
+| 1.2 | 2026-06-16 | Updated profile filename references: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
 
 ---
 

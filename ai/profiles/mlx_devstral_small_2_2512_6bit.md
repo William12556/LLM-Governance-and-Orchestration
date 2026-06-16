@@ -6,19 +6,19 @@ Created: 2026 March 12
 
 ## Table of Contents
 
-- [Overview](<#overview>)
-- [Placeholder Mappings](<#placeholder mappings>)
-- [Strategic Domain](<#strategic domain>)
-- [Tactical Domain](<#tactical domain>)
-- [Tool-Calling Behaviour](<#tool-calling behaviour>)
-- [Autonomous Execution Loop](<#autonomous execution loop>)
-- [Model Selection](<#model selection>)
-- [Project Setup](<#project setup>)
+- [1.0 Overview](<#1.0 overview>)
+- [2.0 Placeholder Mappings](<#2.0 placeholder mappings>)
+- [3.0 Strategic Domain](<#3.0 strategic domain>)
+- [4.0 Tactical Domain](<#4.0 tactical domain>)
+- [5.0 Tool-Calling Behaviour](<#5.0 tool-calling behaviour>)
+- [6.0 Autonomous Execution Loop](<#6.0 autonomous execution loop>)
+- [7.0 Model Selection](<#7.0 model selection>)
+- [8.0 Project Setup](<#8.0 project setup>)
 - [Version History](<#version history>)
 
 ---
 
-## Overview
+## 1.0 Overview
 
 This profile maps governance abstract placeholders to Apple Silicon MLX-based local model tooling using Devstral Small 2 (December 2025 release). It requires Apple M-series hardware.
 
@@ -32,11 +32,11 @@ This profile maps governance abstract placeholders to Apple Silicon MLX-based lo
 
 ---
 
-## Placeholder Mappings
+## 2.0 Placeholder Mappings
 
 | Placeholder | Resolved Value |
 |---|---|
-| `<tactical_context>` | `CLAUDE.md` or `AGENTS.md` |
+| `<tactical_context>` | `CLAUDE.md` |
 
 `<tactical_config>/` and `<skills_dir>/` do not apply to this profile. AEL configuration is in `ai/ael/config.yaml`; recipes are in `ai/ael/recipes/`.
 
@@ -44,7 +44,7 @@ This profile maps governance abstract placeholders to Apple Silicon MLX-based lo
 
 ---
 
-## Strategic Domain
+## 3.0 Strategic Domain
 
 **Preferred implementation:** Claude Desktop
 
@@ -54,7 +54,7 @@ Any frontier model with sufficient reasoning capability may substitute. The Stra
 
 ---
 
-## Tactical Domain
+## 4.0 Tactical Domain
 
 **Implementation:** Devstral Small 2 2512 6bit via oMLX + AEL orchestrator
 
@@ -74,7 +74,7 @@ The server exposes an OpenAI-compatible endpoint at `http://localhost:8000/v1`.
 from huggingface_hub import snapshot_download
 snapshot_download(
     repo_id="mlx-community/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit",
-    local_dir="/path/to/ai-models/mlx-community/devstral-small-2-6bit"
+    local_dir="/path/to/ai-models/mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit"
 )
 ```
 
@@ -86,14 +86,16 @@ Use Python 3.11+. The `huggingface-cli` may be unreliable on some macOS configur
 omlx:
   base_url: http://127.0.0.1:8000/v1
   api_key: local
-  default_model: Devstral-Small-2-24B-Instruct-2512
+  default_model: mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit
 ```
+
+The model ID must match the id reported by oMLX `/v1/models` exactly, including the `mistralai_` prefix and `-MLX-6Bit` suffix.
 
 [Return to Table of Contents](<#table of contents>)
 
 ---
 
-## Tool-Calling Behaviour
+## 5.0 Tool-Calling Behaviour
 
 Devstral Small 2 2512 6bit via oMLX supports tool calling. The AEL orchestrator owns the full tool dispatch loop; tool calls are parsed from model output and dispatched directly via the Python MCP SDK.
 
@@ -110,7 +112,7 @@ Name tools explicitly in recipe prompts.
 
 ---
 
-## Autonomous Execution Loop
+## 6.0 Autonomous Execution Loop
 
 **Implementation:** AEL orchestrator / Ralph Loop
 
@@ -133,7 +135,7 @@ Worker and reviewer roles are differentiated by prompt engineering within the sa
 
 ---
 
-## Model Selection
+## 7.0 Model Selection
 
 | Role | Model | Quantisation | Approx. Memory |
 |---|---|---|---|
@@ -144,7 +146,7 @@ Worker and reviewer roles are differentiated by prompt engineering within the sa
 
 ---
 
-## Project Setup
+## 8.0 Project Setup
 
 **.gitignore additions:**
 
@@ -167,7 +169,8 @@ ai/state/ralph/
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state ai/state/ralph/, workspace/ → ai/workspace/, .gitignore additions |
 | 1.2 | 2026-06-16 | Updated Q8 → 6bit throughout; corrected model download repo and local dir |
 | 1.3 | 2026-06-16 | Placeholder Mappings: removed non-applicable <tactical_config>/ and <skills_dir>/ rows |
+| 1.4 | 2026-06-16 | Renamed file Q8 → 6bit to match document content; removed AGENTS.md from Placeholder Mappings (unsupported elsewhere); corrected AEL config example to full model id verified against oMLX /v1/models (mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit); corrected model download local_dir to match actual on-disk path convention; added section numbering |
 
 ---
 
-Copyright (c) 2025 William Watson. This work is licensed under the MIT License.
+Copyright (c) 2026 William Watson. MIT License.

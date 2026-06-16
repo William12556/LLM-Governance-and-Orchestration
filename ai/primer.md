@@ -71,7 +71,7 @@ determines the tactical context file name, skills directory, and AEL configurati
 | Execution | Automated Ralph Loop | Manual | Manual |
 | Inference | oMLX → Devstral (local) | Anthropic API → Claude Sonnet | oMLX → Devstral via Claude Code CLI |
 | Loop control | `orchestrator.py` | Human operator | Human operator |
-| Profile | `mlx_devstral_small_2_2512_Q8.md` | `claude.md` | `claude-omlx.md` |
+| Profile | `mlx_devstral_small_2_2512_6bit.md` | `claude.md` | `claude-omlx.md` |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -263,6 +263,7 @@ any document.
 | 0.3 | 2026-04-30 | Added §2.1 Tactical Profiles with comparison table |
 | 0.4 | 2026-06-10 | Added §2.2 Monitoring Tools (govwatch) |
 | 0.5 | 2026-06-14 | Relocated framework paths under ai/: workspace/ → ai/workspace/, state .ael/ralph/ → ai/state/ralph/, govwatch output → ai/dashboard-alerts.md |
+| 0.6 | 2026-06-16 | Updated §2.1 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
 
 ---
 

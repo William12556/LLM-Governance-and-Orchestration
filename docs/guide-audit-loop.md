@@ -146,7 +146,7 @@ Severity levels:
 3. Medium findings → record in a tracking issue or schedule for next development cycle
 4. Low findings → discretionary; may be addressed in passing or deferred
 5. Move `audit-report.md` to `ai/workspace/audit/` and rename per naming convention
-6. When remediation is complete, close the audit document per P08 §1.9.7
+6. When remediation is complete, close the audit document per P08 §1.9.8
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -159,6 +159,7 @@ Severity levels:
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
 | 1.2 | 2026-06-16 | Updated guide reference: framework/ai/doc/ → ai/doc/ |
+| 1.3 | 2026-06-16 | Updated §6.0 cross-reference: P08 §1.9.7 → §1.9.8, following governance.md merge of duplicate Audit Closure sections |
 
 ---
 
