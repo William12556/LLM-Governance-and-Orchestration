@@ -34,10 +34,7 @@ workspace/proposal/
 workspace/proposal/closed/
 
 # AEL ephemeral state
-.ael/ralph/
-
-# AEL simulation (local test environment)
-framework/ai/ael/sim/
+ai/state/ralph/
 
 # Model-specific configs (local only)
 .model-config.local.yaml
