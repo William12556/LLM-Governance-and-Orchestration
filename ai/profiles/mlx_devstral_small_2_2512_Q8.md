@@ -36,10 +36,9 @@ This profile maps governance abstract placeholders to Apple Silicon MLX-based lo
 
 | Placeholder | Resolved Value |
 |---|---|
-| `<tactical_config>/` | `ai/ael/` |
-| `<skills_dir>/` | `ai/ael/recipes/` |
 | `<tactical_context>` | `CLAUDE.md` or `AGENTS.md` |
-| Local context file | Not applicable |
+
+`<tactical_config>/` and `<skills_dir>/` do not apply to this profile. AEL configuration is in `ai/ael/config.yaml`; recipes are in `ai/ael/recipes/`.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -167,6 +166,7 @@ ai/state/ralph/
 | 1.0 | 2026-03-12 | Initial document |
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state ai/state/ralph/, workspace/ → ai/workspace/, .gitignore additions |
 | 1.2 | 2026-06-16 | Updated Q8 → 6bit throughout; corrected model download repo and local dir |
+| 1.3 | 2026-06-16 | Placeholder Mappings: removed non-applicable <tactical_config>/ and <skills_dir>/ rows |
 
 ---
 

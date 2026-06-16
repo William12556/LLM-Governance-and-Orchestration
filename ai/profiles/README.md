@@ -24,11 +24,13 @@ Implementation profiles map abstract governance placeholders to concrete tooling
 
 ## Abstract Placeholders
 
-| Placeholder | Meaning |
-|---|---|
-| `<tactical_config>/` | Tactical Domain configuration directory |
-| `<skills_dir>/` | Skills and workflow recipes directory |
-| `<tactical_context>` | Tactical Domain project context file |
+`<tactical_config>/`, `<skills_dir>/`, and `<tactical_context>` are governance placeholders resolved by each profile. Not all placeholders apply to every profile.
+
+| Placeholder | Meaning | Applies to |
+|---|---|---|
+| `<tactical_config>/` | Tactical Domain configuration directory | Claude Code profiles only |
+| `<skills_dir>/` | Skills and workflow recipes directory | Claude Code profiles only |
+| `<tactical_context>` | Tactical Domain project context file | All profiles |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -69,6 +71,7 @@ Strategic Domain is not prescribed. Any frontier model with sufficient reasoning
 | 1.5 | 2026-03-31 | Deprecated mlx_devstral_small_2507_Q8.md; reinstated claude.md as optional Claude Code profile |
 | 1.6 | 2026-04-30 | Added claude-omlx.md profile |
 | 1.7 | 2026-06-16 | Updated Claude Desktop link: framework/ai/doc/ → docs/claude/ |
+| 1.8 | 2026-06-16 | Abstract Placeholders: added Applies to column; noted <tactical_config>/ and <skills_dir>/ apply to Claude Code profiles only |
 
 ---
 
