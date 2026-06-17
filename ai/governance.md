@@ -243,6 +243,7 @@ python ai/ael/src/orchestrator.py --mode loop \
       - Claude Code profiles: CLAUDE.md at project root (checked into git)
     - Local context file: Personal preferences (.gitignore'd)
       - Claude Code profiles: CLAUDE.local.md at project root
+    - AEL auto-load: worker recipe reads project_root/ai/context.md at task start if present
     - Content specification:
       - Project overview and technology stack
       - Common bash commands (build, test, lint)
@@ -1149,6 +1150,7 @@ See [workflow.md](workflow.md).
 | 9.3     | 2026-06-16 | §1.1.17: T01-T06 → T01-T07; added T07-requirements.md to file list; §1.1.16: knowledge/ made optional; §1.2.6: knowledge/ marked optional; §1.3.8: removed mandatory knowledge/ directive |
 | 9.4     | 2026-06-16 | P08 §1.9: merged duplicate "Audit Closure" sections — former §1.9.7 (short form) folded into former §1.9.9 (subsectioned form); renumbered §1.9.8 Audit Trail → §1.9.7, merged Audit Closure §1.9.9 → §1.9.8 (subsections §1.9.8.1–.4); updated cross-references in ai/doc/guide-audit-loop.md and docs/guide-audit-loop.md |
 | 9.5     | 2026-06-17 | Simplified Tactical Domain configuration: removed <tactical_config>/<skills_dir>/commands placeholders from §1.2.6; added ai/context.md (AEL profile) and .claude/ block (Claude Code profiles only) to §1.2.6; scoped §1.1.18 Skills Management to Claude Code profiles; updated §1.1.19 context file paths per profile |
+| 9.6     | 2026-06-17 | Added ai/context.md template; ralph-work.yaml v1.3.0 reads project_root/ai/context.md at task start; §1.1.19 notes AEL auto-load behaviour |
 
 ---
 [Return to Table of Contents](<#table of contents>)
