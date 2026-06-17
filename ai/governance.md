@@ -191,6 +191,7 @@ python ai/ael/src/orchestrator.py --mode loop \
       - ai/workspace/prompt/closed/
       - ai/workspace/audit/closed/
       - ai/workspace/test/closed/
+      - ai/workspace/report/closed/
       - ai/workspace/test/result/closed/
     - §1.1.14.6 Access Constraints
       - Closed documents: Read-only access for reference
@@ -345,6 +346,7 @@ test.txt
         │   ├── dashboard-alerts.md   # govwatch output (excluded from git)
         │   └── workspace/            # Framework execution space
         │       ├── report/            # Reports (excluded from git)
+        │       │   └── closed/
         │       ├── requirements/
         │       │   └── closed/
         │       ├── design/
@@ -1151,7 +1153,7 @@ See [workflow.md](workflow.md).
 | 9.4     | 2026-06-16 | P08 §1.9: merged duplicate "Audit Closure" sections — former §1.9.7 (short form) folded into former §1.9.9 (subsectioned form); renumbered §1.9.8 Audit Trail → §1.9.7, merged Audit Closure §1.9.9 → §1.9.8 (subsections §1.9.8.1–.4); updated cross-references in ai/doc/guide-audit-loop.md and docs/guide-audit-loop.md |
 | 9.5     | 2026-06-17 | Simplified Tactical Domain configuration: removed <tactical_config>/<skills_dir>/commands placeholders from §1.2.6; added ai/context.md (AEL profile) and .claude/ block (Claude Code profiles only) to §1.2.6; scoped §1.1.18 Skills Management to Claude Code profiles; updated §1.1.19 context file paths per profile |
 | 9.6     | 2026-06-17 | Added ai/context.md template; ralph-work.yaml v1.3.0 reads project_root/ai/context.md at task start; §1.1.19 notes AEL auto-load behaviour |
-| 9.7     | 2026-06-17 | Renamed ai/workspace/admin/ → ai/workspace/report/ in §1.2.2 .gitignore template and §1.2.6 folder structure |
+| 9.7     | 2026-06-17 | Renamed ai/workspace/admin/ → ai/workspace/report/ in §1.2.2 .gitignore template and §1.2.6 folder structure; added report/closed/ to §1.2.6 and §1.1.14.5 |
 
 ---
 [Return to Table of Contents](<#table of contents>)
