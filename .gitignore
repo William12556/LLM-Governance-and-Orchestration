@@ -28,7 +28,7 @@ venv/
 *.canvas
 
 # AI framework
-workspace/admin/
+workspace/report/
 workspace/proposal/
 workspace/proposal/closed/
 
