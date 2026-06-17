@@ -29,7 +29,6 @@ venv/
 
 # AI framework
 workspace/admin/
-workspace/ai/
 workspace/proposal/
 workspace/proposal/closed/
 
