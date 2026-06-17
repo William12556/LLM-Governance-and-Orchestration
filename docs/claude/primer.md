@@ -271,10 +271,8 @@ any document.
 | 0.1 | 2026-04-27 | Initial draft |
 | 0.2 | 2026-04-28 | Added ael-mcp to §2.0 Architecture; annotated §4.0 Workflow AEL step with Option A/B |
 | 0.3 | 2026-04-30 | Added §2.1 Tactical Profiles with comparison table |
-| 0.4 | 2026-06-10 | Added §2.2 Monitoring Tools (govwatch) |
-| 0.5 | 2026-06-14 | Relocated framework paths under ai/: workspace/ → ai/workspace/, state .ael/ralph/ → ai/state/ralph/, govwatch output → ai/dashboard-alerts.md |
-| 0.6 | 2026-06-16 | Updated §2.1 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
-| 0.7 | 2026-06-17 | Aligned with docs/claude/primer.md (canonical): code spans for governance.md, workflow.md, SHIP, BLOCKED, .gitignore, budget.py, tactical_brief throughout; Prime Directive bolded; ael-mcp bold extent corrected; §6.0 restructured with §6.1 Naming and §6.2 Lifecycle subsections; colon positions in UUID propagation and Iteration headings; blank lines before bullet lists in §3.0 and §7.0; tactical_brief Format and Trivial Change Exemption heading formats |
+| 0.4 | 2026-06-17 | Applied markdown formatting; corrected stale references: `.ael/ralph/` → `ai/state/ralph/`, profile filename `mlx_devstral_small_2_2512_Q8.md` → `mlx_devstral_small_2_2512_6bit.md`; split §6.0 into §6.1 Naming and §6.2 Lifecycle |
+| 0.5 | 2026-06-17 | Aligned with ai/primer.md v0.4–v0.6: added §2.2 Monitoring Tools (govwatch); corrected §2.1 header level H3 → H2; corrected lifecycle paths and §7.0 constraint to ai/workspace/ prefix |
 
 ---
 
