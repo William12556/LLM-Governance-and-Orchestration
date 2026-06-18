@@ -25,7 +25,7 @@ The framework was motivated by a practical observation: language models lose coh
 
 The Autonomous Execution Loop (AEL) implements the Ralph Loop: a worker/reviewer cycle in which the same model fulfills both roles, differentiated by prompt engineering. The loop runs iteratively until the reviewer emits `SHIP` (task complete) or `BLOCKED` (boundary exceeded). Based on Geoffrey Huntley's Ralph Wiggum techniques.
 
-`orchestrator.py` is an AI agent. It perceives its environment by reading state files and tool outputs, reasons via the model  inference endpoint, acts by dispatching tool calls and writing state, and maintains persistent state in `ai/state/ralph/` across iterations. The Ralph Loop constitutes a minimal two-agent system: the worker agent produces, the reviewer agent critiques, and the orchestrator arbitrates. Autonomy is constrained by the governance protocols and the T04 tactical brief — the agent cannot redefine its goal mid-run.
+`orchestrator.py` is an AI agent. It perceives its environment by reading state files and tool outputs, reasons via the model inference endpoint, acts by dispatching tool calls and writing state, and maintains persistent state in `ai/state/ralph/` across iterations. The Ralph Loop constitutes a minimal two-agent system: the worker agent produces, the reviewer agent critiques, and the orchestrator arbitrates. Autonomy is constrained by the governance protocols and the T04 tactical brief — the agent cannot redefine its goal mid-run.
 
 `orchestrator.py` is the AEL entry point. It connects to configured MCP servers, sends tool definitions to the inference endpoint, dispatches tool calls, injects results, and iterates until no tool calls remain. It supports four execution modes:
 
@@ -36,141 +36,7 @@ The Autonomous Execution Loop (AEL) implements the Ralph Loop: a worker/reviewer
 | `reviewer` | Single review phase pass |
 | `reset` | Clear state directory after human acceptance |
 
-**Configuration** — `ai/ael/config.yaml`:
-
-| Section | Purpose |
-|---|---|
-| `omlx` | Inference endpoint URL and default model |
-| `mcp_servers` | MCP server command and argument definitions |
-| `loop` | `max_iterations` (outer Ralph cycles), `phase_max_iterations` (inner tool-call iterations per phase), MCP error threshold, tool call cap |
-| `context` | Model directory path, context window size (or `null` to resolve from model `config.json`), warn/abort budget thresholds |
-
-**State directory** — `ai/state/ralph/` (ephemeral, per-task):
-
-| File | Signal |
-|---|---|
-| `task.md` | Task description loaded from T04 prompt |
-| `iteration.txt` | Current Ralph Loop cycle number |
-| `work-summary.txt` | Worker phase output |
-| `work-complete.txt` | Worker completion signal |
-| `review-result.txt` | `SHIP` or `REVISE` decision |
-| `review-feedback.txt` | Reviewer notes for next worker iteration |
-| `.ralph-complete` | Success marker |
-| `RALPH-BLOCKED.md` | Failure details; seeds T03 Issue |
-
-**Invocation** (from project root, after human approval of T04 prompt):
-
-```bash
-# Standard loop
-python ai/ael/src/orchestrator.py --mode loop \
-  --task ai/workspace/prompt/prompt-<uuid>-<n>.md
-
-# With wall-clock time limit (hours)
-python ai/ael/src/orchestrator.py --mode loop \
-  --task ai/workspace/prompt/prompt-<uuid>-<n>.md \
-  --duration 12
-```
-
-| Flag | Purpose |
-|---|---|
-| `--mode` | `worker` \| `reviewer` \| `loop` \| `reset` (default: `loop`) |
-| `--task` | Task string or path to task file |
-| `--model` | Model for all phases (overrides config default) |
-| `--worker-model` | Model for work phase only (loop mode) |
-| `--reviewer-model` | Model for review phase only (loop mode) |
-| `--max-iterations` | Outer Ralph cycle limit override |
-| `--duration` | Wall-clock time limit in hours (default: no limit) |
-| `--config` | Path to config.yaml |
-
-### Audit Loop
-
-The AEL includes a read-only codebase quality analysis capability. It uses dedicated recipes (`audit-work.yaml`, `audit-review.yaml`) in place of the standard Ralph recipes. The worker reads source files, records findings, and marks items in a traversal index. The reviewer checks finding quality and coverage. No source file is written.
-
-Audit-specific state files (pre-populated by the Strategic Domain before launch):
-
-| File | Purpose |
-|---|---|
-| `audit-index.md` | Ordered list of items to audit; worker marks each `[x]` on completion |
-| `audit-report.md` | Append-only findings accumulator |
-| `audit-uml.md` | Optional structural map of the target codebase |
-
-Audit criteria assessed per item: style, complexity, error handling, security, conformance, dead code.
-
-Invocation:
-
-```bash
-python ai/ael/src/orchestrator.py --mode loop \
-  --task ai/workspace/prompt/<uuid>-audit.md \
-  --duration 12
-```
-
-Without `--duration` the loop runs until all items in `audit-index.md` are marked complete or `max_iterations` is exhausted. High-severity findings are promoted to T03 issues post-run via the standard P04 workflow.
-
-See `docs/guide-audit-loop.md` for an overview and `ai/doc/guide-audit-loop.md` for operational detail.
-
-### govwatch — Governance Monitoring TUI
-
-`govwatch` is a standalone read-only TUI for monitoring a downstream project's governance state. It scans `ai/workspace/` and `ai/state/ralph/` each polling cycle and reports:
-
-- Inferred workflow phase (Idle, Change cycle, Tactical execution, etc.)
-- Two-tier compliance alerts: coupling violations, UUID mismatches, invalid `tactical_brief`, naming convention failures
-- Open document registry grouped by UUID
-- Alert summary written to `ai/dashboard-alerts.md`; clipboard copy via `C` key
-
-Invocation from project root:
-
-```bash
-python ai/src/govwatch.py [--project PATH] [--interval N]
-```
-
-See `ai/doc/guide-govwatch.md` for full operational detail.
-
-### ael-mcp — Claude Desktop AEL Interface (optional)
-
-`ael-mcp` is a standalone MCP server that registers once in Claude Desktop and exposes three tools: `start_ael`, `ael_status`, and `reset_ael`. When registered, the Strategic Domain can launch and monitor AEL without human terminal access.
-
-At T04 handoff (P09 §1.10.3), the human selects the execution path:
-
-| Option | Who launches AEL | Status notification |
-|---|---|---|
-| A — Human executes (all profiles) | Human runs terminal command | Human notifies Strategic Domain |
-| B — ael-mcp (Claude Desktop profile only) | Strategic Domain calls `start_ael` | Strategic Domain calls `ael_status` on request |
-
-Repository: `https://github.com/William12556/ael-mcp`  
-Setup instructions: P01 §1.2.8 in `ai/governance.md`
-
-## Repository Structure
-
-| Path | Purpose |
-| --- | --- |
-| `ai/` | Canonical framework — propagated to downstream projects via `bin/propagate.sh` |
-| `ai/governance.md` | Master governance document (P00–P10) |
-| `ai/primer.md` | Strategic Domain operational primer |
-| `ai/workflow.md` | Workflow flowchart |
-| `ai/profiles/` | Implementation profiles (AEL, Claude Code, claude-omlx) |
-| `ai/templates/` | Document templates T01–T07 |
-| `ai/ael/` | AEL orchestrator source, recipes, and configuration |
-| `ai/ael/src/` | Python source: orchestrator, mcp_client, parser, budget, linter |
-| `ai/ael/recipes/` | Ralph Loop and audit loop YAML recipes |
-| `ai/ael/config.yaml` | AEL configuration (inference endpoint, MCP servers, loop control) |
-| `ai/doc/` | Operational guides deployed with downstream projects |
-| `ai/doc/guide-ael-operations.md` | AEL operational reference for the Strategic Domain |
-| `ai/doc/guide-audit-loop.md` | Audit loop operational guide |
-| `ai/doc/guide-govwatch.md` | govwatch operational guide |
-| `ai/src/govwatch.py` | Governance monitoring TUI — read-only downstream project observer |
-| `ai/workspace/` | Governance document workspace (project-local; not propagated) |
-| `ai/state/ralph/` | AEL ephemeral state directory (project-local; created by orchestrator) |
-| `bin/propagate.sh` | Push `ai/` to a downstream project `ai/` directory |
-| `bin/sync-skel.sh` | Obsolete — deprecation stub |
-| `dev/` | Framework development artefacts (requirements, design, issues, changes) |
-| `docs/` | User-facing operational documentation |
-| `docs/claude/` | Strategic Domain operational documents (instructions, guidelines, context) |
-| `docs/guide-getting-started.md` | End-to-end setup guide from clone to first AEL run |
-| `docs/guide-profile-selection.md` | Profile selection guide: AEL vs Claude Code vs claude-omlx |
-| `docs/guide-audit-loop.md` | Audit loop overview and usage guide |
-| `docs/setup-apple-silicon-mlx.md` | Apple Silicon + MLX inference setup guide |
-| `docs/guide-software-testing.md` | Software testing reference for framework adopters |
-| `deprecated/` | Retired artefacts (former skel/ skeleton) |
+For configuration, invocation, audit loop, govwatch, and ael-mcp detail, see [docs/guide-orchestration.md](docs/guide-orchestration.md).
 
 ## Requirements
 
@@ -199,9 +65,43 @@ Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 | `omlx`         | Required inference server (`pip install omlx`)             |
 | Model          | Devstral Small 2 (2512) 6bit                               |
 
-Devstral Small 2 is the required Tactical Domain model. It is purpose-built for agentic coding and multi-file editing. The AEL parser (`parser.py`) is tuned to Mistral's tool-call format, which Devstral uses natively.
-
 Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
+
+---
+
+## Installation
+
+Two installation paths are provided. See [docs/guide-install.md](docs/guide-install.md) for full detail.
+
+### User Install
+
+Bootstraps the `ai/` framework into a project without cloning the repository. Always installs the latest release.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/William12556/LLM-Governance-and-Orchestration/main/bin/bootstrap.sh | bash -s -- <project-path>
+```
+
+Review `ai/ael/config.yaml` in the target project before first use.
+
+### Developer Install
+
+For developing or extending the framework.
+
+```bash
+git clone https://github.com/William12556/LLM-Governance-and-Orchestration.git
+```
+
+After changes to `ai/`, propagate to a downstream project:
+
+```bash
+bin/propagate.sh <project-root>
+```
+
+To publish a release:
+
+```bash
+bin/release.sh <version>
+```
 
 ---
 
@@ -215,7 +115,7 @@ Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-sili
 
 ### Initialization
 
-1. Run `bin/propagate.sh <project-root>` to push `ai/` into the downstream project directory
+1. Install the framework into the project using either path above
 2. Select an implementation profile from `ai/profiles/` and follow its setup instructions
 3. Ask your Strategic Domain model to read `ai/governance.md` and initialize the project per P01 (§1.2 Project Initialization)
 4. Begin with P00 (Governance) and follow the workflow flowchart in section 2.0
@@ -270,6 +170,8 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 3.2 | 2026-06-16 | Updated for unified ai/ model: Repository Structure, state dir, invocation paths, govwatch paths, Getting Started |
 | 3.3 | 2026-06-16 | Second-pass alignment: ai/dashboard-alerts.md prefix; model spec Q8 → 6bit |
 | 3.4 | 2026-06-16 | Updated Implementation Profiles table: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
+| 3.5 | 2026-06-18 | Added Installation section (user and developer paths); updated Getting Started; updated Repository Structure with bootstrap.sh, release.sh, guide-install.md |
+| 3.6 | 2026-06-18 | Condensed Orchestration section (detail moved to docs/guide-orchestration.md); removed Repository Structure section; removed Devstral rationale paragraph |
 
 ---
 
