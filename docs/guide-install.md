@@ -1,0 +1,105 @@
+Created: 2026 June 18
+
+# Installation Guide
+
+---
+
+## Table of Contents
+
+[1.0 Overview](<#1.0 overview>)
+[2.0 User Install](<#2.0 user install>)
+[3.0 Developer Install](<#3.0 developer install>)
+[Version History](<#version history>)
+
+---
+
+## 1.0 Overview
+
+Two installation paths are provided:
+
+| Path | Use case |
+|---|---|
+| User install | Bootstrap a project without cloning the repository |
+| Developer install | Develop or extend the framework |
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+## 2.0 User Install
+
+Bootstraps the `ai/` framework directory into an existing project. Does not require cloning the repository. Always installs the latest release.
+
+### 2.1 Prerequisites
+
+- `curl`
+- `bash`
+- An existing project directory
+
+### 2.2 Bootstrap
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/William12556/LLM-Governance-and-Orchestration/main/bin/bootstrap.sh | bash -s -- <project-path>
+```
+
+Replace `<project-path>` with the absolute or relative path to the target project root.
+
+### 2.3 Result
+
+After bootstrap:
+
+- `<project-path>/ai/` is created and populated with the framework
+- `<project-path>/ai/ael/config.yaml` is generated from the default template
+
+Review `config.yaml` before first use. It contains project-specific settings that must be verified manually.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+## 3.0 Developer Install
+
+For developing or extending the LLM-G&O framework.
+
+### 3.1 Prerequisites
+
+- `git`
+- `gh` (GitHub CLI) — required for `bin/release.sh` only
+
+### 3.2 Clone
+
+```bash
+git clone https://github.com/William12556/LLM-Governance-and-Orchestration.git
+```
+
+### 3.3 Propagate to a Downstream Project
+
+After making changes to `ai/`, push updates to a downstream project:
+
+```bash
+bin/propagate.sh <project-root>
+```
+
+Run from the repository root. The target project must already have an `ai/` directory. See `bin/propagate.sh` for excluded files.
+
+### 3.4 Create a Release
+
+```bash
+bin/release.sh
+```
+
+Archives `ai/`, creates a GitHub release, and attaches the tarball as a release asset. Requires `gh` authenticated to GitHub.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+## Version History
+
+| Version | Date | Description |
+|---|---|---|
+| 0.1 | 2026-06-18 | Initial document |
+
+---
+
+Copyright (c) 2026 William Watson. MIT License.
