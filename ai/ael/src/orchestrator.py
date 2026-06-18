@@ -42,6 +42,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -97,7 +98,51 @@ _RESET_FILES = [
     "review-feedback.txt",
     ".ralph-complete",
     "RALPH-BLOCKED.md",
+    "audit-index.md",
+    "audit-report.md",
 ]
+
+
+def _archive_audit_artifacts(state_dir: str, task_path: str | None, log: logging.Logger) -> None:
+    """
+    Copy audit-index.md and audit-report.md from state_dir to ai/workspace/audit/
+    with canonical naming: audit-<uuid>-index.md and audit-<uuid>-report.md.
+    Called after a successful audit loop SHIP. No-op if audit-report.md is absent.
+    UUID is extracted from the task file path basename (first 8-hex substring).
+    Falls back to yyyymmdd timestamp if UUID cannot be determined.
+    """
+    report_src = os.path.join(state_dir, "audit-report.md")
+    if not os.path.exists(report_src):
+        return  # not an audit run
+
+    index_src = os.path.join(state_dir, "audit-index.md")
+
+    uid = None
+    if task_path:
+        m = re.search(r"[0-9a-f]{8}", os.path.basename(task_path))
+        uid = m.group(0) if m else None
+    if not uid:
+        uid = datetime.datetime.now().strftime("%Y%m%d")
+        log.warning("archive audit: UUID not found in task path — using date fallback: %s", uid)
+
+    output_dir = os.path.join(os.getcwd(), "ai", "workspace", "audit")
+    os.makedirs(output_dir, exist_ok=True)
+
+    archived = 0
+    for src, suffix in [(index_src, "index"), (report_src, "report")]:
+        if os.path.exists(src):
+            dst = os.path.join(output_dir, f"audit-{uid}-{suffix}.md")
+            shutil.copy2(src, dst)
+            archived += 1
+            log.info("archive audit: %s -> %s", src, dst)
+            console.print(f"[green][ael] audit archived: {escape(dst)}[/green]")
+        else:
+            log.warning("archive audit: %s not found — skipping", src)
+
+    if archived:
+        console.print(
+            f"[green][ael] {archived} audit artifact(s) archived to {escape(output_dir)}[/green]"
+        )
 
 
 def load_yaml(path: str) -> dict:
@@ -845,6 +890,46 @@ def run_preflight_check(task: str, log: logging.Logger) -> str:
     return summary
 
 
+def _snapshot_audit_index(state_dir: str, log: logging.Logger) -> int | None:
+    """
+    Count total items in audit-index.md at loop start.
+    Returns the count as the scope snapshot, or None if the file is absent.
+    Non-audit runs return None — all scope checks become no-ops.
+    """
+    index_path = os.path.join(state_dir, "audit-index.md")
+    if not os.path.exists(index_path):
+        return None
+    count = sum(1 for line in open(index_path) if line.strip().startswith("- ["))
+    log.info("audit scope snapshot: %d items", count)
+    return count
+
+
+def _check_audit_scope(
+    state_dir: str, original_count: int | None, log: logging.Logger
+) -> str | None:
+    """
+    Detect unauthorised modifications to audit-index.md item count.
+    Compares current total against snapshot taken at loop start.
+    Returns an error string if count changed, None if intact or non-audit run.
+    """
+    if original_count is None:
+        return None
+    index_path = os.path.join(state_dir, "audit-index.md")
+    if not os.path.exists(index_path):
+        return None
+    current = sum(1 for line in open(index_path) if line.strip().startswith("- ["))
+    if current == original_count:
+        return None
+    delta = current - original_count
+    verb = "added" if delta > 0 else "removed"
+    return (
+        f"Scope violation: audit-index.md item count changed from {original_count} "
+        f"to {current} ({abs(delta)} item(s) {verb}). "
+        f"Do not add or remove items from audit-index.md. "
+        f"Only change [ ] to [x]. Restore the original item list and continue."
+    )
+
+
 def _count_unchecked_audit_items(state_dir: str, log: logging.Logger) -> int:
     """
     Count unchecked [ ] items in audit-index.md.
@@ -893,6 +978,9 @@ async def run_loop(
     clear_state(state_dir,
                 "review-result.txt", "review-feedback.txt",
                 "work-complete.txt", "work-summary.txt", ".ralph-complete")
+
+    # Audit scope snapshot: record original item count for scope lock enforcement.
+    _audit_original_count = _snapshot_audit_index(state_dir, log)
 
     # Pre-flight success criteria check (opt-in)
     if preflight_check:
@@ -949,6 +1037,18 @@ async def run_loop(
             console.print(Panel(escape(blocked_content), title="[red]✗ BLOCKED[/red]", border_style="red"))
             return 1
 
+        # Audit scope lock: reject unauthorised modifications to audit-index.md.
+        _scope_error = _check_audit_scope(state_dir, _audit_original_count, log)
+        if _scope_error:
+            log.warning("audit scope lock: %s", _scope_error)
+            console.print(
+                "[yellow][ael] audit scope lock: item count changed "
+                "\u2014 injecting corrective feedback[/yellow]"
+            )
+            write_state(state_dir, "review-feedback.txt", _scope_error)
+            clear_state(state_dir, "work-complete.txt", "review-result.txt")
+            continue
+
         # Review phase — clear worker signal before reviewer starts
         clear_state(state_dir, "work-complete.txt")
         console.print("\n[bold yellow]▶ REVIEW PHASE[/bold yellow]")
@@ -968,31 +1068,40 @@ async def run_loop(
 
         result = read_state(state_dir, "review-result.txt")
         if result == "SHIP":
-            # Audit SHIP gate: enforce coverage before accepting SHIP.
-            _unchecked = _count_unchecked_audit_items(state_dir, log)
-            if _unchecked > 0:
-                log.warning(
-                    "audit SHIP gate: reviewer issued SHIP with %d unchecked item(s) — overriding",
-                    _unchecked,
-                )
+            # Audit SHIP gate: check scope integrity then coverage before accepting SHIP.
+            _gate_scope_err = _check_audit_scope(state_dir, _audit_original_count, log)
+            if _gate_scope_err:
+                log.warning("audit SHIP gate: scope violation — %s", _gate_scope_err)
                 console.print(
-                    f"[yellow][ael] audit SHIP gate: {_unchecked} unchecked item(s) remain "
-                    f"— overriding SHIP to REVISE[/yellow]"
+                    "[yellow][ael] audit SHIP gate: scope violation "
+                    "— overriding SHIP to REVISE[/yellow]"
                 )
-                write_state(
-                    state_dir, "review-feedback.txt",
-                    f"Coverage incomplete: {_unchecked} item(s) in audit-index.md remain unchecked.\n"
-                    f"Do not issue SHIP until every item is marked [x].\n"
-                    f"Proceed to audit the next unchecked item."
-                )
+                write_state(state_dir, "review-feedback.txt", _gate_scope_err)
             else:
-                console.print(Panel(
-                    f"[bold]✓ SHIPPED[/bold] after {i} loop iteration(s)",
-                    border_style="green",
-                ))
-                log.info("SHIPPED iteration=%d", i)
-                write_state(state_dir, ".ralph-complete", f"COMPLETE: iteration {i}")
-                return 0
+                _unchecked = _count_unchecked_audit_items(state_dir, log)
+                if _unchecked > 0:
+                    log.warning(
+                        "audit SHIP gate: reviewer issued SHIP with %d unchecked item(s) — overriding",
+                        _unchecked,
+                    )
+                    console.print(
+                        f"[yellow][ael] audit SHIP gate: {_unchecked} unchecked item(s) remain "
+                        f"— overriding SHIP to REVISE[/yellow]"
+                    )
+                    write_state(
+                        state_dir, "review-feedback.txt",
+                        f"Coverage incomplete: {_unchecked} item(s) in audit-index.md remain unchecked.\n"
+                        f"Do not issue SHIP until every item is marked [x].\n"
+                        f"Proceed to audit the next unchecked item."
+                    )
+                else:
+                    console.print(Panel(
+                        f"[bold]✓ SHIPPED[/bold] after {i} loop iteration(s)",
+                        border_style="green",
+                    ))
+                    log.info("SHIPPED iteration=%d", i)
+                    write_state(state_dir, ".ralph-complete", f"COMPLETE: iteration {i}")
+                    return 0
 
         feedback = read_state(state_dir, "review-feedback.txt")
         if feedback:
@@ -1134,6 +1243,8 @@ async def main_async(args: argparse.Namespace) -> int:
                                 max_tool_calls_per_iter=max_tool_calls,
                                 preflight_check=do_preflight,
                                 deadline=deadline)
+            if rc == 0:
+                _archive_audit_artifacts(state_dir, args.task, log)
     finally:
         log.info("AEL end rc=%d", rc)
         await mcp.close()
