@@ -243,6 +243,12 @@ required after each increment.
 - Full issue/change/prompt workflow applies to `src/` changes only.
 - `ai/workspace/` document changes may be made directly after human approval.
 
+**Initial Implementation**
+
+- First-time source code implementation from an approved design does not require issue or change documents.
+- Forward path: approved design → T04 prompt → execution → review.
+- The T03 → T02 corrective loop is triggered only by AEL `BLOCKED` or test failure.
+
 [Return to Table of Contents](<#table of contents>)
 
 ---
@@ -278,6 +284,7 @@ any document.
 | 0.6 | 2026-06-16 | Updated §2.1 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
 | 0.7 | 2026-06-17 | Aligned with docs/claude/primer.md (canonical): code spans for governance.md, workflow.md, SHIP, BLOCKED, .gitignore, budget.py, tactical_brief throughout; Prime Directive bolded; ael-mcp bold extent corrected; §6.0 restructured with §6.1 Naming and §6.2 Lifecycle subsections; colon positions in UUID propagation and Iteration headings; blank lines before bullet lists in §3.0 and §7.0; tactical_brief Format and Trivial Change Exemption heading formats |
 | 0.8 | 2026-06-17 | §2.0: added context file to AEL description; §2.1: added Context file row to profile comparison table |
+| 0.9 | 2026-06-25 | Added §7.0 Initial Implementation constraint: initial implementation from approved design does not require issue/change documents; forward path and corrective loop trigger made explicit |
 
 ---
 

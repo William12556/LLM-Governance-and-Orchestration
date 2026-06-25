@@ -589,6 +589,7 @@ exclude_lines = [
     - Strategic Domain: For human-requested source code changes, first creates issue document via P04, then creates change document referencing that issue
     - Strategic Domain: For enhancement or requirement change requests, creates issue document via P04 with type `enhancement` or `requirement_change` and origin `requirement_change`, then creates change document referencing that issue
     - Exception: Non-source-code changes (ai/workspace/ documents per 1.4.10) may be implemented directly after human approval without issue/change documents
+    - Exception: Initial implementation of source code from an approved design document does not require issue or change documents. The forward path is: approved design → T04 prompt → Tactical Domain execution → review. Issue and change documents are required only when execution fails (AEL BLOCKED) or tests fail.
   - §1.4.2 Document coupling
     - Strategic Domain: Ensures one-to-one coupling between issue and change documents
     - Strategic Domain: Every source code change document must reference exactly one source issue document via UUID
@@ -1154,6 +1155,7 @@ See [workflow.md](workflow.md).
 | 9.5     | 2026-06-17 | Simplified Tactical Domain configuration: removed <tactical_config>/<skills_dir>/commands placeholders from §1.2.6; added ai/context.md (AEL profile) and .claude/ block (Claude Code profiles only) to §1.2.6; scoped §1.1.18 Skills Management to Claude Code profiles; updated §1.1.19 context file paths per profile |
 | 9.6     | 2026-06-17 | Added ai/context.md template; ralph-work.yaml v1.3.0 reads project_root/ai/context.md at task start; §1.1.19 notes AEL auto-load behaviour |
 | 9.7     | 2026-06-17 | Renamed ai/workspace/admin/ → ai/workspace/report/ in §1.2.2 .gitignore template and §1.2.6 folder structure; added report/closed/ to §1.2.6 and §1.1.14.5 |
+| 9.8     | 2026-06-25 | Added P03 §1.4.1 exception: initial implementation from approved design does not require issue or change documents; forward path is design → T04 → execution → review; corrective loop triggered only by AEL BLOCKED or test failure |
 
 ---
 [Return to Table of Contents](<#table of contents>)
