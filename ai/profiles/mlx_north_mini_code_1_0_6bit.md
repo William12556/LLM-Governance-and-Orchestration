@@ -21,7 +21,7 @@ Created: 2026 June 26
 
 ## 1.0 Overview
 
-This profile maps governance abstract placeholders to Apple Silicon MLX-based local model tooling using North Mini Code 1.0 (Cohere2 mixture-of-experts architecture). It requires Apple M-series hardware. This profile is provisional; the model is under evaluation as a Tactical Domain. See [9.0 Verification Status](<#9.0 verification status>).
+This profile maps governance abstract placeholders to Apple Silicon MLX-based local model tooling using North Mini Code 1.0 (Cohere2 mixture-of-experts architecture; 30B total parameters, 3B active). It requires Apple M-series hardware. Licence: Apache 2.0. This profile is provisional; the model is under evaluation as a Tactical Domain. See [9.0 Verification Status](<#9.0 verification status>).
 
 | Concern | Implementation |
 |---|---|
@@ -59,7 +59,9 @@ Any frontier model with sufficient reasoning capability may substitute. The Stra
 
 **Implementation:** North Mini Code 1.0 6bit via oMLX + AEL orchestrator
 
-**Architecture:** Cohere2 mixture-of-experts (`cohere2_moe`); 128 experts, 8 active per token.
+**Architecture:** Cohere2 mixture-of-experts (`cohere2_moe`); 30B total parameters, 3B active; 128 experts, 8 active per token.
+
+**Licence:** Apache 2.0 (Cohere). Official model card: `CohereLabs/North-Mini-Code-1.0`. The on-disk 6bit weights are a community MLX conversion.
 
 **Hardware requirement:** Apple M-series chip; 32 GB unified memory minimum (~25 GB resident at 6bit per oMLX estimate).
 
@@ -151,7 +153,7 @@ Worker and reviewer roles are differentiated by prompt engineering within the sa
 | Worker | North Mini Code 1.0 | 6bit | ~25 GB |
 | Reviewer | North Mini Code 1.0 | 6bit | ~25 GB |
 
-Context window: 500K tokens (`max_position_embeddings`). oMLX sets no explicit context cap for this model.
+Context window: 256K tokens (Cohere specification; 64K maximum generation). The model `config.json` reports `max_position_embeddings` 500000, and oMLX sets no explicit context cap; 256K is the supported figure.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -180,6 +182,7 @@ This profile is provisional pending evaluation. Open items:
 |---|---|
 | oMLX served id matches `default_model` | Verified (`North-Mini-Code-1.0-6bit`) |
 | Resident memory footprint | Verified (~25 GB, oMLX estimate) |
+| Licence | Verified (Apache 2.0, Cohere blog 2026-06-09) |
 | AEL parser handles Cohere action-block tool calls | Unverified |
 | Orchestrator separates thinking blocks from action blocks | Unverified |
 | Worker/reviewer prompt engineering effective with this model | Unverified |
@@ -194,6 +197,7 @@ This profile is provisional pending evaluation. Open items:
 | Version | Date | Description |
 |---|---|---|
 | 0.1 | 2026-06-26 | Initial draft; provisional profile for North Mini Code 1.0 6bit under evaluation as Tactical Domain. Facts verified against oMLX admin endpoint and on-disk model config |
+| 0.2 | 2026-06-26 | Added Apache 2.0 licence, 30B/3B parameter figures, official CohereLabs card reference; corrected context 500K → 256K per Cohere specification |
 
 ---
 
