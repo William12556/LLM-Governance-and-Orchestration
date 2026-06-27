@@ -6,7 +6,7 @@ issue_info:
   title: "AEL MCP stdio teardown raises anyio cancel-scope RuntimeError at shutdown"
   date: "2026-06-26"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "low"
   type: "defect"
   iteration: 1

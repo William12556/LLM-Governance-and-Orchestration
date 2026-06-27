@@ -6,7 +6,7 @@ change_info:
   title: "Own MCP stdio/session contexts in a single AsyncExitStack (a3f1c7d9 Option B)"
   date: "2026-06-27"
   author: "William Watson"
-  status: "proposed"
+  status: "implemented"
   priority: "low"
   iteration: 1
   coupled_docs:
