@@ -3,10 +3,14 @@ MCP client manager — async.
 
 Manages stdio connections to one or more MCP servers.
 Provides tool catalogue in OpenAI format and async tool dispatch.
+
+Note: connect() and close() must be awaited in the same task to ensure
+proper AsyncExitStack teardown without anyio cancel-scope errors.
 """
 
 import re
 import uuid
+from contextlib import AsyncExitStack
 from typing import Any
 
 from mcp import ClientSession, StdioServerParameters
@@ -35,11 +39,16 @@ class MCPClient:
     def __init__(self, servers: dict[str, dict]) -> None:
         self._servers = servers
         self._sessions: dict[str, ClientSession] = {}
-        self._contexts: list = []
         self._tools: dict[str, dict] = {}  # tool_name -> {server, description, input_schema}
+        self._stack: AsyncExitStack = AsyncExitStack()
 
     async def connect(self) -> None:
-        """Connect to all configured MCP servers and build tool catalogue."""
+        """
+        Connect to all configured MCP servers and build tool catalogue.
+
+        All stdio_client and ClientSession contexts are entered via the instance
+        AsyncExitStack. Call close() in the same task to tear down cleanly.
+        """
         for name, cfg in self._servers.items():
             params = StdioServerParameters(
                 command=cfg["command"],
@@ -47,11 +56,10 @@ class MCPClient:
                 env=cfg.get("env"),
             )
             try:
-                ctx = stdio_client(params)
-                read, write = await ctx.__aenter__()
-                self._contexts.append(ctx)
-                session = ClientSession(read, write)
-                await session.__aenter__()
+                # Enter stdio_client context via the stack
+                read, write = await self._stack.enter_async_context(stdio_client(params))
+                # Enter ClientSession context via the stack
+                session = await self._stack.enter_async_context(ClientSession(read, write))
                 await session.initialize()
                 self._sessions[name] = session
                 response = await session.list_tools()
@@ -112,14 +120,11 @@ class MCPClient:
             return f"Error calling '{name}': {e}"
 
     async def close(self) -> None:
-        """Close all server connections."""
-        for session in self._sessions.values():
-            try:
-                await session.__aexit__(None, None, None)
-            except Exception:
-                pass
-        # Note: ctx.__aexit__() is intentionally skipped. Calling it during orchestrator
-        # shutdown raises anyio RuntimeError (cancel scope task mismatch) on Python 3.11.
-        # The stdio subprocess is a short-lived child process; it will be reaped by the OS
-        # when the parent process exits. This is safe for single-run orchestrator sessions.
-        self._contexts.clear()
+        """
+        Close all server connections.
+
+        Tears down all stdio_client and ClientSession contexts via the
+        AsyncExitStack. Must be awaited in the same task as connect().
+        """
+        await self._stack.aclose()
+        self._sessions.clear()
