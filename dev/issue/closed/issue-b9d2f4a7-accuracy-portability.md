@@ -6,7 +6,7 @@ issue_info:
   title: "Reviewer syntax gate unexecutable, budget undercount, and interpreter/tool assumptions"
   date: "2026-06-26"
   reporter: "William Watson"
-  status: "open"
+  status: "resolved"
   severity: "medium"
   type: "defect"
   iteration: 1
@@ -86,6 +86,10 @@ version_history:
     date: "2026-06-26"
     changes:
       - "Initial issue"
+  - version: "1.1"
+    date: "2026-06-26"
+    changes:
+      - "Resolved: fix implemented and verified against source; issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

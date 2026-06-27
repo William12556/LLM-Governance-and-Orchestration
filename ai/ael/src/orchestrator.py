@@ -38,6 +38,7 @@ import argparse
 import asyncio
 import datetime
 import glob
+import hashlib
 import json
 import logging
 import os
@@ -46,6 +47,7 @@ import shutil
 import subprocess
 import sys
 import time
+import traceback
 import uuid
 
 import yaml
@@ -71,10 +73,12 @@ def _ctx_bar(estimated: int, context_window: int, status: str) -> str:
     color = "red" if status == "abort" else "yellow" if status == "warn" else "dim"
     return f"[{color}]  {bar}  {pct:.1f}%  {estimated:,} / {context_window:,} tokens[/{color}]"
 
-_MCP_ERROR_PATTERNS = (
+# F7: MCP error detection uses prefix matching only to avoid false positives.
+# A benign result containing these strings mid-text will not be misclassified.
+_MCP_ERROR_PREFIXES = (
+    "Error:",
     "Error calling",
     "MCP error",
-    "Input validation error",
 )
 
 _EDIT_PATTERN_ERRORS = (
@@ -82,10 +86,93 @@ _EDIT_PATTERN_ERRORS = (
     "E_INVALID_INPUT",
 )
 
+# F4: Write/destructive tool names for scope validation
+_WRITE_TOOLS = {
+    "write", "write_file", "create_file",
+    "edit", "edit_file",
+    "delete", "remove", "delete_file", "remove_file",
+    "move", "rename", "move_file", "rename_file",
+    "mkdir", "create_directory", "makedirs",
+}
+
+# F12: Stall detection — consecutive identical REVISE feedback threshold
+_DEFAULT_STALL_THRESHOLD = 3
+
+# F14: Completion call retry settings
+_COMPLETION_MAX_RETRIES = 3
+_COMPLETION_INITIAL_BACKOFF = 2.0  # seconds
+_COMPLETION_BACKOFF_MULTIPLIER = 2.0
+
+
+def _validate_write_scope(tool_name: str, arguments: dict, project_root: str) -> str | None:
+    """
+    F4: Validate that write/destructive tool calls target paths within project_root.
+
+    Returns None if the tool is in scope or not a write tool.
+    Returns an error message string if the path is out of scope.
+    """
+    if tool_name not in _WRITE_TOOLS:
+        return None
+
+    # Extract path from common argument names
+    target_path = arguments.get("path") or arguments.get("file_path") or arguments.get("destination")
+    if not target_path:
+        return None  # Let MCP validate missing required args
+
+    # Resolve to absolute and check containment
+    try:
+        resolved = os.path.abspath(target_path)
+        if not resolved.startswith(project_root + os.sep) and resolved != project_root:
+            return (
+                f"Scope violation: path '{target_path}' is outside the project root "
+                f"'{project_root}'. All writes must target paths within the project."
+            )
+    except Exception:
+        pass  # Let MCP handle malformed paths
+
+    return None
+
 
 def _is_mcp_error(result: str) -> bool:
-    """Return True if result string indicates an MCP tool error."""
-    return any(result.startswith(p) or p in result for p in _MCP_ERROR_PATTERNS)
+    """
+    F7: Return True if result string indicates an MCP tool error.
+
+    Uses prefix matching only to avoid false positives — a benign result
+    containing error-like text mid-string will not be misclassified.
+    """
+    return any(result.startswith(p) for p in _MCP_ERROR_PREFIXES)
+
+
+def _normalize_verdict(text: str) -> str:
+    """
+    Normalize a review verdict string to SHIP or REVISE.
+
+    Handles various formats:
+      - 'SHIP', 'ship', 'SHIP.', '**SHIP**', 'SHIP!' -> 'SHIP'
+      - 'REVISE', 'revise', 'REVISE:', '**REVISE**' -> 'REVISE'
+      - 'SHIP: The code looks good...' -> 'SHIP' (leading token)
+
+    Returns 'SHIP' if the leading token (uppercased, non-alphanumerics stripped)
+    matches 'SHIP', otherwise returns 'REVISE'.
+    """
+    if not text:
+        return "REVISE"
+
+    # Extract first token: split on whitespace, take first word
+    tokens = text.strip().split()
+    if not tokens:
+        return "REVISE"
+
+    leading = tokens[0]
+
+    # Normalize: uppercase, strip non-alphanumerics
+    normalized = re.sub(r'[^A-Za-z]', '', leading).upper()
+
+    # SHIP set: exact match only
+    if normalized == "SHIP":
+        return "SHIP"
+
+    return "REVISE"
 
 
 # State files cleared by reset (logs and context report excluded)
@@ -97,10 +184,78 @@ _RESET_FILES = [
     "review-result.txt",
     "review-feedback.txt",
     ".ralph-complete",
+    ".ralph-timeout",  # F10: duration-limit sentinel
     "RALPH-BLOCKED.md",
     "audit-index.md",
     "audit-report.md",
 ]
+
+
+def _hash_feedback(feedback: str) -> str:
+    """F12: Return a short hash of feedback content for stall detection."""
+    return hashlib.sha256(feedback.encode()).hexdigest()[:16] if feedback else ""
+
+
+async def _completion_with_retry(
+    client,
+    model: str,
+    messages: list[dict],
+    tools: list[dict] | None,
+    log: logging.Logger,
+    state_dir: str,
+    max_retries: int = _COMPLETION_MAX_RETRIES,
+    initial_backoff: float = _COMPLETION_INITIAL_BACKOFF,
+    backoff_multiplier: float = _COMPLETION_BACKOFF_MULTIPLIER,
+):
+    """
+    F14: Bounded retry with exponential backoff around the completion call.
+
+    On persistent failure after max_retries, writes RALPH-BLOCKED.md and raises
+    a RuntimeError to signal clean termination (no uncaught exception).
+    """
+    backoff = initial_backoff
+    last_error = None
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                tools=tools or None,
+                stream=False,
+            )
+            return response
+        except Exception as e:
+            last_error = e
+            log.warning(
+                "completion call failed (attempt %d/%d): %s",
+                attempt, max_retries, e,
+            )
+            if attempt < max_retries:
+                console.print(
+                    f"[yellow][ael] completion error (attempt {attempt}/{max_retries}), "
+                    f"retrying in {backoff:.1f}s: {e}[/yellow]"
+                )
+                await asyncio.sleep(backoff)
+                backoff *= backoff_multiplier
+            else:
+                # Persistent failure — BLOCK cleanly
+                tb = traceback.format_exc()
+                log.error("completion call persistent failure:\n%s", tb)
+                blocked_msg = (
+                    "# RALPH-BLOCKED\n\n"
+                    f"Completion call failed after {max_retries} attempts.\n\n"
+                    f"Last error: {last_error}\n\n"
+                    f"Traceback:\n```\n{tb}\n```\n"
+                )
+                write_state(state_dir, "RALPH-BLOCKED.md", blocked_msg)
+                console.print(
+                    f"[red][ael] BLOCKED: completion call failed after {max_retries} attempts[/red]"
+                )
+                raise RuntimeError(f"Completion call failed: {last_error}") from last_error
+
+    # Should not reach here, but satisfy type checker
+    raise RuntimeError("Unexpected: completion retry loop exited without return or raise")
 
 
 def _archive_audit_artifacts(state_dir: str, task_path: str | None, log: logging.Logger) -> None:
@@ -190,34 +345,53 @@ def resolve_context_window(
     models_dir: str,
     override: int | None,
     log: logging.Logger,
+    model_overrides: dict | None = None,
 ) -> int | None:
     """
     Resolve the model context window in tokens.
 
     Priority:
-      1. config.yaml context.context_window override (if set)
-      2. max_position_embeddings from model config.json on disk
-         Searches models_dir recursively for a directory matching model_name.
+      1. config.yaml context.context_window global override (if set)
+      2. F18: config.yaml context.model_context_windows per-model override (if set)
+      3. max_position_embeddings from model config.json on disk
+         Searches models_dir for the exact model directory (not arbitrary glob match).
          Handles both top-level and text_config-nested layout.
 
     Returns the context window as int, or None if not determinable.
     """
     if override is not None:
-        log.info("context window: %d (config override)", override)
+        log.info("context window: %d (config global override)", override)
         return override
+
+    # F18: Check per-model override from config
+    if model_overrides and model_name in model_overrides:
+        ctx = model_overrides[model_name]
+        log.info("context window: %d (config per-model override for '%s')", ctx, model_name)
+        return int(ctx)
 
     if not models_dir:
         log.debug("context window: models_dir not set — skipping disk lookup")
         return None
 
-    # Find all config.json files under a directory whose name matches model_name
-    pattern = os.path.join(models_dir, "**", model_name, "config.json")
-    matches = glob.glob(pattern, recursive=True)
-    if not matches:
+    # F18: Match exact model directory instead of arbitrary glob
+    # Try direct path first, then search subdirectories
+    candidate_paths = [
+        os.path.join(models_dir, model_name, "config.json"),
+    ]
+    # Also check one level of subdirectories (e.g., models_dir/mlx-community/model_name)
+    for subdir in os.listdir(models_dir) if os.path.isdir(models_dir) else []:
+        candidate_paths.append(os.path.join(models_dir, subdir, model_name, "config.json"))
+
+    cfg_path = None
+    for path in candidate_paths:
+        if os.path.exists(path):
+            cfg_path = path
+            break
+
+    if not cfg_path:
         log.debug("context window: no config.json found for '%s' under %s", model_name, models_dir)
         return None
 
-    cfg_path = matches[0]
     try:
         with open(cfg_path) as f:
             cfg = json.load(f)
@@ -235,9 +409,11 @@ def resolve_context_window(
     return None
 
 
-def estimate_tokens(messages: list[dict]) -> int:
+def estimate_tokens(messages: list[dict], tools: list[dict] | None = None) -> int:
     """
-    Approximate token count for a list of chat messages.
+    Approximate token count for a list of chat messages plus optional tool schema.
+
+    F8: Includes both message content and serialized tool-schema length.
     Uses len(content) // 4 — a standard heuristic for Mistral-family BPE.
     Slightly overestimates, which is the safe direction for budget checks.
     """
@@ -251,6 +427,11 @@ def estimate_tokens(messages: list[dict]) -> int:
             for block in content:
                 if isinstance(block, dict):
                     total += len(block.get("text", "")) // 4
+
+    # F8: Include serialized tool schema in token estimate
+    if tools:
+        total += len(json.dumps(tools)) // 4
+
     return total
 
 
@@ -506,13 +687,18 @@ async def run_phase(
     budget_abort_pct: float = 0.95,
     mcp_error_threshold: int = 3,
     max_tool_calls_per_iter: int = 10,
-) -> int:
+    project_root: str = "",
+) -> tuple[int, str]:
     """
     Single phase (worker or reviewer): inject tools, send completions,
     dispatch tool calls, loop until no tool calls remain.
-    Returns 0 on success, 1 on failure.
+    Returns (exit_code, final_message) where:
+      - exit_code: 0 on success, 1 on failure
+      - final_message: the terminal assistant response text (empty on failure or tool exit)
     """
-    tools = mcp.get_openai_tools()
+    is_worker_phase = "REVIEW" not in phase_label.upper()
+    # F5: review phase gets read-only tool subset; worker gets full toolset
+    tools = mcp.get_openai_tools(readonly=not is_worker_phase)
 
     # Build real tool name list and inject into recipe system prompt
     tool_list = format_tool_signatures(tools)
@@ -549,7 +735,7 @@ async def run_phase(
                 console.print("[red]  budget exceeded — aborting phase[/red]")
                 log.error("context budget abort: %d / %d tokens (%.1f%%)",
                           estimated, context_window, fraction * 100)
-                return 1
+                return 1, ""
             elif status == "warn":
                 console.print(_ctx_bar(estimated, context_window, status))
                 log.warning("context budget warn: %d / %d tokens (%.1f%%)",
@@ -559,12 +745,14 @@ async def run_phase(
                 log.debug("context budget ok: %d / %d tokens (%.1f%%)",
                           estimated, context_window, fraction * 100)
 
-        response = await client.chat.completions.create(
-            model=model,
-            messages=messages,
-            tools=tools or None,
-            stream=False,
-        )
+        # F14: Use bounded retry with backoff for transient endpoint errors
+        try:
+            response = await _completion_with_retry(
+                client, model, messages, tools, log, state_dir
+            )
+        except RuntimeError:
+            # Persistent failure — RALPH-BLOCKED.md already written
+            return 1, ""
 
         message = response.choices[0].message
         content = message.content or ""
@@ -586,6 +774,27 @@ async def run_phase(
                 except json.JSONDecodeError:
                     arguments = {}
                 tool_calls.append({"id": tc.id, "name": tc.function.name, "arguments": arguments})
+        else:
+            # Mistral plain-text format — parse from content
+            parsed = parse_tool_calls(content)
+            if parsed:
+                for tc in parsed:
+                    tc["id"] = f"call_{uuid.uuid4().hex[:8]}"
+                tool_calls = parsed
+
+        # F3: Apply tool call cap BEFORE building assistant message to avoid orphaned IDs.
+        # The assistant message must only reference tool_calls that will have matching results.
+        if tool_calls and len(tool_calls) > max_tool_calls_per_iter:
+            log.warning(
+                "iteration %d: %d tool calls exceeds cap %d — truncating",
+                iteration, len(tool_calls), max_tool_calls_per_iter,
+            )
+            console.print(f"[yellow][ael] tool call cap ({max_tool_calls_per_iter}) exceeded "
+                          f"({len(tool_calls)} calls) — truncating[/yellow]")
+            tool_calls = tool_calls[:max_tool_calls_per_iter]
+
+        # Build assistant message with (possibly truncated) tool_calls
+        if tool_calls:
             messages.append({
                 "role": "assistant",
                 "content": content,
@@ -596,57 +805,44 @@ async def run_phase(
                 ],
             })
         else:
-            # Mistral plain-text format — parse from content
-            parsed = parse_tool_calls(content)
-            if parsed:
-                for tc in parsed:
-                    tc["id"] = f"call_{uuid.uuid4().hex[:8]}"
-                tool_calls = parsed
-                messages.append({
-                    "role": "assistant",
-                    "content": content,
-                    "tool_calls": [
-                        {"id": tc["id"], "type": "function",
-                         "function": {"name": tc["name"], "arguments": json.dumps(tc["arguments"])}}
-                        for tc in tool_calls
-                    ],
-                })
-            else:
-                # No tool calls — final response
-                messages.append({"role": "assistant", "content": content})
-
-        # P2a: enforce per-iteration tool call cap
-        if tool_calls and len(tool_calls) > max_tool_calls_per_iter:
-            log.warning(
-                "iteration %d: %d tool calls exceeds cap %d — truncating",
-                iteration, len(tool_calls), max_tool_calls_per_iter,
-            )
-            console.print(f"[yellow][ael] tool call cap ({max_tool_calls_per_iter}) exceeded "
-                          f"({len(tool_calls)} calls) — truncating[/yellow]")
-            tool_calls = tool_calls[:max_tool_calls_per_iter]
+            # No tool calls — final response
+            messages.append({"role": "assistant", "content": content})
 
         if not tool_calls:
-            # P1b: guard against malformed final response
-            if "[TOOL_CALLS]" in content or _is_mcp_error(content):
+            # F7: Guard against malformed final response using structured signals.
+            # Check for unparsed tool call markers (model tried to emit calls but parser failed).
+            # Do NOT use substring scans for error patterns — a summary may legitimately
+            # contain such text without indicating a malformed response.
+            _has_unparsed_tool_marker = "[TOOL_CALLS]" in content and not message.tool_calls
+            if _has_unparsed_tool_marker:
                 blocked_msg = (
                     "# RALPH-BLOCKED\n\n"
-                    "Worker final response is malformed "
-                    "(contains tool call markers or error text).\n\n"
+                    "Worker final response contains unparsed tool call markers.\n\n"
                     f"Content preview:\n\n    {content[:400]}\n"
                 )
                 write_state(state_dir, "RALPH-BLOCKED.md", blocked_msg)
-                log.error("BLOCKED: worker final response malformed")
+                log.error("BLOCKED: worker final response contains unparsed tool markers")
                 console.print("[red][ael] BLOCKED: worker final response malformed[/red]")
-                return 1
+                return 1, ""
             console.print(Panel(escape(content), title="[green]response[/green]", border_style="green"))
-            write_state(state_dir, "work-summary.txt", content)
-            return 0
+            # F13: only worker phase writes work-summary.txt; review phase preserves it
+            if is_worker_phase:
+                write_state(state_dir, "work-summary.txt", content)
+            return 0, content
 
         # Dispatch tool calls and inject results
         for tc in tool_calls:
-            console.print(f"[yellow]  call →[/yellow]  [bold]{escape(tc['name'])}[/bold]({escape(json.dumps(tc['arguments']))})") 
+            console.print(f"[yellow]  call →[/yellow]  [bold]{escape(tc['name'])}[/bold]({escape(json.dumps(tc['arguments']))})")
             log.debug("tool call: %s args=%s", tc["name"], json.dumps(tc["arguments"]))
-            result = await mcp.call_tool(tc["name"], tc["arguments"])
+
+            # F4: Pre-dispatch write scope validation
+            _scope_err = _validate_write_scope(tc["name"], tc["arguments"], project_root) if project_root else None
+            if _scope_err:
+                log.warning("scope violation: %s", _scope_err)
+                console.print(f"[red][ael] scope violation: {escape(_scope_err[:200])}[/red]")
+                result = f"Error: {_scope_err}"
+            else:
+                result = await mcp.call_tool(tc["name"], tc["arguments"])
             log.debug("tool result: %s", result)
             preview = result[:200] + ("..." if len(result) > 200 else "")
             console.print(f"[dim]  result ← {escape(preview)}[/dim]")
@@ -686,7 +882,7 @@ async def run_phase(
                 )
                 if _ep_path and _ep_path.endswith(".py"):
                     _ep_proc = subprocess.run(
-                        ["python", "-m", "py_compile", _ep_path],
+                        [sys.executable, "-m", "py_compile", _ep_path],
                         capture_output=True,
                         text=True,
                     )
@@ -732,7 +928,7 @@ async def run_phase(
                         f"[red][ael] BLOCKED: MCP error threshold "
                         f"({mcp_error_threshold}) reached[/red]"
                     )
-                    return 1
+                    return 1, ""
             else:
                 mcp_error_count = 0
                 # P4: post-write Python syntax check
@@ -740,7 +936,7 @@ async def run_phase(
                     _py_path = tc["arguments"].get("path", "")
                     if _py_path and _py_path.endswith(".py"):
                         proc = subprocess.run(
-                            ["python", "-m", "py_compile", _py_path],
+                            [sys.executable, "-m", "py_compile", _py_path],
                             capture_output=True,
                             text=True,
                         )
@@ -768,11 +964,11 @@ async def run_phase(
             log.info("work-complete.txt detected — phase complete")
             console.print()
             console.print("[green][ael] work-complete detected[/green]")
-            return 0
+            return 0, ""
 
     console.print(f"\n[red][ael] max iterations ({max_iterations}) reached[/red]")
     log.warning("max iterations %d reached", max_iterations)
-    return 1
+    return 1, ""
 
 
 def run_preflight_check(task: str, log: logging.Logger) -> str:
@@ -842,7 +1038,7 @@ def run_preflight_check(task: str, log: logging.Logger) -> str:
             path = syntax_match.group(1)
             try:
                 proc = subprocess.run(
-                    ["python", "-m", "py_compile", path],
+                    [sys.executable, "-m", "py_compile", path],
                     capture_output=True, text=True,
                 )
                 if proc.returncode == 0:
@@ -856,19 +1052,24 @@ def run_preflight_check(task: str, log: logging.Logger) -> str:
                 unchecked += 1
         elif grep_match:
             path, pattern = grep_match.group(1), grep_match.group(2)
-            try:
-                proc = subprocess.run(
-                    ["grep", "-qF", pattern, path],
-                    capture_output=True,
-                )
-                if proc.returncode == 0:
-                    lines.append(f"  [{i}] SATISFIED  {criterion}")
-                    satisfied += 1
-                else:
-                    lines.append(f"  [{i}] REMAINING  {criterion}")
-            except Exception as exc:
-                lines.append(f"  [{i}] UNCHECKED  {criterion} (error: {exc})")
+            # F9: Guard grep availability before use
+            if not shutil.which("grep"):
+                lines.append(f"  [{i}] UNCHECKED  {criterion} (grep not available)")
                 unchecked += 1
+            else:
+                try:
+                    proc = subprocess.run(
+                        ["grep", "-qF", pattern, path],
+                        capture_output=True,
+                    )
+                    if proc.returncode == 0:
+                        lines.append(f"  [{i}] SATISFIED  {criterion}")
+                        satisfied += 1
+                    else:
+                        lines.append(f"  [{i}] REMAINING  {criterion}")
+                except Exception as exc:
+                    lines.append(f"  [{i}] UNCHECKED  {criterion} (error: {exc})")
+                    unchecked += 1
         else:
             lines.append(f"  [{i}] UNCHECKED  {criterion}")
             unchecked += 1
@@ -890,6 +1091,95 @@ def run_preflight_check(task: str, log: logging.Logger) -> str:
     return summary
 
 
+def _run_syntax_gate(state_dir: str, log: logging.Logger) -> str:
+    """
+    F6: Run py_compile on modified .py files and return a summary for the reviewer.
+
+    Extracts .py file paths from work-summary.txt, runs py_compile on each,
+    and returns a [SYNTAX GATE] block to inject into the reviewer task.
+    Returns empty string if no .py files found or work-summary.txt absent.
+    """
+    summary_path = os.path.join(state_dir, "work-summary.txt")
+    if not os.path.exists(summary_path):
+        return ""
+
+    summary_content = open(summary_path).read()
+
+    # Extract .py file paths from the work summary
+    # Match patterns like: path/to/file.py, "path/to/file.py", 'path/to/file.py'
+    py_files = re.findall(r'["\']?([\w./\-]+\.py)["\']?', summary_content)
+    # Deduplicate while preserving order
+    seen = set()
+    unique_py_files = []
+    for f in py_files:
+        if f not in seen and os.path.exists(f):
+            seen.add(f)
+            unique_py_files.append(f)
+
+    if not unique_py_files:
+        return ""
+
+    results = []
+    all_passed = True
+
+    for py_path in unique_py_files:
+        try:
+            proc = subprocess.run(
+                [sys.executable, "-m", "py_compile", py_path],
+                capture_output=True,
+                text=True,
+            )
+            if proc.returncode == 0:
+                results.append(f"  ✓ {py_path}: OK")
+            else:
+                all_passed = False
+                err = proc.stderr.strip()[:200]
+                results.append(f"  ✗ {py_path}: SYNTAX ERROR\n    {err}")
+        except Exception as exc:
+            all_passed = False
+            results.append(f"  ? {py_path}: check failed ({exc})")
+
+    status = "PASS" if all_passed else "FAIL"
+    log.info("syntax gate: %d files checked, status=%s", len(unique_py_files), status)
+
+    gate_block = (
+        f"[SYNTAX GATE: {status}]\n"
+        f"The orchestrator ran py_compile on {len(unique_py_files)} .py file(s):\n"
+        + "\n".join(results)
+        + "\n[END SYNTAX GATE]\n"
+    )
+
+    if not all_passed:
+        console.print(f"[yellow][ael] syntax gate: {status} ({len(unique_py_files)} files)[/yellow]")
+    else:
+        console.print(f"[dim][ael] syntax gate: {status} ({len(unique_py_files)} files)[/dim]")
+
+    return gate_block
+
+
+def _parse_audit_items(index_path: str) -> list[tuple[bool, str]]:
+    """
+    F17: Shared parser for audit-index.md items.
+
+    Returns a list of (checked, item_text) tuples for all audit items.
+    An item is any line matching "- [ ]" or "- [x]" (case-insensitive x).
+    Returns empty list if file doesn't exist.
+    """
+    if not os.path.exists(index_path):
+        return []
+
+    items = []
+    with open(index_path) as f:
+        for line in f:
+            stripped = line.strip()
+            # Match "- [ ]" (unchecked) or "- [x]"/"- [X]" (checked)
+            if stripped.startswith("- [ ]"):
+                items.append((False, stripped))
+            elif stripped.startswith("- [x]") or stripped.startswith("- [X]"):
+                items.append((True, stripped))
+    return items
+
+
 def _snapshot_audit_index(state_dir: str, log: logging.Logger) -> int | None:
     """
     Count total items in audit-index.md at loop start.
@@ -897,9 +1187,10 @@ def _snapshot_audit_index(state_dir: str, log: logging.Logger) -> int | None:
     Non-audit runs return None — all scope checks become no-ops.
     """
     index_path = os.path.join(state_dir, "audit-index.md")
-    if not os.path.exists(index_path):
+    items = _parse_audit_items(index_path)
+    if not items:
         return None
-    count = sum(1 for line in open(index_path) if line.strip().startswith("- ["))
+    count = len(items)
     log.info("audit scope snapshot: %d items", count)
     return count
 
@@ -915,9 +1206,10 @@ def _check_audit_scope(
     if original_count is None:
         return None
     index_path = os.path.join(state_dir, "audit-index.md")
-    if not os.path.exists(index_path):
+    items = _parse_audit_items(index_path)
+    if not items:
         return None
-    current = sum(1 for line in open(index_path) if line.strip().startswith("- ["))
+    current = len(items)
     if current == original_count:
         return None
     delta = current - original_count
@@ -936,9 +1228,8 @@ def _count_unchecked_audit_items(state_dir: str, log: logging.Logger) -> int:
     Returns 0 if the file is absent (non-audit runs unaffected).
     """
     index_path = os.path.join(state_dir, "audit-index.md")
-    if not os.path.exists(index_path):
-        return 0
-    count = sum(1 for line in open(index_path) if "- [ ]" in line)
+    items = _parse_audit_items(index_path)
+    count = sum(1 for checked, _ in items if not checked)
     log.debug("audit SHIP gate: %d unchecked items", count)
     return count
 
@@ -962,6 +1253,8 @@ async def run_loop(
     max_tool_calls_per_iter: int = 10,
     preflight_check: bool = False,
     deadline: float | None = None,
+    project_root: str = "",
+    stall_threshold: int = _DEFAULT_STALL_THRESHOLD,
 ) -> int:
     """Full Ralph Loop: worker/reviewer cycle until SHIP, max_iterations, or deadline."""
     ctx_line = f"  context:  {context_window:,} tokens\n" if context_window else ""
@@ -977,10 +1270,14 @@ async def run_loop(
 
     clear_state(state_dir,
                 "review-result.txt", "review-feedback.txt",
-                "work-complete.txt", "work-summary.txt", ".ralph-complete")
+                "work-complete.txt", "work-summary.txt", ".ralph-complete", ".ralph-timeout")
 
     # Audit scope snapshot: record original item count for scope lock enforcement.
     _audit_original_count = _snapshot_audit_index(state_dir, log)
+
+    # F12: Stall detection — track consecutive identical feedback
+    _last_feedback_hash = ""
+    _stall_count = 0
 
     # Pre-flight success criteria check (opt-in)
     if preflight_check:
@@ -992,11 +1289,12 @@ async def run_loop(
     _extra = 0
     while True:
         i += 1
+        # F10: Duration-limit exit returns distinct code and writes .ralph-timeout
         if deadline and time.monotonic() > deadline:
-            console.print("[yellow][ael] duration limit reached — exiting cleanly[/yellow]")
+            console.print("[yellow][ael] duration limit reached — exiting[/yellow]")
             log.info("duration limit reached at loop iteration %d", i)
-            write_state(state_dir, ".ralph-complete", f"DURATION_LIMIT: iteration {i}")
-            return 0
+            write_state(state_dir, ".ralph-timeout", f"TIMEOUT: iteration {i}")
+            return 2  # Distinct non-zero code for timeout
         if i > max_iterations + _extra:
             console.print(f"\n[red]✗ max iterations ({max_iterations + _extra}) reached without SHIP[/red]")
             log.warning("max iterations %d reached without SHIP", max_iterations + _extra)
@@ -1009,7 +1307,8 @@ async def run_loop(
                 return 1
             _extra += max_iterations
             log.info("user elected to continue: %d total additional iterations", _extra)
-            continue
+            # F15: Do NOT continue here — fall through to run iteration i,
+            # which is the first of the promised additional cycles.
         console.rule(f"[bold blue]loop iteration {i} / {max_iterations + _extra}[/bold blue]", style="blue")
 
         write_state(state_dir, "iteration.txt", str(i))
@@ -1017,14 +1316,15 @@ async def run_loop(
 
         # Work phase
         console.print("\n[bold yellow]▶ WORK PHASE[/bold yellow]")
-        rc = await run_phase(client, mcp, worker_model, work_recipe,
-                             task, phase_max_iterations, state_dir, log,
-                             phase_label="WORKER",
-                             context_window=context_window,
-                             budget_warn_pct=budget_warn_pct,
-                             budget_abort_pct=budget_abort_pct,
-                             mcp_error_threshold=mcp_error_threshold,
-                             max_tool_calls_per_iter=max_tool_calls_per_iter)
+        rc, _ = await run_phase(client, mcp, worker_model, work_recipe,
+                                task, phase_max_iterations, state_dir, log,
+                                phase_label="WORKER",
+                                context_window=context_window,
+                                budget_warn_pct=budget_warn_pct,
+                                budget_abort_pct=budget_abort_pct,
+                                mcp_error_threshold=mcp_error_threshold,
+                                max_tool_calls_per_iter=max_tool_calls_per_iter,
+                                project_root=project_root)
         log.info("work phase rc=%d", rc)
         if rc != 0:
             console.print("[red]✗ WORK PHASE FAILED[/red]")
@@ -1052,22 +1352,48 @@ async def run_loop(
         # Review phase — clear worker signal before reviewer starts
         clear_state(state_dir, "work-complete.txt")
         console.print("\n[bold yellow]▶ REVIEW PHASE[/bold yellow]")
-        review_task = f"Review the work in state directory '{state_dir}'."
-        rc = await run_phase(client, mcp, reviewer_model, review_recipe,
-                             review_task, phase_max_iterations, state_dir, log,
-                             phase_label="REVIEWER",
-                             context_window=context_window,
-                             budget_warn_pct=budget_warn_pct,
-                             budget_abort_pct=budget_abort_pct,
-                             mcp_error_threshold=mcp_error_threshold,
-                             max_tool_calls_per_iter=max_tool_calls_per_iter)
+
+        # F6: Run syntax gate and inject result into reviewer task
+        _syntax_result = _run_syntax_gate(state_dir, log)
+
+        # F16: Prepend [AEL RUNTIME CONTEXT] to review_task for consistent framing
+        _review_header = (
+            f"[AEL RUNTIME CONTEXT]\n"
+            f"state_dir (full absolute path): {state_dir}\n"
+            f"project_root (full absolute path): {project_root}\n"
+            f"[END RUNTIME CONTEXT]\n\n"
+        )
+        review_task = _review_header + f"Review the work in state directory '{state_dir}'."
+        if _syntax_result:
+            review_task = _syntax_result + "\n" + review_task
+        rc, reviewer_final_msg = await run_phase(client, mcp, reviewer_model, review_recipe,
+                                                  review_task, phase_max_iterations, state_dir, log,
+                                                  phase_label="REVIEWER",
+                                                  context_window=context_window,
+                                                  budget_warn_pct=budget_warn_pct,
+                                                  budget_abort_pct=budget_abort_pct,
+                                                  mcp_error_threshold=mcp_error_threshold,
+                                                  max_tool_calls_per_iter=max_tool_calls_per_iter,
+                                                  project_root=project_root)
         log.info("review phase rc=%d", rc)
         if rc != 0:
             console.print("[red]✗ REVIEW PHASE FAILED[/red]")
             return 1
 
-        result = read_state(state_dir, "review-result.txt")
-        if result == "SHIP":
+        # F1/F2: Read review-result.txt (precedence), fallback to reviewer final message
+        result_raw = read_state(state_dir, "review-result.txt")
+        if result_raw:
+            verdict = _normalize_verdict(result_raw)
+            log.debug("verdict from review-result.txt: '%s' -> '%s'", result_raw.strip(), verdict)
+        elif reviewer_final_msg:
+            verdict = _normalize_verdict(reviewer_final_msg)
+            log.debug("verdict from reviewer final message: '%s' -> '%s'",
+                      reviewer_final_msg[:60].replace('\n', ' '), verdict)
+        else:
+            verdict = "REVISE"
+            log.debug("no verdict source — defaulting to REVISE")
+
+        if verdict == "SHIP":
             # Audit SHIP gate: check scope integrity then coverage before accepting SHIP.
             _gate_scope_err = _check_audit_scope(state_dir, _audit_original_count, log)
             if _gate_scope_err:
@@ -1109,6 +1435,28 @@ async def run_loop(
             console.print(Panel(escape(feedback), title="[yellow]↻ REVISE[/yellow]", border_style="yellow"))
         else:
             console.print("[yellow]↻ REVISE[/yellow]")
+
+        # F12: Stall detection — check for consecutive identical feedback
+        _current_hash = _hash_feedback(feedback)
+        if _current_hash and _current_hash == _last_feedback_hash:
+            _stall_count += 1
+            log.debug("stall detection: identical feedback (count=%d/%d)", _stall_count, stall_threshold)
+            if _stall_count >= stall_threshold:
+                blocked_msg = (
+                    "# RALPH-BLOCKED\n\n"
+                    f"Stall detected: identical REVISE feedback for {stall_threshold} consecutive cycles.\n\n"
+                    "The loop is making no progress. Intervention required.\n\n"
+                    f"Last feedback:\n\n{feedback[:500]}\n"
+                )
+                write_state(state_dir, "RALPH-BLOCKED.md", blocked_msg)
+                log.error("BLOCKED: stall detected — %d consecutive identical feedbacks", stall_threshold)
+                console.print(
+                    f"[red][ael] BLOCKED: stall detected — {stall_threshold} consecutive identical feedbacks[/red]"
+                )
+                return 1
+        else:
+            _stall_count = 0
+            _last_feedback_hash = _current_hash
 
         clear_state(state_dir, "work-complete.txt", "review-result.txt")
 
@@ -1159,8 +1507,11 @@ async def main_async(args: argparse.Namespace) -> int:
     )
 
     # Resolve context window
+    # F18: Support per-model context window overrides from config
+    _model_ctx_overrides = ctx_cfg.get("model_context_windows", {})
     context_window = resolve_context_window(
-        model, models_dir, ctx_cfg.get("context_window"), log
+        model, models_dir, ctx_cfg.get("context_window"), log,
+        model_overrides=_model_ctx_overrides
     )
     if context_window:
         console.print(f"[blue][ael] context window: {context_window:,} tokens ({escape(model)})[/blue]")
@@ -1199,10 +1550,13 @@ async def main_async(args: argparse.Namespace) -> int:
     write_state(state_dir, "task.md", task)
 
     # Write context budget report for Strategic Domain
+    # F8: Include actual system prompt and tool schema in the initial estimate
+    _sys_prompt = work_recipe.get("instructions", "")
+    _tools = mcp.get_openai_tools()
     initial_tokens = estimate_tokens([
-        {"role": "system", "content": ""},  # system prompt estimated separately
+        {"role": "system", "content": _sys_prompt},
         {"role": "user",   "content": task},
-    ])
+    ], tools=_tools)
     write_context_report(
         state_dir, model, context_window,
         initial_tokens, budget_warn, budget_abort
@@ -1215,21 +1569,43 @@ async def main_async(args: argparse.Namespace) -> int:
     rc = 1  # default: failure — ensures rc is defined even on unexpected exception
     try:
         if args.mode == "worker":
-            rc = await run_phase(client, mcp, model, work_recipe, task, phase_max_iter,
-                                 state_dir, log, phase_label="WORKER",
-                                 context_window=context_window,
-                                 budget_warn_pct=budget_warn,
-                                 budget_abort_pct=budget_abort,
-                                 mcp_error_threshold=mcp_error_thresh,
-                                 max_tool_calls_per_iter=max_tool_calls)
+            # F11: Clear stale phase signals to prevent false completion on iteration 1
+            _stale = os.path.join(state_dir, "work-complete.txt")
+            if os.path.exists(_stale):
+                log.warning("clearing stale work-complete.txt from prior run")
+                console.print("[yellow][ael] clearing stale work-complete.txt from prior run[/yellow]")
+                os.remove(_stale)
+            rc, _ = await run_phase(client, mcp, model, work_recipe, task, phase_max_iter,
+                                    state_dir, log, phase_label="WORKER",
+                                    context_window=context_window,
+                                    budget_warn_pct=budget_warn,
+                                    budget_abort_pct=budget_abort,
+                                    mcp_error_threshold=mcp_error_thresh,
+                                    max_tool_calls_per_iter=max_tool_calls,
+                                    project_root=project_root)
         elif args.mode == "reviewer":
-            rc = await run_phase(client, mcp, model, rev_recipe, task, phase_max_iter,
-                                 state_dir, log, phase_label="REVIEWER",
-                                 context_window=context_window,
-                                 budget_warn_pct=budget_warn,
-                                 budget_abort_pct=budget_abort,
-                                 mcp_error_threshold=mcp_error_thresh,
-                                 max_tool_calls_per_iter=max_tool_calls)
+            # F11: Clear stale phase signals for single-phase reviewer mode
+            _stale = os.path.join(state_dir, "work-complete.txt")
+            if os.path.exists(_stale):
+                log.warning("clearing stale work-complete.txt from prior run")
+                console.print("[yellow][ael] clearing stale work-complete.txt from prior run[/yellow]")
+                os.remove(_stale)
+            # F16: Use consistent review task with runtime context (not the worker task)
+            _review_task = (
+                f"[AEL RUNTIME CONTEXT]\n"
+                f"state_dir (full absolute path): {state_dir}\n"
+                f"project_root (full absolute path): {project_root}\n"
+                f"[END RUNTIME CONTEXT]\n\n"
+                f"Review the work in state directory '{state_dir}'."
+            )
+            rc, _ = await run_phase(client, mcp, model, rev_recipe, _review_task, phase_max_iter,
+                                    state_dir, log, phase_label="REVIEWER",
+                                    context_window=context_window,
+                                    budget_warn_pct=budget_warn,
+                                    budget_abort_pct=budget_abort,
+                                    mcp_error_threshold=mcp_error_thresh,
+                                    max_tool_calls_per_iter=max_tool_calls,
+                                    project_root=project_root)
         else:  # loop
             worker_model   = args.worker_model   or model
             reviewer_model = args.reviewer_model or model
@@ -1242,7 +1618,8 @@ async def main_async(args: argparse.Namespace) -> int:
                                 mcp_error_threshold=mcp_error_thresh,
                                 max_tool_calls_per_iter=max_tool_calls,
                                 preflight_check=do_preflight,
-                                deadline=deadline)
+                                deadline=deadline,
+                                project_root=project_root)
             if rc == 0:
                 _archive_audit_artifacts(state_dir, args.task, log)
     finally:

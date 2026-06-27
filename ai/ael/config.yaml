@@ -5,14 +5,15 @@ omlx:
   default_model: "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit"
 
 # MCP server definitions
+# F4: filesystem MCP is confined to the project root for scope containment.
+# Each downstream project sets its own allowed_dirs in its local config.yaml.
 mcp_servers:
   filesystem:
     command: "/usr/local/bin/npx"
     args:
       - "-y"
       - "@j0hanz/filesystem-mcp@latest"
-      - "/Users/williamwatson/Documents/GitHub"
-      - "/Users/williamwatson/Documents/ClaudeProjects"
+      - "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration"
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
 
@@ -39,8 +40,12 @@ loop:
 # Context budget
 # context_window: null resolves from model config.json on disk.
 # Set explicitly to override (e.g. when model is remote and not stored locally).
+# F18: model_context_windows allows per-model overrides (absent falls back to detected value).
 context:
   models_dir: "/Users/williamwatson/ai-models"
   context_window: null      # tokens; null = read from model config.json
   budget_warn_pct: 0.80     # print warning at this fraction of context window
   budget_abort_pct: 0.95    # abort phase at this fraction
+  # Per-model context window overrides (optional)
+  # model_context_windows:
+  #   "model-name": 32768

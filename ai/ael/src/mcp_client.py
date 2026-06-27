@@ -5,11 +5,28 @@ Manages stdio connections to one or more MCP servers.
 Provides tool catalogue in OpenAI format and async tool dispatch.
 """
 
+import re
 import uuid
 from typing import Any
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
+
+
+# Read-only tool name patterns — tools matching these are safe for reviewer use.
+# All other tools (write/edit/delete/move) are excluded from the read-only subset.
+_READONLY_TOOL_PATTERNS = (
+    r"^read",           # read, read_file, read_text_file
+    r"^list",           # list, list_files, list_directory
+    r"^grep",           # grep, grep_file
+    r"^search",         # search
+    r"^stat",           # stat
+    r"^get_file_info",  # get_file_info
+    r"^find",           # find (read-only search)
+    r"^head",           # head
+    r"^tail",           # tail
+    r"^cat",            # cat
+)
 
 
 class MCPClient:
@@ -48,19 +65,31 @@ class MCPClient:
             except Exception as e:
                 print(f"[ael] Warning: failed to connect to '{name}': {e}")
 
-    def get_openai_tools(self) -> list[dict]:
-        """Return tool catalogue in OpenAI tools array format."""
-        return [
-            {
+    def _is_readonly_tool(self, name: str) -> bool:
+        """Return True if the tool name matches a read-only pattern."""
+        return any(re.match(pattern, name) for pattern in _READONLY_TOOL_PATTERNS)
+
+    def get_openai_tools(self, readonly: bool = False) -> list[dict]:
+        """
+        Return tool catalogue in OpenAI tools array format.
+
+        Args:
+            readonly: If True, return only read-only tools (read/list/grep/search).
+                      If False, return all tools.
+        """
+        tools = []
+        for name, meta in self._tools.items():
+            if readonly and not self._is_readonly_tool(name):
+                continue
+            tools.append({
                 "type": "function",
                 "function": {
                     "name": name,
                     "description": meta["description"],
                     "parameters": meta["input_schema"],
                 },
-            }
-            for name, meta in self._tools.items()
-        ]
+            })
+        return tools
 
     async def call_tool(self, name: str, arguments: dict[str, Any]) -> str:
         """Dispatch a tool call and return result as string."""

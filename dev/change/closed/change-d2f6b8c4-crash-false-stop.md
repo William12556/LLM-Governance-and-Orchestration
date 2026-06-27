@@ -6,7 +6,7 @@ change_info:
   title: "Fix tool-call truncation crash, substring error misclassification, and stale-signal false completion"
   date: "2026-06-26"
   author: "William Watson"
-  status: "proposed"
+  status: "verified"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -109,6 +109,10 @@ version_history:
     date: "2026-06-26"
     changes:
       - "Initial change document"
+  - version: "1.1"
+    date: "2026-06-26"
+    changes:
+      - "Implemented and verified against source; change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

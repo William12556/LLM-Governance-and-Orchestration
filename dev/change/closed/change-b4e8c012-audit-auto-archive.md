@@ -5,7 +5,7 @@ change_info:
   id: "change-b4e8c012"
   title: "Auto-archive audit artifacts on SHIP in orchestrator"
   date: "2026-06-17"
-  status: "approved"
+  status: "verified"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -101,6 +101,10 @@ version_history:
     date: "2026-06-17"
     changes:
       - "Initial change document"
+  - version: "1.1"
+    date: "2026-06-26"
+    changes:
+      - "Implemented and verified against source; change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
