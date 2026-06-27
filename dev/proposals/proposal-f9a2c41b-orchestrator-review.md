@@ -2,7 +2,7 @@ Created: 2026 June 26
 
 # Proposal: orchestrator.py Code Review — Findings and Remediations
 
-**Status:** Draft
+**Status:** Resolved
 **Scope:** `ai/ael/src/orchestrator.py` (cross-referenced: `mcp_client.py`, `parser.py`, `recipes/ralph-work.yaml`, `recipes/ralph-review.yaml`)
 
 ---
@@ -168,6 +168,7 @@ If these findings are accepted, recommend filing T03 issues per remediation grou
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-06-26 | Initial review; 18 findings across loop termination, scope containment, correctness, and robustness, with prioritized remediation |
+| 1.1 | 2026-06-26 | Resolved: all 18 findings (F1-F18) implemented via change-a1d4f7e2/c8b3e9a1/d2f6b8c4/e7a1c3d5/b9d2f4a7/f1c8a3e6 and verified against orchestrator.py, mcp_client.py, ralph-review.yaml, config.yaml |
 
 ---
 
