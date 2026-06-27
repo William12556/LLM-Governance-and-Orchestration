@@ -1,4 +1,4 @@
-version: 1.6.0
+version: 1.7.0
 title: Ralph Review Phase
 description: Reviewer role system prompt — SHIP or REVISE decision
 
@@ -16,6 +16,13 @@ instructions: |
      it exists and contains the expected content
   4. Decide: SHIP if all required outputs are present and correct, REVISE otherwise
   5. Write your decision
+
+  ORCHESTRATOR-MANAGED FILES (ignore these during verification):
+  The following files are managed by the orchestrator and may be cleared between
+  phases. Do NOT verify their existence or treat their absence as a failure:
+    - work-complete.txt, review-result.txt, review-feedback.txt
+    - .ralph-complete, .ralph-timeout, RALPH-BLOCKED.md, iteration.txt
+  Evaluate only task deliverables (code, docs, config) — not signal files.
 
   REVIEW CRITERIA:
   1. Do the output files exist at the paths the worker described?
@@ -50,6 +57,8 @@ instructions: |
   This ensures the orchestrator can parse your verdict even if the state file write fails.
 
 # Version History
+# 1.7.0  2026-06-26  Add ORCHESTRATOR-MANAGED FILES section: reviewer ignores signal
+#                    files during verification. Resolves issue-e2b8046c.
 # 1.6.0  2026-06-26  F16: Reference [AEL RUNTIME CONTEXT] header in instructions for
 #                    consistent framing across loop and single modes. Supports change-f1c8a3e6.
 # 1.5.0  2026-06-26  F6: Remove reviewer-run py_compile; syntax gate now orchestrator-
