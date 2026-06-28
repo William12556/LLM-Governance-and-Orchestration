@@ -1393,6 +1393,19 @@ async def run_loop(
             verdict = "REVISE"
             log.debug("no verdict source — defaulting to REVISE")
 
+        # Persist fallback REVISE feedback body when reviewer_final_msg provided verdict.
+        # Reviewer is read-only (F5) so cannot write review-feedback.txt itself.
+        # Extract feedback = reviewer_final_msg minus the leading verdict token.
+        if verdict == "REVISE" and not result_raw and reviewer_final_msg:
+            existing_feedback = read_state(state_dir, "review-feedback.txt")
+            if not existing_feedback:
+                # Strip leading verdict token: first whitespace-delimited token
+                tokens = reviewer_final_msg.strip().split(None, 1)
+                feedback_body = tokens[1].strip() if len(tokens) > 1 else ""
+                if feedback_body:
+                    write_state(state_dir, "review-feedback.txt", feedback_body)
+                    log.debug("persisted fallback REVISE feedback (%d chars)", len(feedback_body))
+
         if verdict == "SHIP":
             # Audit SHIP gate: check scope integrity then coverage before accepting SHIP.
             _gate_scope_err = _check_audit_scope(state_dir, _audit_original_count, log)
@@ -1493,8 +1506,19 @@ async def main_async(args: argparse.Namespace) -> int:
     log.info("AEL start mode=%s model=%s state_dir=%s", args.mode, model, state_dir)
 
     recipe_dir  = os.path.join(os.path.dirname(__file__), "..", "recipes")
-    work_recipe = load_yaml(os.path.join(recipe_dir, "ralph-work.yaml"))
-    rev_recipe  = load_yaml(os.path.join(recipe_dir, "ralph-review.yaml"))
+    # Recipe selection: audit-index.md in the state directory selects the audit
+    # recipe pair; otherwise the standard Ralph Loop pair. Same signal the audit
+    # scope/SHIP/archive logic keys on — mode detection is single-sourced.
+    if os.path.exists(os.path.join(state_dir, "audit-index.md")):
+        recipe_set = "audit"
+        work_recipe = load_yaml(os.path.join(recipe_dir, "audit-work.yaml"))
+        rev_recipe  = load_yaml(os.path.join(recipe_dir, "audit-review.yaml"))
+    else:
+        recipe_set = "ralph"
+        work_recipe = load_yaml(os.path.join(recipe_dir, "ralph-work.yaml"))
+        rev_recipe  = load_yaml(os.path.join(recipe_dir, "ralph-review.yaml"))
+    console.print(f"[blue][ael] recipe set: {recipe_set}[/blue]")
+    log.info("recipe set: %s", recipe_set)
 
     client = AsyncOpenAI(base_url=omlx_cfg["base_url"], api_key=omlx_cfg["api_key"])
 
