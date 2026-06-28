@@ -1,152 +1,254 @@
 Created: 2026 June 02
 
-# Audit Loop Guide
+# Audit Loop — Operational Guide
 
 ---
 
 ## Table of Contents
 
-[1.0 Overview](<#1.0 overview>)
-[2.0 How It Works](<#2.0 how it works>)
-[3.0 Prerequisites](<#3.0 prerequisites>)
-[4.0 Running an Audit](<#4.0 running an audit>)
-[5.0 Interpreting Results](<#5.0 interpreting results>)
-[6.0 Post-Run Workflow](<#6.0 post-run workflow>)
+[1.0 Purpose](<#1.0 purpose>)
+[2.0 Pre-Audit Steps](<#2.0 pre-audit steps>)
+[2.1 Generate the UML Map](<#2.1 generate the uml map>)
+[2.2 Generate audit-index.md](<#2.2 generate audit-index.md>)
+[2.3 Configure config.yaml](<#2.3 configure config.yaml>)
+[3.0 Author the T04 Brief](<#3.0 author the t04 brief>)
+[4.0 Launch](<#4.0 launch>)
+[5.0 Monitoring](<#5.0 monitoring>)
+[6.0 Interpreting audit-report.md](<#6.0 interpreting audit-report.md>)
+[7.0 Post-Run Workflow](<#7.0 post-run workflow>)
+[8.0 Termination Reference](<#8.0 termination reference>)
 [Version History](<#version history>)
 
 ---
 
-## 1.0 Overview
+## 1.0 Purpose
 
-The AEL audit loop is a read-only codebase quality analysis tool. It uses the Tactical Domain to systematically inspect source files and accumulate structured findings, without writing to any source file. The loop runs until all target items have been inspected, a wall-clock time limit is reached, or the iteration ceiling is hit.
-
-The audit tool is available to downstream projects that use the AEL profile. It requires no modifications to the target codebase.
+This guide is an operational reference for the Strategic Domain when running a codebase quality audit against a downstream project. The audit loop uses `audit-work.yaml` and `audit-review.yaml` recipes. The orchestrator selects these recipes automatically when `audit-index.md` is present in the state directory; no source edit is required. No source file in the target codebase is written. Findings are accumulated in `ai/state/ralph/audit-report.md`.
 
 [Return to Table of Contents](<#table of contents>)
 
 ---
 
-## 2.0 How It Works
+## 2.0 Pre-Audit Steps
 
-The audit loop uses two dedicated recipes in place of the standard Ralph recipes:
+The Strategic Domain performs all preparation steps before launching the AEL. These steps are human-approved before proceeding.
 
-- `audit-work.yaml` — worker reads one source item per iteration and appends findings to `audit-report.md`
-- `audit-review.yaml` — reviewer checks finding quality and verifies coverage against `audit-index.md`
+### 2.1 Generate the UML Map
 
-**Per-iteration flow:**
+The Strategic Domain reads the target `src/` tree using the Filesystem MCP and mcp-grep, then produces a Mermaid class diagram covering modules, classes, and key functions. This is saved as `ai/state/ralph/audit-uml.md`.
 
+The UML serves two purposes:
+- Orients the worker each iteration without requiring it to re-traverse the codebase
+- Provides the reviewer with a coverage ground truth independent of the index
+
+Minimum content for `audit-uml.md`:
+
+```markdown
+# Codebase UML — <project name>
+
+Generated: <date>
+
+## Module Map
+
+```mermaid
+classDiagram
+  class ModuleName {
+    +function_one()
+    +function_two()
+  }
+  ModuleName --> OtherModule
 ```
-Worker reads audit-index.md → selects next unchecked item
-Worker reads source file → analyses against six criteria
-Worker appends findings to audit-report.md
-Worker marks item [x] in audit-index.md
-Reviewer reads work-summary.txt and audit-report.md
-Reviewer assesses finding quality → REVISE or continue
-All items [x] → SHIP
+
+## File List
+
+- `src/module_a.py` — <brief description>
+- `src/module_b.py` — <brief description>
+```
 ```
 
-**Audit criteria assessed per item:**
+Present `audit-uml.md` to the human for review before proceeding.
 
-| Criterion | What is checked |
-|---|---|
-| Style | Naming conventions, formatting, docstring quality |
-| Complexity | Function length, nesting depth, cyclomatic complexity |
-| Error handling | Bare excepts, swallowed exceptions, missing error paths |
-| Security | Hardcoded credentials, unsafe input handling, injection risks |
-| Conformance | Adherence to project design and governance conventions |
-| Dead code | Unreachable branches, unused imports, unused variables |
+### 2.2 Generate audit-index.md
 
-**Termination conditions:**
+From the UML, derive an ordered list of audit items — one entry per significant function or class. Save as `ai/state/ralph/audit-index.md`.
 
-| Condition | Outcome |
-|---|---|
-| All items in `audit-index.md` marked `[x]` | Reviewer issues `SHIP` |
-| `--duration` wall-clock limit reached | Loop exits with `DURATION_LIMIT` marker |
-| `max_iterations` exhausted | Loop exits; partial results valid |
-| Worker writes `RALPH-BLOCKED.md` | Loop blocked; review manually |
+Format — one item per line, unchecked:
 
-[Return to Table of Contents](<#table of contents>)
+```markdown
+## Audit Index
 
----
+- [ ] src/orchestrator.py :: run_loop
+- [ ] src/orchestrator.py :: run_phase
+- [ ] src/orchestrator.py :: main_async
+- [ ] src/orchestrator.py :: extract_tactical_brief
+- [ ] src/mcp_client.py :: MCPClient.connect
+- [ ] src/mcp_client.py :: MCPClient.call_tool
+- [ ] src/parser.py :: parse_tool_calls
+- [ ] src/budget.py :: resolve_context_window
+```
 
-## 3.0 Prerequisites
+Order items from most complex to least. Present the index to the human for review before proceeding.
 
-- AEL profile configured and operational (see [guide-profile-selection.md](guide-profile-selection.md))
-- oMLX running with Devstral loaded
-- Target project's `src/` accessible via the Filesystem MCP server
+### 2.3 Configure config.yaml
 
-[Return to Table of Contents](<#table of contents>)
-
----
-
-## 4.0 Running an Audit
-
-Full operational instructions are in `ai/doc/guide-audit-loop.md`. A summary follows.
-
-**1. Pre-audit preparation (Strategic Domain):**
-
-The Strategic Domain generates two files and places them in `ai/state/ralph/` before launching:
-
-- `audit-index.md` — ordered list of files and functions to audit, one item per line in `[ ] path :: name` format
-- `audit-uml.md` — optional Mermaid class diagram of the target codebase for structural context
-
-**2. Configure `config.yaml`:**
-
-Set `max_iterations` to at least the number of items in `audit-index.md`:
+Set `max_iterations` to at least the number of items in `audit-index.md`. Add margin for REVISE cycles:
 
 ```yaml
 loop:
-  max_iterations: 200
+  max_iterations: 300    # items × ~1.5 to allow for revise cycles
+  phase_max_iterations: 20
 ```
 
-**3. Author a T04 brief** specifying the target codebase path, read-only constraint, and audit scope.
+[Return to Table of Contents](<#table of contents>)
 
-**4. Launch:**
+---
+
+## 3.0 Author the T04 Brief
+
+The `tactical_brief` in the T04 prompt must specify:
+
+- Absolute path to the target `src/` directory
+- Read-only constraint (explicit)
+- State directory path
+- Audit scope (all criteria, or a subset)
+
+Example `tactical_brief`:
+
+```yaml
+tactical_brief: |
+  Read-only audit of /path/to/project/src/.
+  State directory: /path/to/project/ai/state/ralph/
+  DO NOT write to any file in src/.
+  Audit criteria: style, complexity, error-handling, security, conformance, dead-code.
+  One item per iteration as listed in audit-index.md.
+  Append all findings to audit-report.md in the required format.
+```
+
+Verify `tactical_brief` is non-empty and in a `yaml` fenced block before issuing the AEL command (P09 §1.10.2).
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+## 4.0 Launch
+
+From the project root, after human approval of the T04 prompt:
 
 ```bash
+# With wall-clock time limit (recommended for long runs)
 python ai/ael/src/orchestrator.py --mode loop \
   --task ai/workspace/prompt/<uuid>-audit.md \
   --duration 12
+
+# Without time limit (runs until coverage complete or max_iterations)
+python ai/ael/src/orchestrator.py --mode loop \
+  --task ai/workspace/prompt/<uuid>-audit.md
 ```
 
-Omit `--duration` to run until coverage is complete.
+The `--duration` value is in hours. The loop exits cleanly at the limit; partial results in `audit-report.md` are valid and usable.
 
 [Return to Table of Contents](<#table of contents>)
 
 ---
 
-## 5.0 Interpreting Results
+## 5.0 Monitoring
 
-Findings are written to `ai/state/ralph/audit-report.md` in a structured format:
+The Strategic Domain may monitor progress at any time by reading state files directly:
+
+| File | What it shows |
+|---|---|
+| `ai/state/ralph/audit-index.md` | Coverage: count `[x]` vs `[ ]` items |
+| `ai/state/ralph/audit-report.md` | Findings accumulated so far |
+| `ai/state/ralph/work-summary.txt` | Most recent worker iteration summary |
+| `ai/state/ralph/iteration.txt` | Current outer loop iteration number |
+| `ai/state/ralph/ael_<timestamp>.LOG` | Full debug log |
+
+The AEL TUI displays iteration progress, context budget, and tool calls in the terminal during the run.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+## 6.0 Interpreting audit-report.md
+
+Each entry follows this structure:
 
 ```markdown
-## src/module.py :: function_name  [iteration N]
-- **Type:** error-handling
-- **Location:** line 47
-- **Description:** Exception caught bare; original error context is lost.
-- **Severity:** high
+---
+## src/module.py :: ClassName.method_name  [iteration N]
+- **Type:** <criterion>
+- **Location:** line <N> (or range <N>–<M>)
+- **Description:** <precise, actionable observation>
+- **Severity:** <low | medium | high>
 ```
 
-Severity levels:
+Severity guidance:
 
-| Severity | Meaning |
-|---|---|
-| high | Likely to cause failure, security risk, or significant conformance violation |
-| medium | Degraded quality; should be addressed in normal development cycle |
-| low | Minor style or documentation issue |
+| Severity | Meaning | Action |
+|---|---|---|
+| high | Security risk, data loss potential, or critical conformance violation | Create T03 issue immediately |
+| medium | Degraded quality; correctness or maintainability concern | Schedule for next iteration |
+| low | Style or documentation gap | Discretionary |
+
+Items with no findings are recorded as:
+
+```markdown
+---
+## src/module.py :: function_name  [iteration N]
+- No findings.
+```
+
+A missing entry for an item means the worker did not reach it — check `audit-index.md` for remaining `[ ]` items.
 
 [Return to Table of Contents](<#table of contents>)
 
 ---
 
-## 6.0 Post-Run Workflow
+## 7.0 Post-Run Workflow
 
-1. Read `audit-report.md` — review all findings
-2. High and critical severity findings → create T03 issues via P04, referencing the audit run
-3. Medium findings → record in a tracking issue or schedule for next development cycle
-4. Low findings → discretionary; may be addressed in passing or deferred
-5. Move `audit-report.md` to `ai/workspace/audit/` and rename per naming convention
-6. When remediation is complete, close the audit document per P08 §1.9.8
+**7.1 Review findings**
+
+Read `audit-report.md` in full. Group findings by severity.
+
+**7.2 Promote high-severity findings**
+
+For each high-severity finding, create a T03 issue via P04. Reference the audit report path in the issue. The issue enters the standard P04 → P03 → T04 → AEL remediation workflow.
+
+**7.3 Archive the audit report**
+
+```bash
+cp ai/state/ralph/audit-report.md ai/workspace/audit/audit-<uuid>-<name>.md
+```
+
+The UUID is the same UUID used for the T04 audit prompt. Name the file descriptively (e.g. `audit-a1b2c3d4-framework-src-2026-06.md`).
+
+**7.4 Reset AEL state**
+
+```bash
+python ai/ael/src/orchestrator.py --mode reset
+```
+
+**7.5 Close the audit**
+
+When remediation of all critical and high-severity findings is complete, close the audit document per P08 §1.9.8:
+
+```bash
+mv ai/workspace/audit/audit-<uuid>-<name>.md ai/workspace/audit/closed/
+```
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
+## 8.0 Termination Reference
+
+| Condition | State file written | Meaning |
+|---|---|---|
+| All items `[x]`, reviewer issues SHIP | `.ralph-complete` = `COMPLETE: iteration N` | Normal completion |
+| `--duration` limit reached | `.ralph-timeout` = `TIMEOUT: iteration N` (exit code 2) | Time-bounded exit; results valid |
+| `max_iterations` exhausted | None | Partial run; check coverage manually |
+| Worker writes RALPH-BLOCKED.md | `RALPH-BLOCKED.md` | Review blocker; address manually |
+| Context budget abort | None | Reduce `tactical_brief` size and restart |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -157,9 +259,9 @@ Severity levels:
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
-| 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
-| 1.2 | 2026-06-16 | Updated guide reference: framework/ai/doc/ → ai/doc/ |
-| 1.3 | 2026-06-16 | Updated §6.0 cross-reference: P08 §1.9.7 → §1.9.8, following governance.md merge of duplicate Audit Closure sections |
+| 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/audit → ai/workspace/audit, workspace/prompt → ai/workspace/prompt |
+| 1.2 | 2026-06-16 | Updated §7.5 cross-reference: P08 §1.9.7 → §1.9.8, following governance.md merge of duplicate Audit Closure sections |
+| 1.3 | 2026-06-28 | Noted automatic recipe selection on audit-index.md presence (§1.0); corrected §8.0 duration-limit row to `.ralph-timeout` / exit code 2 |
 
 ---
 

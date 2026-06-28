@@ -12,6 +12,7 @@ Created: 2026 April 27
 [2.2 Monitoring Tools](<#2.2 monitoring tools>)
 [3.0 Responsibilities](<#3.0 responsibilities>)
 [4.0 Workflow](<#4.0 workflow>)
+[4.1 Audit Modes](<#4.1 audit modes>)
 [5.0 Protocol Reference](<#5.0 protocol reference>)
 [6.0 Document Conventions](<#6.0 document conventions>)
 [7.0 Constraints](<#7.0 constraints>)
@@ -49,8 +50,9 @@ direct conversational access to the other.
 - **AEL (Autonomous Execution Loop)** — reference implementation. Runs a
   worker/reviewer cycle (Ralph Loop) until `SHIP` or `BLOCKED`. State resides
   in `ai/state/ralph/`. Requires oMLX inference endpoint and `config.yaml`.
+  Context file: `ai/context.md`.
 - **Claude Code** — alternative profile. Manual invocation; no automated loop.
-  Uses `CLAUDE.md` as tactical context file. See `ai/profiles/claude.md`.
+  Uses `CLAUDE.md` at project root as tactical context file. See `ai/profiles/claude.md`.
 
 **ael-mcp** (Claude Desktop profile, optional) — standalone MCP server exposing
 `start_ael`, `ael_status`, and `reset_ael` tools to Claude Desktop. Allows the
@@ -66,12 +68,13 @@ determines the tactical context file name, skills directory, and AEL configurati
 
 ## 2.1 Tactical Profiles
 
-| Aspect | AEL (Primary) | Claude Code | claude-omlx |
-|---|---|---|---|
-| Execution | Automated Ralph Loop | Manual | Manual |
-| Inference | oMLX → Devstral (local) | Anthropic API → Claude Sonnet | oMLX → Devstral via Claude Code CLI |
-| Loop control | `orchestrator.py` | Human operator | Human operator |
-| Profile | `mlx_devstral_small_2_2512_6bit.md` | `claude.md` | `claude-omlx.md` |
+| Aspect       | AEL (Primary)                       | Claude Code                   | claude-omlx                         |
+| ------------ | ----------------------------------- | ----------------------------- | ----------------------------------- |
+| Execution    | Automated Ralph Loop                | Manual                        | Manual                              |
+| Inference    | oMLX → Devstral (local)             | Anthropic API → Claude Sonnet | oMLX → Devstral via Claude Code CLI |
+| Loop control | `orchestrator.py`                   | Human operator                | Human operator                      |
+| Context file | `ai/context.md`                     | `CLAUDE.md` (project root)    | `CLAUDE.md` (project root)          |
+| Profile      | `mlx_devstral_small_2_2512_6bit.md` | `claude.md`                   | `claude-omlx.md`                    |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -159,6 +162,25 @@ P00  Close documents         →  move to closed/ → git commit → AEL reset
 
 ---
 
+## 4.1 Audit Modes
+
+Two audit modes serve P08 (governance §1.9). The operator selects by trigger phrase.
+
+| Mode | Trigger | Actor | Procedure |
+|---|---|---|---|
+| Strategic | "conduct a strategic audit" | Claude Desktop | Read source via MCP, reason holistically, author `audit-<uuid>-<name>.md` (T08) inline |
+| Tactical | "conduct a tactical audit" | AEL audit loop | Prepare `audit-uml.md` + `audit-index.md` + audit T04 prompt; human approval; launch per `ai/doc/guide-audit-loop.md` |
+
+Strategic favours frontier judgement: architecture, protocol and name-registry
+conformance, traceability. Tactical favours exhaustive per-item coverage and
+unattended runtime (`--duration`). The orchestrator selects the audit recipe
+pair automatically when `audit-index.md` is present in the state directory. If
+the requested mode is unclear, ask before proceeding.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
 ## 5.0 Protocol Reference
 
 | Protocol | Name | Key Action |
@@ -171,7 +193,7 @@ P00  Close documents         →  move to closed/ → git commit → AEL reset
 | P05 | Trace | Traceability matrix updates at every phase boundary |
 | P06 | Test | T05 docs, pytest generation, progressive validation |
 | P07 | Quality | Code validation, automated audits via AEL hooks |
-| P08 | Audit | Periodic compliance audit; findings → issues |
+| P08 | Audit | Strategic or tactical audit (§4.1); findings → issues (P04) |
 | P09 | Prompt | T04 authoring, `tactical_brief`, AEL command delivery |
 | P10 | Requirements | T07 elicitation before design; baseline before Tier 1 |
 
@@ -241,6 +263,12 @@ required after each increment.
 - Full issue/change/prompt workflow applies to `src/` changes only.
 - `ai/workspace/` document changes may be made directly after human approval.
 
+**Initial Implementation**
+
+- First-time source code implementation from an approved design does not require issue or change documents.
+- Forward path: approved design → T04 prompt → execution → review.
+- The T03 → T02 corrective loop is triggered only by AEL `BLOCKED` or test failure.
+
 [Return to Table of Contents](<#table of contents>)
 
 ---
@@ -259,6 +287,7 @@ any document.
 | T05 | Test | `ai/templates/T05-test.md` |
 | T06 | Result | `ai/templates/T06-result.md` |
 | T07 | Requirements | `ai/templates/T07-requirements.md` |
+| T08 | Audit | `ai/templates/T08-audit.md` |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -271,8 +300,13 @@ any document.
 | 0.1 | 2026-04-27 | Initial draft |
 | 0.2 | 2026-04-28 | Added ael-mcp to §2.0 Architecture; annotated §4.0 Workflow AEL step with Option A/B |
 | 0.3 | 2026-04-30 | Added §2.1 Tactical Profiles with comparison table |
-| 0.4 | 2026-06-17 | Applied markdown formatting; corrected stale references: `.ael/ralph/` → `ai/state/ralph/`, profile filename `mlx_devstral_small_2_2512_Q8.md` → `mlx_devstral_small_2_2512_6bit.md`; split §6.0 into §6.1 Naming and §6.2 Lifecycle |
-| 0.5 | 2026-06-17 | Aligned with ai/primer.md v0.4–v0.6: added §2.2 Monitoring Tools (govwatch); corrected §2.1 header level H3 → H2; corrected lifecycle paths and §7.0 constraint to ai/workspace/ prefix |
+| 0.4 | 2026-06-10 | Added §2.2 Monitoring Tools (govwatch) |
+| 0.5 | 2026-06-14 | Relocated framework paths under ai/: workspace/ → ai/workspace/, state .ael/ralph/ → ai/state/ralph/, govwatch output → ai/dashboard-alerts.md |
+| 0.6 | 2026-06-16 | Updated §2.1 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
+| 0.7 | 2026-06-17 | Aligned with docs/claude/primer.md (canonical): code spans for governance.md, workflow.md, SHIP, BLOCKED, .gitignore, budget.py, tactical_brief throughout; Prime Directive bolded; ael-mcp bold extent corrected; §6.0 restructured with §6.1 Naming and §6.2 Lifecycle subsections; colon positions in UUID propagation and Iteration headings; blank lines before bullet lists in §3.0 and §7.0; tactical_brief Format and Trivial Change Exemption heading formats |
+| 0.8 | 2026-06-17 | §2.0: added context file to AEL description; §2.1: added Context file row to profile comparison table |
+| 0.9 | 2026-06-25 | Added §7.0 Initial Implementation constraint: initial implementation from approved design does not require issue/change documents; forward path and corrective loop trigger made explicit |
+| 0.10 | 2026-06-28 | Added §4.1 Audit Modes (strategic / tactical triggers); noted automatic audit-recipe selection; updated §5.0 P08 row; added T08 Audit to §8.0 template table |
 
 ---
 
