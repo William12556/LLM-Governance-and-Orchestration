@@ -5,7 +5,7 @@ change_info:
   id: "change-7c1d9a4e"
   title: "Auto-select recipe pair on audit-index.md presence in orchestrator"
   date: "2026-06-28"
-  status: "proposed"
+  status: "verified"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -99,6 +99,15 @@ implementation:
       owner: "Claude Code"
   rollback_procedure: "Revert orchestrator.py to prior version via git"
 
+verification:
+  implemented_date: "2026-06-28"
+  implemented_by: "Claude Code"
+  verification_date: "2026-06-28"
+  test_results: >
+    Verified against source (orchestrator.py lines 1508-1521): branch correct,
+    audit/ralph pairs load as specified, recipe_dir unchanged, rev_recipe name
+    retained, startup print and log present.
+
 notes: >
   Variable name rev_recipe retained (matches existing code, not review_recipe).
 
@@ -107,6 +116,10 @@ version_history:
     date: "2026-06-28"
     changes:
       - "Initial change document"
+  - version: "1.1"
+    date: "2026-06-28"
+    changes:
+      - "Implemented and verified against source; change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
