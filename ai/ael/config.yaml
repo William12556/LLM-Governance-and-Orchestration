@@ -2,7 +2,7 @@
 omlx:
   base_url: "http://127.0.0.1:8000/v1"
   api_key: "local"
-  default_model: "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-6Bit"
+  default_model: "North-Mini-Code-1.0-6bit"
 
 # MCP server definitions
 # F4: filesystem MCP is confined to the project root for scope containment.
@@ -47,5 +47,5 @@ context:
   budget_warn_pct: 0.80     # print warning at this fraction of context window
   budget_abort_pct: 0.95    # abort phase at this fraction
   # Per-model context window overrides (optional)
-  # model_context_windows:
-  #   "model-name": 32768
+  model_context_windows:
+    "North-Mini-Code-1.0-6bit": 262144
