@@ -5,7 +5,7 @@ issue_info:
   id: "issue-7c1d9a4e"
   title: "Orchestrator hard-codes Ralph recipe pair; tactical-audit mode unreachable"
   date: "2026-06-28"
-  status: "open"
+  status: "verified"
   severity: "medium"
   type: "enhancement"
   iteration: 1
@@ -54,6 +54,18 @@ resolution:
     present -> audit-*.yaml, absent -> ralph-*.yaml. Print and log the selected
     recipe set at startup. No new CLI flag or config key.
   change_ref: "change-7c1d9a4e"
+  resolved_date: "2026-06-28"
+  fix_description: >
+    orchestrator.py main_async (lines 1508-1521): recipe load branched on
+    os.path.exists(state_dir/audit-index.md); recipe_set label printed and
+    logged at startup. recipe_dir line and rev_recipe name retained.
+
+verification:
+  verified_date: "2026-06-28"
+  test_results: >
+    Verified against source: branch present, audit/ralph pairs correct,
+    startup print and log lines present, no regression to standard path.
+  closure_notes: "Implemented via Claude Code; verified against source."
 
 traceability:
   change_refs:
@@ -69,6 +81,10 @@ version_history:
     date: "2026-06-28"
     changes:
       - "Initial issue document"
+  - version: "1.1"
+    date: "2026-06-28"
+    changes:
+      - "Implemented and verified against source; issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
