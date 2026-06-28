@@ -12,6 +12,7 @@ Created: 2026 April 27
 [2.2 Monitoring Tools](<#2.2 monitoring tools>)
 [3.0 Responsibilities](<#3.0 responsibilities>)
 [4.0 Workflow](<#4.0 workflow>)
+[4.1 Audit Modes](<#4.1 audit modes>)
 [5.0 Protocol Reference](<#5.0 protocol reference>)
 [6.0 Document Conventions](<#6.0 document conventions>)
 [7.0 Constraints](<#7.0 constraints>)
@@ -161,6 +162,25 @@ P00  Close documents         →  move to closed/ → git commit → AEL reset
 
 ---
 
+## 4.1 Audit Modes
+
+Two audit modes serve P08 (governance §1.9). The operator selects by trigger phrase.
+
+| Mode | Trigger | Actor | Procedure |
+|---|---|---|---|
+| Strategic | "conduct a strategic audit" | Claude Desktop | Read source via MCP, reason holistically, author `audit-<uuid>-<name>.md` (T08) inline |
+| Tactical | "conduct a tactical audit" | AEL audit loop | Prepare `audit-uml.md` + `audit-index.md` + audit T04 prompt; human approval; launch per `ai/doc/guide-audit-loop.md` |
+
+Strategic favours frontier judgement: architecture, protocol and name-registry
+conformance, traceability. Tactical favours exhaustive per-item coverage and
+unattended runtime (`--duration`). The orchestrator selects the audit recipe
+pair automatically when `audit-index.md` is present in the state directory. If
+the requested mode is unclear, ask before proceeding.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
 ## 5.0 Protocol Reference
 
 | Protocol | Name | Key Action |
@@ -173,7 +193,7 @@ P00  Close documents         →  move to closed/ → git commit → AEL reset
 | P05 | Trace | Traceability matrix updates at every phase boundary |
 | P06 | Test | T05 docs, pytest generation, progressive validation |
 | P07 | Quality | Code validation, automated audits via AEL hooks |
-| P08 | Audit | Periodic compliance audit; findings → issues |
+| P08 | Audit | Strategic or tactical audit (§4.1); findings → issues (P04) |
 | P09 | Prompt | T04 authoring, `tactical_brief`, AEL command delivery |
 | P10 | Requirements | T07 elicitation before design; baseline before Tier 1 |
 
@@ -267,6 +287,7 @@ any document.
 | T05 | Test | `ai/templates/T05-test.md` |
 | T06 | Result | `ai/templates/T06-result.md` |
 | T07 | Requirements | `ai/templates/T07-requirements.md` |
+| T08 | Audit | `ai/templates/T08-audit.md` |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -285,6 +306,7 @@ any document.
 | 0.7 | 2026-06-17 | Aligned with docs/claude/primer.md (canonical): code spans for governance.md, workflow.md, SHIP, BLOCKED, .gitignore, budget.py, tactical_brief throughout; Prime Directive bolded; ael-mcp bold extent corrected; §6.0 restructured with §6.1 Naming and §6.2 Lifecycle subsections; colon positions in UUID propagation and Iteration headings; blank lines before bullet lists in §3.0 and §7.0; tactical_brief Format and Trivial Change Exemption heading formats |
 | 0.8 | 2026-06-17 | §2.0: added context file to AEL description; §2.1: added Context file row to profile comparison table |
 | 0.9 | 2026-06-25 | Added §7.0 Initial Implementation constraint: initial implementation from approved design does not require issue/change documents; forward path and corrective loop trigger made explicit |
+| 0.10 | 2026-06-28 | Added §4.1 Audit Modes (strategic / tactical triggers); noted automatic audit-recipe selection; updated §5.0 P08 row; added T08 Audit to §8.0 template table |
 
 ---
 

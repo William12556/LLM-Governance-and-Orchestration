@@ -27,6 +27,7 @@ Created: 2025 October 30
   - [T05: Test](T05-test.md)
   - [T06: Result](T06-result.md)
   - [T07: Requirements](T07-requirements.md)
+  - [T08: Audit](T08-audit.md)
   
 [Workflow](workflow.md)
 
@@ -222,6 +223,7 @@ python ai/ael/src/orchestrator.py --mode loop \
       - ai/templates/T05-test.md
       - ai/templates/T06-result.md
       - ai/templates/T07-requirements.md
+      - ai/templates/T08-audit.md
     - Strategic Domain: Read template from ai/templates/ before creating documents
     - Tactical Domain: Read templates when referenced in prompt documents
     - Templates contain YAML structure and JSON Schema validation rules
@@ -890,6 +892,7 @@ pip install dist/*.whl
     - Milestone-based: Upon completion of major development phases
     - Human-requested: Ad-hoc audits when compliance concerns arise
     - Baseline: After initial code generation before production deployment
+    - Mode selection: Human-requested audits resolve to one of two modes — strategic (Strategic Domain) or tactical (AEL audit loop) — per §1.9.9
   - §1.9.3 Audit Scope
     - Protocol compliance: All protocols P00-P09
     - Document compliance: Naming, formatting, cross-linking, version histories
@@ -898,13 +901,22 @@ pip install dist/*.whl
     - Traceability: Requirement ↔ design ↔ code ↔ test linkages
     - Configuration management: Code vs. baseline verification
   - §1.9.4 Audit Procedure
-    - Strategic Domain: Conducts systematic review of source code against governance requirements
-    - Strategic Domain: Documents findings with severity classification (critical, high, medium, low)
-    - Strategic Domain: Provides evidence for each finding (file paths, line numbers, specific violations)
-    - Strategic Domain: Calculates compliance metrics (percentage, deficiency counts by severity)
+    - §1.9.4.1 Strategic-led (frontier reasoning)
+      - Strategic Domain: Conducts systematic review of source code against governance requirements
+      - Strategic Domain: Documents findings with severity classification (critical, high, medium, low)
+      - Strategic Domain: Provides evidence for each finding (file paths, line numbers, specific violations)
+      - Strategic Domain: Calculates compliance metrics (percentage, deficiency counts by severity)
+    - §1.9.4.2 Tactical-led (AEL audit loop)
+      - Strategic Domain: Prepares audit-uml.md and audit-index.md in the state directory; obtains human approval
+      - Strategic Domain: Authors a T04 audit prompt and presents the AEL command (P09 §1.10.3)
+      - AEL: Runs a read-only worker/reviewer loop, one audit-index.md item per iteration, accumulating findings in audit-report.md
+      - Recipe selection is automatic on presence of audit-index.md in the state directory; operational detail in ai/doc/guide-audit-loop.md
+      - Outcome: findings consolidated into the audit report deliverable (§1.9.5)
   - §1.9.5 Audit Deliverables
     - Strategic Domain: Creates audit report following naming format: audit-<uuid>-<audit name>.md
     - Strategic Domain: Stores audit reports in ai/workspace/audit/ folder
+    - Audit report template: ai/templates/T08-audit.md (mode field records strategic or tactical)
+    - Tactical-led runs: audit-report.md is archived to audit-<uuid>-<name>.md on SHIP automatically (see guide-audit-loop.md §7)
     - Audit report structure:
     - Executive summary with compliance status and critical issue count
     - Protocol-by-protocol compliance assessment
@@ -945,6 +957,23 @@ pip install dist/*.whl
       - Prohibited: Closed audits are immutable
       - New findings: Create new audit with reference to closed audit
       - Follow-up verification: Covered by new audit cycle
+
+  - §1.9.9 Audit Modes
+    - Two audit modes satisfy this protocol; the human selects by trigger phrase (primer §4.1)
+    - §1.9.9.1 Strategic audit
+      - Trigger: "conduct a strategic audit"
+      - Actor: Strategic Domain (frontier reasoning)
+      - Method: Reads source via MCP and reasons holistically; authors the audit report directly
+      - Best for: architecture, protocol and name-registry conformance, traceability, cross-cutting judgement
+      - Bound: Tactical Domain context budget does not apply; large codebases may exceed a single review pass
+    - §1.9.9.2 Tactical audit
+      - Trigger: "conduct a tactical audit"
+      - Actor: AEL audit loop (local model)
+      - Method: Item-by-item per audit-index.md, one per iteration, read-only; findings accumulate in audit-report.md
+      - Best for: exhaustive per-function coverage and unattended runtime (--duration)
+      - Flag: orchestrator selects audit recipes automatically when audit-index.md is present in the state directory
+      - Procedure: ai/doc/guide-audit-loop.md
+    - Both modes terminate at audit-<uuid>-<name>.md (T08) and feed remediation via §1.9.6 (P04)
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -1156,6 +1185,7 @@ See [workflow.md](workflow.md).
 | 9.6     | 2026-06-17 | Added ai/context.md template; ralph-work.yaml v1.3.0 reads project_root/ai/context.md at task start; §1.1.19 notes AEL auto-load behaviour |
 | 9.7     | 2026-06-17 | Renamed ai/workspace/admin/ → ai/workspace/report/ in §1.2.2 .gitignore template and §1.2.6 folder structure; added report/closed/ to §1.2.6 and §1.1.14.5 |
 | 9.8     | 2026-06-25 | Added P03 §1.4.1 exception: initial implementation from approved design does not require issue or change documents; forward path is design → T04 → execution → review; corrective loop triggered only by AEL BLOCKED or test failure |
+| 9.9     | 2026-06-28 | P08 §1.9: added §1.9.9 Audit Modes (strategic / tactical); split §1.9.4 into §1.9.4.1 strategic-led and §1.9.4.2 tactical-led (AEL audit loop); §1.9.2 mode-selection note; §1.9.5 T08 template and tactical archive note; registered T08-audit.md in §1.1.17 Templates and the ToC; append-only, existing §1.9.x not renumbered |
 
 ---
 [Return to Table of Contents](<#table of contents>)
