@@ -134,6 +134,37 @@ def _validate_write_scope(tool_name: str, arguments: dict, project_root: str) ->
     return None
 
 
+def _validate_audit_report_write(tool_name: str, arguments: dict, state_dir: str) -> str | None:
+    """
+    F21: Block writes to audit-report.md that would discard prior findings.
+
+    audit-report.md is append-only across a 25-item audit run. A write/write_file/
+    create_file call (overwrite semantics) whose content omits the file's existing
+    content would silently destroy previously recorded findings. edit/edit_file
+    calls (patch semantics) are not affected.
+
+    Returns None if safe (not a write tool, not this file, file absent/empty,
+    or existing content is preserved in the new content). Returns an error
+    message string otherwise.
+    """
+    if tool_name not in ("write", "write_file", "create_file"):
+        return None
+    target = arguments.get("path") or arguments.get("file_path") or ""
+    if os.path.basename(target) != "audit-report.md":
+        return None
+    report_path = os.path.join(state_dir, "audit-report.md")
+    if not os.path.exists(report_path):
+        return None
+    existing = open(report_path).read().strip()
+    if not existing or existing in (arguments.get("content") or "").strip():
+        return None
+    return (
+        f"Error: This write would discard {len(existing)} characters of existing "
+        "audit-report.md findings. audit-report.md is append-only \u2014 use the edit "
+        "tool to append, or include the full existing content before your new entry."
+    )
+
+
 def _is_mcp_error(result: str) -> bool:
     """
     F7: Return True if result string indicates an MCP tool error.
@@ -635,8 +666,9 @@ def extract_reasoning(message, content: str, log: logging.Logger) -> tuple[str, 
     """
     Extract model reasoning from response message.
     Checks reasoning_content attribute first (some providers), then
-    <think>...</think> tags embedded in content (Mistral/Devstral).
-    Returns (reasoning, content_without_think_tags).
+    <think>...</think> tags (Mistral/Devstral), then Cohere's
+    <|START_THINKING|>...<|END_THINKING|> blocks (North-Mini-Code-1.0 / cohere2_moe).
+    Returns (reasoning, content_without_reasoning_tags).
     """
     reasoning = getattr(message, "reasoning_content", None) or ""
     if not reasoning and content:
@@ -645,6 +677,13 @@ def extract_reasoning(message, content: str, log: logging.Logger) -> tuple[str, 
             reasoning = think_match.group(1).strip()
             content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
             log.debug("extracted <think> block (%d chars)", len(reasoning))
+        else:
+            # F23: Cohere thinking-block (North-Mini-Code-1.0 / cohere2_moe via oMLX)
+            cohere_match = re.search(r"<\|START_THINKING\|>(.*?)<\|END_THINKING\|>", content, re.DOTALL)
+            if cohere_match:
+                reasoning = cohere_match.group(1).strip()
+                content = re.sub(r"<\|START_THINKING\|>.*?<\|END_THINKING\|>", "", content, flags=re.DOTALL).strip()
+                log.debug("extracted <|START_THINKING|> block (%d chars)", len(reasoning))
     return reasoning, content
 
 
@@ -706,6 +745,19 @@ async def run_phase(
     tool_list = format_tool_signatures(tools)
     system_prompt = recipe.get("instructions", "").replace("{{TOOLS}}", tool_list)
 
+    # F24: for audit runs, inject the next unchecked item directly into the
+    # work-phase task so the model doesn't have to re-derive it each iteration
+    # by reading and parsing the full audit-index.md / audit-uml.md.
+    if is_worker_phase:
+        _audit_index_path = os.path.join(state_dir, "audit-index.md")
+        if os.path.exists(_audit_index_path):
+            _next_item = next(
+                (text for checked, text in _parse_audit_items(_audit_index_path) if not checked),
+                None,
+            )
+            if _next_item:
+                task = f"[NEXT AUDIT ITEM]\n{_next_item}\n[END NEXT AUDIT ITEM]\n\n" + task
+
     messages: list[dict] = [
         {"role": "system", "content": system_prompt},
         {"role": "user",   "content": task},
@@ -724,6 +776,14 @@ async def run_phase(
         iter_label = f"{phase_label}  " if phase_label else ""
         console.rule(f"[blue dim]{iter_label}iteration {iteration}/{max_iterations}[/blue dim]", style="blue dim")
         log.debug("iteration %d/%d phase=%s", iteration, max_iterations, phase_label or "?")
+
+        # F25: refresh system message with an iteration countdown each pass so
+        # the model can self-regulate pacing instead of being cut off abruptly.
+        _remaining = max_iterations - iteration + 1
+        _status = f"[ITERATION STATUS] {iteration}/{max_iterations} ({_remaining} remaining)"
+        if _remaining <= max(5, max_iterations // 5):
+            _status += " — budget running low; finish the current item and call work-complete soon."
+        messages[0]["content"] = system_prompt + "\n\n" + _status
 
         # Context budget check before API call
         if context_window is not None:
@@ -850,10 +910,16 @@ async def run_phase(
 
             # F4: Pre-dispatch write scope validation
             _scope_err = _validate_write_scope(tc["name"], tc["arguments"], project_root) if project_root else None
+            # F21: Pre-dispatch audit-report.md append-only validation
+            _report_err = _validate_audit_report_write(tc["name"], tc["arguments"], state_dir)
             if _scope_err:
                 log.warning("scope violation: %s", _scope_err)
                 console.print(f"[red][ael] scope violation: {escape(_scope_err[:200])}[/red]")
                 result = f"Error: {_scope_err}"
+            elif _report_err:
+                log.warning("audit-report.md overwrite blocked: %s", _report_err)
+                console.print(f"[red][ael] audit-report.md overwrite blocked[/red]")
+                result = _report_err
             else:
                 result = await mcp.call_tool(tc["name"], tc["arguments"])
             log.debug("tool result: %s", result)
