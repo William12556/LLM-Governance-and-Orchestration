@@ -924,7 +924,7 @@ async def run_phase(
                 result = await mcp.call_tool(tc["name"], tc["arguments"])
             log.debug("tool result: %s", result)
             preview = result[:200] + ("..." if len(result) > 200 else "")
-            console.print(f"[dim]  result ← {escape(preview)}[/dim]")
+            console.print(f"[cyan]  result ←[/cyan]  [dim]{escape(preview)}[/dim]")
             # P3: duplicate read tracking
             if tc["name"] in ("read", "read_file", "read_text_file"):
                 _path = tc["arguments"].get("path", "")
