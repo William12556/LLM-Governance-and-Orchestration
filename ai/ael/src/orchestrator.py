@@ -571,6 +571,7 @@ def setup_logging(state_dir: str) -> logging.Logger:
     log_path = os.path.join(state_dir, f"ael_{timestamp}.LOG")
     logger = logging.getLogger("ael")
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False  # F19: prevent duplicate console output via root logger's default handler
     if not logger.handlers:
         fh = logging.FileHandler(log_path)
         fh.setLevel(logging.DEBUG)
