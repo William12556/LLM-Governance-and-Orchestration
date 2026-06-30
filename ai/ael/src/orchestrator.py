@@ -25,7 +25,8 @@ Terminal output legend (rich TUI):
     ▶ WORK PHASE / ▶ REVIEW PHASE       which loop half is active
     ── WORKER iteration N/M ──  rule    phase-level LLM call counter
     ████░░  X%  N / M tokens            context budget bar (dim/yellow/red by status)
-    ╔ think ╗ panel                     model reasoning output
+    ╔ think ╗ panel                     model reasoning output (tagged: reasoning_content / <think>)
+    ╔ narration ╗ panel                 untagged model commentary preceding a tool call (F20)
       call →  tool_name(args)           outbound tool call to MCP server
       result ← preview                  MCP result returned (truncated 200 chars)
     ╔ response ╗ panel                  worker final response
@@ -764,6 +765,17 @@ async def run_phase(
         if reasoning:
             log.debug("model reasoning:\n%s", reasoning)
             console.print(Panel(escape(reasoning), title="[dim cyan]think[/dim cyan]", border_style="dim cyan", expand=False))
+        else:
+            # F20: surface untagged model commentary that precedes a tool call.
+            # Some models (e.g. Devstral) interleave narrative text with tool
+            # calls instead of using a dedicated reasoning_content/<think> channel.
+            # Without this, that text is logged but never reaches the console.
+            # Strip any plain-text [TOOL_CALLS] marker — that syntax is shown
+            # separately via the 'call ->' line once parsed below.
+            _narration = content.split("[TOOL_CALLS]")[0].strip()
+            if _narration and (message.tool_calls or "[TOOL_CALLS]" in content):
+                log.debug("untagged narration (%d chars)", len(_narration))
+                console.print(Panel(escape(_narration), title="[dim magenta]narration[/dim magenta]", border_style="dim magenta", expand=False))
 
         tool_calls: list[dict] = []
 
