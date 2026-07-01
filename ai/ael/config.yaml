@@ -35,6 +35,7 @@ loop:
   mcp_error_threshold: 3    # Write RALPH-BLOCKED.md after this many consecutive MCP errors per phase
   max_tool_calls_per_iteration: 10  # Truncate tool calls per iteration beyond this count
   preflight_check: false             # Evaluate success criteria before first worker iteration
+  phase_duration_minutes: 30         # F28: soft cap on a single phase's wall-clock cost during audit-run refinement
   state_dir: "ai/state/ralph"
 
 # Context budget

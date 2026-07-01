@@ -729,6 +729,7 @@ async def run_phase(
     mcp_error_threshold: int = 3,
     max_tool_calls_per_iter: int = 10,
     project_root: str = "",
+    phase_duration_seconds: float | None = None,
 ) -> tuple[int, str]:
     """
     Single phase (worker or reviewer): inject tools, send completions,
@@ -765,6 +766,7 @@ async def run_phase(
 
     mcp_error_count = 0
     _read_counts: dict[str, int] = {}  # P3: duplicate read tracking
+    _failed_call_sigs: dict[str, int] = {}  # F27: repeated identical failed call tracking
 
     label = f"{phase_label} " if phase_label else ""
     console.rule(f"[blue]{label or 'AEL'} — {escape(model)}[/blue]", style="blue")
@@ -772,10 +774,22 @@ async def run_phase(
     console.print(f"[blue][ael] task:   {escape(task[:80])}{'...' if len(task) > 80 else ''}[/blue]")
     log.info("phase start phase=%s model=%s tools=%d task=%s", phase_label or "?", model, len(tools), task)
 
+    _phase_start = time.monotonic()  # F28: phase wall-clock cap
+
     for iteration in range(1, max_iterations + 1):
         iter_label = f"{phase_label}  " if phase_label else ""
         console.rule(f"[blue dim]{iter_label}iteration {iteration}/{max_iterations}[/blue dim]", style="blue dim")
         log.debug("iteration %d/%d phase=%s", iteration, max_iterations, phase_label or "?")
+
+        # F28: phase wall-clock cap (Option A, soft) — bounds a single item's
+        # cost so a stuck item cannot consume the whole run's --duration
+        # budget. Ends the phase as if complete; the item stays unchecked,
+        # the reviewer issues REVISE, and the next loop iteration retries it
+        # under a fresh cap rather than aborting the entire run.
+        if phase_duration_seconds is not None and (time.monotonic() - _phase_start) > phase_duration_seconds:
+            console.print(f"\n[yellow][ael] phase wall-clock cap ({phase_duration_seconds/60:.0f} min) reached[/yellow]")
+            log.warning("phase wall-clock cap (%.0fs) reached at iteration %d", phase_duration_seconds, iteration)
+            return 0, ""
 
         # F25: refresh system message with an iteration countdown each pass so
         # the model can self-regulate pacing instead of being cut off abruptly.
@@ -934,6 +948,37 @@ async def run_phase(
                         log.warning("duplicate read (count=%d): %s",
                                     _read_counts[_path], _path)
 
+            # F27: repeated identical failed call tracking. Diagnostic calls
+            # (stat/grep/read) commonly intervene between retries, defeating a
+            # simple consecutive-call counter, so failures are counted per
+            # unique (tool, arguments) signature across the whole phase.
+            if _scope_err or _report_err or _is_mcp_error(result):
+                _call_sig = f"{tc['name']}:{json.dumps(tc['arguments'], sort_keys=True)}"
+                _failed_call_sigs[_call_sig] = _failed_call_sigs.get(_call_sig, 0) + 1
+                _fail_n = _failed_call_sigs[_call_sig]
+                if _fail_n == 2:
+                    log.warning("repeated identical failed call (count=%d): %s",
+                                _fail_n, _call_sig[:150])
+                    result += (
+                        "\n\nYou have called this exact tool with identical "
+                        "arguments before and it failed. Do not repeat it — "
+                        "use a different tool or approach."
+                    )
+                elif _fail_n >= 4:
+                    blocked_msg = (
+                        "# RALPH-BLOCKED\n\n"
+                        f"Repeated identical failed call: {_fail_n} attempts.\n\n"
+                        f"Call: {_call_sig[:300]}\n\n"
+                        f"Last result: {result[:300]}\n"
+                    )
+                    write_state(state_dir, "RALPH-BLOCKED.md", blocked_msg)
+                    log.error("BLOCKED: repeated identical failed call (%d attempts)", _fail_n)
+                    console.print(
+                        f"[red][ael] BLOCKED: repeated identical failed call "
+                        f"({_fail_n} attempts)[/red]"
+                    )
+                    return 1, ""
+
             # Corrective guidance is embedded in the tool result content rather
             # than injected as a separate user message.  A standalone user message
             # after a tool message is rejected by the Mistral/oMLX API as an
@@ -971,7 +1016,20 @@ async def run_phase(
                             f"{_ep_proc.stderr.strip()}"
                         )
                 _corrective = _ep_msg
-            # P1a: MCP error handling (extended pattern match)
+            # F26: audit-report.md append-guard-specific corrective. _report_err
+            # messages start with "Error:" and would otherwise be misrouted into
+            # the generic MCP-error branch below, which tells the model to
+            # "review required parameters" — wrong advice for an overwrite
+            # rejection, and observed to reinforce blind write-retries instead
+            # of steering the model toward edit/edit_file as F21 intends.
+            elif _report_err:
+                _corrective = (
+                    "\n\nDo not retry write/write_file/create_file on this file. "
+                    "Call edit or edit_file instead: set old_text to the exact "
+                    "final line(s) currently in the file (read the tail first "
+                    "if unsure), and new_text to those same line(s) followed by "
+                    "your new entry."
+                )
             elif _is_mcp_error(result):
                 mcp_error_count += 1
                 console.print(
@@ -1334,6 +1392,7 @@ async def run_loop(
     deadline: float | None = None,
     project_root: str = "",
     stall_threshold: int = _DEFAULT_STALL_THRESHOLD,
+    phase_duration_seconds: float | None = None,
 ) -> int:
     """Full Ralph Loop: worker/reviewer cycle until SHIP, max_iterations, or deadline."""
     ctx_line = f"  context:  {context_window:,} tokens\n" if context_window else ""
@@ -1403,7 +1462,8 @@ async def run_loop(
                                 budget_abort_pct=budget_abort_pct,
                                 mcp_error_threshold=mcp_error_threshold,
                                 max_tool_calls_per_iter=max_tool_calls_per_iter,
-                                project_root=project_root)
+                                project_root=project_root,
+                                phase_duration_seconds=phase_duration_seconds)
         log.info("work phase rc=%d", rc)
         if rc != 0:
             console.print("[red]✗ WORK PHASE FAILED[/red]")
@@ -1453,7 +1513,8 @@ async def run_loop(
                                                   budget_abort_pct=budget_abort_pct,
                                                   mcp_error_threshold=mcp_error_threshold,
                                                   max_tool_calls_per_iter=max_tool_calls_per_iter,
-                                                  project_root=project_root)
+                                                  project_root=project_root,
+                                                  phase_duration_seconds=phase_duration_seconds)
         log.info("review phase rc=%d", rc)
         if rc != 0:
             console.print("[red]✗ REVIEW PHASE FAILED[/red]")
@@ -1573,6 +1634,9 @@ async def main_async(args: argparse.Namespace) -> int:
     mcp_error_thresh      = config["loop"].get("mcp_error_threshold", 3)
     max_tool_calls        = config["loop"].get("max_tool_calls_per_iteration", 10)
     do_preflight          = config["loop"].get("preflight_check", False)
+    # F28: phase wall-clock cap (minutes -> seconds; None disables)
+    _phase_duration_min   = config["loop"].get("phase_duration_minutes")
+    phase_duration_seconds = _phase_duration_min * 60 if _phase_duration_min else None
     model          = args.model or omlx_cfg["default_model"]
 
     # Resolve context budget config
@@ -1722,7 +1786,8 @@ async def main_async(args: argparse.Namespace) -> int:
                                 max_tool_calls_per_iter=max_tool_calls,
                                 preflight_check=do_preflight,
                                 deadline=deadline,
-                                project_root=project_root)
+                                project_root=project_root,
+                                phase_duration_seconds=phase_duration_seconds)
             if rc == 0:
                 _archive_audit_artifacts(state_dir, args.task, log)
     finally:
