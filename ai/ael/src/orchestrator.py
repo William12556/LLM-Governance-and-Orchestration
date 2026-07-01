@@ -1663,6 +1663,17 @@ async def main_async(args: argparse.Namespace) -> int:
     console.print(f"[blue][ael] recipe set: {recipe_set}[/blue]")
     log.info("recipe set: %s", recipe_set)
 
+    # F29: initialize audit-report.md as zero-byte at run start (audit runs
+    # only, and only if absent) so the worker's first read/find/ls probe on
+    # a clean run returns an empty result rather than NOT_FOUND — observed
+    # to trigger unnecessary exploratory iterations before the first write.
+    # Guarded by file-absence so an in-progress run's findings are never touched.
+    if recipe_set == "audit":
+        _report_path = os.path.join(state_dir, "audit-report.md")
+        if not os.path.exists(_report_path):
+            write_state(state_dir, "audit-report.md", "")
+            log.info("audit-report.md initialized (zero-byte)")
+
     client = AsyncOpenAI(base_url=omlx_cfg["base_url"], api_key=omlx_cfg["api_key"])
 
     readiness = config.get("readiness", {})
