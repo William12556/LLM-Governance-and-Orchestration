@@ -905,7 +905,7 @@ async def run_phase(
 
         # Dispatch tool calls and inject results
         for tc in tool_calls:
-            console.print(f"[yellow]  call →[/yellow]  [bold]{escape(tc['name'])}[/bold]({escape(json.dumps(tc['arguments']))})")
+            console.print(f"[yellow]  call →[/yellow]  [bold]{escape(tc['name'])}[/bold][dim]({escape(json.dumps(tc['arguments']))})[/dim]")
             log.debug("tool call: %s args=%s", tc["name"], json.dumps(tc["arguments"]))
 
             # F4: Pre-dispatch write scope validation
@@ -1394,7 +1394,7 @@ async def run_loop(
         log.info("loop iteration %d/%d", i, max_iterations + _extra)
 
         # Work phase
-        console.print("\n[bold yellow]▶ WORK PHASE[/bold yellow]")
+        console.print("\n[bold blue]▶ WORK PHASE[/bold blue]")
         rc, _ = await run_phase(client, mcp, worker_model, work_recipe,
                                 task, phase_max_iterations, state_dir, log,
                                 phase_label="WORKER",
@@ -1430,7 +1430,7 @@ async def run_loop(
 
         # Review phase — clear worker signal before reviewer starts
         clear_state(state_dir, "work-complete.txt")
-        console.print("\n[bold yellow]▶ REVIEW PHASE[/bold yellow]")
+        console.print("\n[bold blue]▶ REVIEW PHASE[/bold blue]")
 
         # F6: Run syntax gate and inject result into reviewer task
         _syntax_result = _run_syntax_gate(state_dir, log)
