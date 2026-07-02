@@ -113,7 +113,7 @@ The Strategic Domain owns the following functions:
 **Execution Coordination**
 
 - T04 prompt authoring and AEL command delivery (P09)
-- Context budget check before every T04 prompt
+- Context budget check before every AEL-targeted T04 prompt
 - Human handoff: ready-to-execute command after approval
 
 **Quality**
@@ -242,8 +242,9 @@ required after each increment.
 
 **Context Budget**
 
-- `context-budget.md` must exist in `ai/state/ralph/` before authoring any T04
-  prompt. If absent, instruct human to run `python ai/ael/src/budget.py`.
+- `context-budget.md` must exist in `ai/state/ralph/` before authoring any
+  AEL-targeted T04 prompt (prompt_info.target_profile: ael). If absent,
+  instruct human to run `python ai/ael/src/budget.py`.
 - Read budget before sizing `tactical_brief` (~200–400 tokens target).
 
 **`tactical_brief` Format**
@@ -307,6 +308,7 @@ any document.
 | 0.8 | 2026-06-17 | §2.0: added context file to AEL description; §2.1: added Context file row to profile comparison table |
 | 0.9 | 2026-06-25 | Added §7.0 Initial Implementation constraint: initial implementation from approved design does not require issue/change documents; forward path and corrective loop trigger made explicit |
 | 0.10 | 2026-06-28 | Added §4.1 Audit Modes (strategic / tactical triggers); noted automatic audit-recipe selection; updated §5.0 P08 row; added T08 Audit to §8.0 template table |
+| 0.11 | 2026-07-02 | Rescoped §3.0 and §7.0 context-budget directives to AEL-targeted T04 prompts only (prompt_info.target_profile field; issue-713437bc) |
 
 ---
 

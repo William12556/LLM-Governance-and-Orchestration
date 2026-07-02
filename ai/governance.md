@@ -592,6 +592,7 @@ exclude_lines = [
     - Strategic Domain: For enhancement or requirement change requests, creates issue document via P04 with type `enhancement` or `requirement_change` and origin `requirement_change`, then creates change document referencing that issue
     - Exception: Non-source-code changes (ai/workspace/ documents per 1.4.10) may be implemented directly after human approval without issue/change documents
     - Exception: Initial implementation of source code from an approved design document does not require issue or change documents. The forward path is: approved design → T04 prompt → Tactical Domain execution → review. Issue and change documents are required only when execution fails (AEL BLOCKED) or tests fail.
+    - Cross-reference: P09 §1.10.2 — T04 prompt_info.source_ref distinguishes design-sourced prompts (this exception) from change-sourced prompts; coupled_docs is required only for the latter.
   - §1.4.2 Document coupling
     - Strategic Domain: Ensures one-to-one coupling between issue and change documents
     - Strategic Domain: Every source code change document must reference exactly one source issue document via UUID
@@ -982,9 +983,9 @@ pip install dist/*.whl
     - Manage creation and lifecycle of T04 prompt documents
     - Facilitate Strategic Domain → Tactical Domain code generation communication
   - §1.10.2 Prompt Creation
-    - Prompt documents are always Tactical Domain specific.
+    - Prompt documents are always Tactical Domain specific; prompt_info.target_profile declares which profile (ael, claude_code, or claude_omlx) a given prompt targets.
     - Strategic Domain: Reads template from ai/templates/T04-prompt.md
-    - Strategic Domain: Creates prompt documents from design and change documents using T04 template
+    - Strategic Domain: Creates prompt documents from design documents (initial implementation, §1.4.1 exception) or from change documents (corrective/enhancement cycle) using T04 template
     - Strategic Domain: Saves prompts with naming format prompt-<uuid>-<name>.md in ai/workspace/prompt/
     - Strategic Domain: UUID assignment follows workflow initiation pattern:
     - First document created in workflow (Issue OR Change) generates new 8-character UUID
@@ -993,7 +994,8 @@ pip install dist/*.whl
     - Strategic Domain: Rewrites prompt documents in place when revisions required
     - Strategic Domain: Embeds complete design specifications and schema within prompt documents
     - Strategic Domain: Ensures prompt documents are self-contained requiring no external file references
-    - Strategic Domain: Populates tactical_brief field with a concise plain-text AEL task payload (~200-400 tokens); brief contains only: file(s) to modify, hard constraints, implementation steps, deliverable path(s), success criteria; all governance metadata omitted from brief
+    - Strategic Domain: The following tactical_brief and context-budget directives apply only when prompt_info.target_profile is ael; tactical_brief is not consumed by claude_code or claude_omlx profiles and may be omitted for those
+    - Strategic Domain: Populates tactical_brief field with a concise prose AEL task payload (~200-400 tokens); brief contains only: file(s) to modify, hard constraints, implementation steps, deliverable path(s), success criteria; all governance metadata omitted from brief
     - Strategic Domain: Checks whether context-budget.md exists in AEL state directory before authoring tactical_brief; if absent, instructs human to run `python ai/ael/src/budget.py` from project root before proceeding
     - Strategic Domain: Reads context-budget.md and adjusts brief size to fit within available context headroom
     - Strategic Domain: Verifies tactical_brief field is non-empty before issuing AEL command; an empty or placeholder brief causes orchestrator fallback to full raw document, inflating context and risking saturation
@@ -1002,10 +1004,8 @@ pip install dist/*.whl
     - Strategic Domain: AEL end is logged as `INFO AEL end rc=N` in the .LOG file on all exits including unexpected termination; absence of this line in a log indicates unclean exit (signal, crash, or resource failure); log review should check for this line before concluding outcome
     - Strategic Domain: Before specifying any target file path in a T04 prompt, reads the project entry point configuration (pyproject.toml [project.scripts] or equivalent) and confirms the named file is in the deployment path
     - Strategic Domain: Embeds element_registry field in T04 prompt from name registry master, scoped to elements relevant to the code generation task
-    - Strategic Domain: Prompt references source change UUID in coupled_docs.change_ref field
-    - Strategic Domain: Prompt iteration number matches source change iteration number
-    - Strategic Domain: Iteration synchronization maintained through debug cycles
-    - Strategic Domain: Verifies coupling before prompt creation
+    - Strategic Domain: When source_ref references a change document (change-<uuid>), prompt references that change's UUID in coupled_docs.change_ref field, prompt iteration number matches source change iteration number, and synchronization is maintained through debug cycles; verifies coupling before prompt creation
+    - Strategic Domain: When source_ref references a design document (design-<uuid>, initial implementation per §1.4.1), coupled_docs is omitted; no change document exists to couple to
     - GitHub version control maintains complete revision history
   - §1.10.3 Human Handoff
     - Strategic Domain: Verifies tactical context file exists at project root before providing command
@@ -1186,6 +1186,7 @@ See [workflow.md](workflow.md).
 | 9.7     | 2026-06-17 | Renamed ai/workspace/admin/ → ai/workspace/report/ in §1.2.2 .gitignore template and §1.2.6 folder structure; added report/closed/ to §1.2.6 and §1.1.14.5 |
 | 9.8     | 2026-06-25 | Added P03 §1.4.1 exception: initial implementation from approved design does not require issue or change documents; forward path is design → T04 → execution → review; corrective loop triggered only by AEL BLOCKED or test failure |
 | 9.9     | 2026-06-28 | P08 §1.9: added §1.9.9 Audit Modes (strategic / tactical); split §1.9.4 into §1.9.4.1 strategic-led and §1.9.4.2 tactical-led (AEL audit loop); §1.9.2 mode-selection note; §1.9.5 T08 template and tactical archive note; registered T08-audit.md in §1.1.17 Templates and the ToC; append-only, existing §1.9.x not renumbered |
+| 9.10    | 2026-07-02 | P09 §1.10.2: prompt creation clause conditioned on source_ref (design-sourced vs change-sourced, §1.4.1 exception); tactical_brief/context-budget directives scoped to target_profile == ael; coupled_docs directives conditioned on source_ref; P03 §1.4.1: added cross-reference to P09 source_ref discrimination; resolves issue-713437bc (T04 schema hard-coded AEL-exclusivity and change-document-exclusivity, contradicting §1.4.1 exception and multi-profile Tactical Domain architecture) |
 
 ---
 [Return to Table of Contents](<#table of contents>)
