@@ -546,7 +546,7 @@ When authoring the next tactical_brief or T04 prompt:
 
 - Current initial load is {initial_pct:.1f}% of context window
 - Each Ralph Loop phase iteration accumulates ~{est_per_iter} tokens
-- Recommended tactical_brief size: ≤1,000 tokens
+- Recommended tactical_brief size: ~200-400 tokens (hard ceiling: 1,000 tokens)
 - Avoid embedding large design documents or code blocks in the brief
 - Context pressure symptoms: duplicate tool calls, repeated reads, verbose responses
 - If symptoms appear, reduce brief size and restart with --mode reset

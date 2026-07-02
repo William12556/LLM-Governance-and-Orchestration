@@ -709,9 +709,13 @@ class ComplianceEngine:
                         document=None,
                     ))
 
-        # FR-02-07: context-budget.md absent while a prompt is open → WARNING
-        open_prompts = [d for d in docs if d.cls == "prompt" and not d.is_master]
-        if open_prompts and not snapshot.budget.present:
+        # FR-02-07: context-budget.md absent while an AEL-targeted prompt is open → WARNING
+        # (only relevant when target_profile is ael, or absent — default assumes ael)
+        open_ael_prompts = [
+            d for d in docs
+            if d.cls == "prompt" and not d.is_master and d.target_profile in (None, "ael")
+        ]
+        if open_ael_prompts and not snapshot.budget.present:
             alerts.append(Alert(
                 severity="warning",
                 code="FR-02-07",

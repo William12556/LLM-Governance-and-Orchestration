@@ -164,7 +164,7 @@ python ai/ael/src/orchestrator.py --mode reset
 | `--duration` | Wall-clock time limit in hours (default: no limit) |
 | `--config` | Path to config.yaml |
 
-**`budget.py`** reads `config.yaml` and the model's `config.json` from disk to compute context window size, warn/abort thresholds, and recommended `tactical_brief` sizing. It writes `ai/state/ralph/context-budget.md`. The Strategic Domain reads this file before authoring any T04 prompt. If the file is absent, the Strategic Domain will instruct the human to run `budget.py` before proceeding.
+**`budget.py`** reads `config.yaml` and the model's `config.json` from disk to compute context window size, warn/abort thresholds, and recommended `tactical_brief` sizing. It writes `ai/state/ralph/context-budget.md`. The Strategic Domain reads this file before authoring any AEL-targeted T04 prompt. If the file is absent, the Strategic Domain will instruct the human to run `budget.py` before proceeding.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -233,6 +233,7 @@ Integration tests skip automatically if oMLX is not reachable on `127.0.0.1:8000
 | 2.0 | 2026-06-14 | Relocated loop state to ai/state/ralph/ (config.yaml, profile table, usage examples); workspace/ → ai/workspace/ in command examples |
 | 2.1 | 2026-06-16 | Updated Testing section: removed stale framework/ pytest paths; tests moved to deprecated/skel/; updated Configuration note |
 | 2.2 | 2026-06-16 | Added linter.py and protocol_checker.py to §3.0 Structure; updated §2.0 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md; added section numbering throughout; added Created timestamp |
+| 2.3 | 2026-07-02 | Rescoped §7.0 budget.py usage note to AEL-targeted T04 prompts only (issue-713437bc) |
 
 ---
 

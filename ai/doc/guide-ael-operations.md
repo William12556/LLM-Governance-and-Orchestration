@@ -187,7 +187,7 @@ Run `budget.py` once after configuring `config.yaml` and after any model change:
 python ai/ael/src/budget.py
 ```
 
-This writes `ai/state/ralph/context-budget.md`. Read this file before authoring any T04 prompt (P09 §1.10.2).
+This writes `ai/state/ralph/context-budget.md`. Read this file before authoring any AEL-targeted T04 prompt (P09 §1.10.2).
 
 ### 6.2 Budget thresholds
 
@@ -198,9 +198,11 @@ The orchestrator tracks estimated token count per phase iteration. At each thres
 | `budget_warn_pct` | 80% | Yellow warning bar in TUI; logged |
 | `budget_abort_pct` | 95% | Phase aborted; loop exits with error |
 
-### 6.3 Tactical_brief sizing
+### 6.3 Tactical_brief sizing (AEL-targeted prompts only)
 
-Keep the `tactical_brief` to approximately 200–400 tokens (~800–1,600 characters). The brief should contain only: file(s) to modify, hard constraints, implementation steps, deliverables, success criteria. Do not embed design documents or code blocks.
+Applies only when the T04 prompt's `prompt_info.target_profile` is `ael`; `claude_code` and `claude_omlx` profiles do not use `tactical_brief`.
+
+Keep the `tactical_brief` to approximately 200–400 tokens (~800–1,600 characters), hard ceiling 1,000 tokens. The brief should contain only: file(s) to modify, hard constraints, implementation steps, deliverables, success criteria. Do not embed design documents or code blocks.
 
 ### 6.4 Context pressure symptoms
 
@@ -302,6 +304,7 @@ curl -s http://localhost:8000/v1/models -H "Authorization: Bearer local"
 |---|---|---|
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Relocated state to ai/state/ralph/ (config.yaml example, prose); workspace/ → ai/workspace/ |
+| 1.2 | 2026-07-02 | Rescoped §6.1 and §6.3 to AEL-targeted T04 prompts only; reconciled tactical_brief size guidance with orchestrator.py hard ceiling (issue-713437bc) |
 
 ---
 

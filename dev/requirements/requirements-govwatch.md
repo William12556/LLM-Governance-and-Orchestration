@@ -96,11 +96,11 @@ The compliance engine performs two tiers of checks: filename/structure checks
 |---|---|
 | FR-02-01 | Detect T02 (change) documents without a coupled T03 (issue) sharing the same UUID. Severity: VIOLATION. |
 | FR-02-02 | Detect T03 (issue) documents without a coupled T02 (change) sharing the same UUID. Severity: WARNING. |
-| FR-02-03 | Detect T04 (prompt) documents without a coupled T02 (change) sharing the same UUID. Severity: VIOLATION. |
+| FR-02-03 | Detect T04 (prompt) documents without a coupled T02 (change) sharing the same UUID. Skipped for design-sourced prompts (source_ref matches design-, P03 §1.4.1). Severity: VIOLATION. |
 | FR-02-04 | Detect documents with filenames that do not conform to the `<class>-<8-hex-uuid>-<name>.md` pattern. Severity: WARNING. |
 | FR-02-05 | Detect open documents (outside `closed/`) that appear complete based on AEL SHIP signal. Severity: WARNING. |
 | FR-02-06 | Detect AEL task file (`.ael/ralph/task.md`) content that does not correspond to any open T04 document. Severity: WARNING. |
-| FR-02-07 | Detect absence of `context-budget.md` when a T04 document is open. Severity: WARNING. |
+| FR-02-07 | Detect absence of `context-budget.md` when an AEL-targeted T04 document is open (target_profile is ael or absent). Severity: WARNING. |
 
 #### 4.2.2 Tier 2 — Document Content Checks
 
@@ -108,7 +108,7 @@ The compliance engine performs two tiers of checks: filename/structure checks
 |---|---|
 | FR-02-08 | Parse T02 and T03 documents to extract UUID and iteration number fields. Detect mismatched iteration numbers between coupled T02/T03 pairs. Severity: VIOLATION. |
 | FR-02-09 | Parse T02 and T03 documents to verify the UUID field value matches the UUID in the filename. Severity: VIOLATION. |
-| FR-02-10 | Parse T04 documents to verify the `tactical_brief` field is present, is a YAML fenced block, and is not a placeholder (does not begin with `#`). Severity: VIOLATION. |
+| FR-02-10 | Parse T04 documents to verify the `tactical_brief` field is present, is a YAML fenced block, and is not a placeholder (does not begin with `#`). Applies only when target_profile is ael or absent. Severity: VIOLATION. |
 | FR-02-11 | Parse T03 documents to verify required fields are populated (not empty or placeholder). Required fields to be confirmed against T03 template on implementation. Severity: WARNING. |
 | FR-02-12 | Parse T02 documents to verify required fields are populated (not empty or placeholder). Required fields to be confirmed against T02 template on implementation. Severity: WARNING. |
 
@@ -289,6 +289,7 @@ not prevent the rest of the compliance scan from completing.
 | 0.1 | 2026-06-08 | Initial draft |
 | 0.2 | 2026-06-10 | Relocated tool to `framework/ai/src/`; updated §2.0, FR-05-01, NFR-06; added OQ-05 re sync-skel.sh |
 | 0.3 | 2026-06-10 | Added §9.0 Design Notes: technology selection rationale, panel layout, compliance engine design intent |
+| 0.4 | 2026-07-02 | FR-02-03/FR-02-07/FR-02-10 scoped to design-sourced-prompt exemption and target_profile == ael, matching implemented govwatch.py behaviour (issue-713437bc) |
 
 ---
 

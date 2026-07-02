@@ -231,11 +231,11 @@ Conditions 2–6 evaluate over open documents only (excluding `closed/`).
 |---|---|---|
 | FR-02-01 | T02 with no T03 sharing its UUID | VIOLATION |
 | FR-02-02 | T03 with no coupled T02 sharing its UUID | WARNING |
-| FR-02-03 | T04 with no coupled T02 sharing its UUID | VIOLATION |
+| FR-02-03 | T04 with no coupled T02 sharing its UUID (skipped for design-sourced prompts, §1.4.1) | VIOLATION |
 | FR-02-04 | filename not matching `<class>-<8hex>-<name>.md` (masters exempt) | WARNING |
 | FR-02-05 | open document present while AEL signals SHIP | WARNING |
 | FR-02-06 | `.ael/ralph/task.md` content not corresponding to any open T04 | WARNING |
-| FR-02-07 | `context-budget.md` absent while a T04 is open | WARNING |
+| FR-02-07 | `context-budget.md` absent while an AEL-targeted T04 is open | WARNING |
 
 Coupling is computed by grouping open documents by UUID and inspecting which
 classes are present in each group.
@@ -246,9 +246,15 @@ classes are present in each group.
 |---|---|---|
 | FR-02-08 | coupled T02/T03 iteration numbers differ | VIOLATION |
 | FR-02-09 | body `id:` UUID differs from filename UUID | VIOLATION |
-| FR-02-10 | T04 `tactical_brief` absent / placeholder (`#`) / not in a ```yaml block | VIOLATION |
+| FR-02-10 | T04 `tactical_brief` absent / placeholder (`#`) / not in a ```yaml block (only when target_profile is ael or absent) | VIOLATION |
 | FR-02-11 | T03 required fields empty or placeholder | WARNING |
 | FR-02-12 | T02 required fields empty or placeholder | WARNING |
+
+FR-02-03 and FR-02-07 are skipped/scoped by `prompt_info.source_ref` and
+`prompt_info.target_profile` respectively, per issue-713437bc: FR-02-03 does not
+fire when `source_ref` matches `^design-`; FR-02-07 and FR-02-10 fire only when
+`target_profile` is `ael` or absent (default assumes `ael` for prompts
+predating the field).
 
 FR-02-10 mirrors the orchestrator: positive only when Pass 1 (`tactical_brief`
 root key in a ```yaml block) yields a non-empty value not beginning with `#`
@@ -465,6 +471,7 @@ modification to either script (OQ-05). `config.yaml` excludes are irrelevant to
 | Version | Date | Description |
 |---|---|---|
 | 0.1 | 2026-06-10 | Initial component design from requirements-govwatch.md v0.3; resolves OQ-01, OQ-02, OQ-03, OQ-05 |
+| 0.2 | 2026-07-02 | §7.0: FR-02-03 skipped for design-sourced prompts; FR-02-07/FR-02-10 scoped to AEL-targeted prompts (target_profile, is_design_sourced fields; issue-713437bc). §4.0 DocumentRecord and §2.0/§14.0 legacy framework/ paths not updated — out of scope for this revision. |
 
 ---
 
