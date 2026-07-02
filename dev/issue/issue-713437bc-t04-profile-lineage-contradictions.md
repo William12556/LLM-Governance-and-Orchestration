@@ -10,8 +10,8 @@ issue_info:
   type: "defect"
   iteration: 1
   coupled_docs:
-    change_ref: ""
-    change_iteration: null
+    change_ref: "change-713437bc"
+    change_iteration: 1
 
 source:
   origin: "code_review"
@@ -111,11 +111,12 @@ resolution:
     into the Root A fix — tactical_brief size guidance scoped to
     target_profile == ael, single source of truth (budget.py computed
     figure) rather than two static numbers.
-  change_ref: ""
+  change_ref: "change-713437bc"
 
 traceability:
   design_refs: []
-  change_refs: []
+  change_refs:
+    - "change-713437bc"
 
 notes: >
   Both roots and the govwatch extension bundled in one issue per human
