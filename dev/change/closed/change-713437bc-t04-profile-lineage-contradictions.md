@@ -5,7 +5,7 @@ change_info:
   id: "change-713437bc"
   title: "Conditional target_profile and source-lineage requirements in T04 schema, P09/P03 text, and govwatch compliance checks"
   date: "2026-07-02"
-  status: "proposed"
+  status: "verified"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -195,11 +195,24 @@ notes: >
   streams; this change document formalizes the split without a separate
   issue.
 
+verification:
+  implemented_date: "2026-07-02"
+  implemented_by: "Claude Code (Stream A); Claude Desktop (Stream B)"
+  verification_date: "2026-07-08"
+  test_results: >
+    Verified against source: govwatch.py DocumentRecord/parse_document/
+    _tier1/_tier2 changes present and correct; T04-prompt.md v1.10 and
+    governance.md v9.10 wording changes present and correct.
+
 version_history:
   - version: "1.0"
     date: "2026-07-02"
     changes:
       - "Initial change document; two-stream resolution (govwatch.py via T04/Tactical Domain, documents via direct Strategic Domain edit)"
+  - version: "1.1"
+    date: "2026-07-08"
+    changes:
+      - "Implemented and verified against source; change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

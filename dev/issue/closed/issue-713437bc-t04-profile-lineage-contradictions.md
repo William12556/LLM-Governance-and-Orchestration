@@ -5,7 +5,7 @@ issue_info:
   id: "issue-713437bc"
   title: "T04/P09/govwatch hard-code AEL as sole Tactical Domain and change-document lineage as sole prompt origin"
   date: "2026-07-02"
-  status: "open"
+  status: "verified"
   severity: "high"
   type: "defect"
   iteration: 1
@@ -125,11 +125,26 @@ notes: >
   files (governance.md, primer.md, T04-prompt.md, govwatch.py) under one
   change_ref.
 
+verification:
+  verified_date: "2026-07-08"
+  test_results: >
+    Verified against source. Stream A (govwatch.py): DocumentRecord carries
+    target_profile and is_design_sourced; parse_document populates both;
+    FR-02-03 (_tier1) guarded on is_design_sourced; FR-02-10 (_tier2)
+    guarded on target_profile. Stream B: T04-prompt.md v1.10 adds
+    prompt_info.target_profile and both if/then schema blocks; governance.md
+    v9.10 rewords P09 §1.10.2 and P03 §1.4.1 cross-reference.
+  closure_notes: "Both streams confirmed implemented against source; issue closed."
+
 version_history:
   - version: "1.0"
     date: "2026-07-02"
     changes:
       - "Initial issue document; bundles Root A and Root B from report-p09-t04-contradictions-2026-07-01.md plus independently verified govwatch FR-02-03/FR-02-10 unconditional violations"
+  - version: "1.1"
+    date: "2026-07-08"
+    changes:
+      - "Verified against source; issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
