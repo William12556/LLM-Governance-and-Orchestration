@@ -143,10 +143,10 @@ The Strategic Domain owns the following functions:
 Condensed stage sequence. See `workflow.md` for the full flowchart.
 
 ```
-P01  Project Initialization  →  run budget.py
+P01  Project Initialization  →  configure config.yaml
 P10  Requirements            →  human approval → baseline
 P02  Design (Tier 1–3)       →  human approval per tier → git tag baseline
-P09  T04 Prompt              →  check context-budget.md → human approval
+P09  T04 Prompt              →  query omlx_model_status → human approval
      AEL  →  SHIP or BLOCKED
             Option A: human runs terminal command (all profiles)
             Option B: Strategic Domain calls start_ael / polls ael_status
@@ -186,7 +186,7 @@ the requested mode is unclear, ask before proceeding.
 | Protocol | Name | Key Action |
 |---|---|---|
 | P00 | Governance | Master directives, architecture, document conventions |
-| P01 | Project Initialization | Folder structure, `.gitignore`, venv, `budget.py` |
+| P01 | Project Initialization | Folder structure, `.gitignore`, venv, `config.yaml` |
 | P02 | Design | Three-tier hierarchy, name registry, Mermaid diagrams |
 | P03 | Change | T02 from T03 issue; one-to-one coupling; trivial exemption |
 | P04 | Issue | T03 from test failure or `BLOCKED`; issue–change coupling |
@@ -242,10 +242,12 @@ required after each increment.
 
 **Context Budget**
 
-- `context-budget.md` must exist in `ai/state/ralph/` before authoring any
-  AEL-targeted T04 prompt (prompt_info.target_profile: ael). If absent,
-  instruct human to run `python ai/ael/src/budget.py`.
-- Read budget before sizing `tactical_brief` (~200–400 tokens target).
+- Before authoring any AEL-targeted T04 prompt (prompt_info.target_profile:
+  ael), call `omlx_model_status` (mcp_omlx) for the configured model; a null
+  or missing `settings.max_context_window` is unresolved — warn the operator,
+  same as the resolver's own unknown-window behavior.
+- Read `context-budget.md` (written automatically by the orchestrator at AEL
+  runtime) before sizing `tactical_brief` (~200–400 tokens target).
 
 **`tactical_brief` Format**
 
@@ -309,6 +311,7 @@ any document.
 | 0.9 | 2026-06-25 | Added §7.0 Initial Implementation constraint: initial implementation from approved design does not require issue/change documents; forward path and corrective loop trigger made explicit |
 | 0.10 | 2026-06-28 | Added §4.1 Audit Modes (strategic / tactical triggers); noted automatic audit-recipe selection; updated §5.0 P08 row; added T08 Audit to §8.0 template table |
 | 0.11 | 2026-07-02 | Rescoped §3.0 and §7.0 context-budget directives to AEL-targeted T04 prompts only (prompt_info.target_profile field; issue-713437bc) |
+| 0.12 | 2026-07-08 | §4.0/§5.0/§7.0: replaced retired `budget.py` file-existence gate with direct `omlx_model_status` (mcp_omlx) query before authoring AEL-targeted T04 prompts; `context-budget.md` now written automatically by the orchestrator at AEL runtime (change-d42e64a9) |
 
 ---
 

@@ -433,8 +433,7 @@ pip list
     - **AEL setup (both profiles)**:
       - Install AEL dependencies: `pip install -r ai/ael/requirements.txt`
       - Configure `ai/ael/config.yaml` with inference endpoint and MCP server definitions
-      - Run `python ai/ael/src/budget.py` to generate initial context-budget.md in state directory
-      - Re-run `budget.py` after any model change
+      - `ai/ael/src/orchestrator.py` resolves context-window size at startup (config.yaml override → live oMLX query → per-model config.yaml override → unknown) and writes context-budget.md to the state directory automatically; no separate script to run
       - Recipe location: `<project name>/ai/ael/recipes/`
       - Reference: §1.1.11, §1.2.4
 
@@ -996,8 +995,8 @@ pip install dist/*.whl
     - Strategic Domain: Ensures prompt documents are self-contained requiring no external file references
     - Strategic Domain: The following tactical_brief and context-budget directives apply only when prompt_info.target_profile is ael; tactical_brief is not consumed by claude_code or claude_omlx profiles and may be omitted for those
     - Strategic Domain: Populates tactical_brief field with a concise prose AEL task payload (~200-400 tokens); brief contains only: file(s) to modify, hard constraints, implementation steps, deliverable path(s), success criteria; all governance metadata omitted from brief
-    - Strategic Domain: Checks whether context-budget.md exists in AEL state directory before authoring tactical_brief; if absent, instructs human to run `python ai/ael/src/budget.py` from project root before proceeding
-    - Strategic Domain: Reads context-budget.md and adjusts brief size to fit within available context headroom
+    - Strategic Domain: Calls omlx_model_status (mcp_omlx) for the configured model before authoring tactical_brief; a null or missing settings.max_context_window is treated as unresolved and the operator is warned, consistent with the resolver's own unknown-window handling
+    - Strategic Domain: Reads context-budget.md (written automatically by the orchestrator at AEL runtime) and adjusts brief size to fit within available context headroom
     - Strategic Domain: Verifies tactical_brief field is non-empty before issuing AEL command; an empty or placeholder brief causes orchestrator fallback to full raw document, inflating context and risking saturation
     - Strategic Domain: Ensures tactical_brief is authored in a ```yaml fenced block with tactical_brief as the root key; the orchestrator scans only ```yaml blocks — plain text or non-YAML fenced blocks are not detected and cause fallback to raw document; when using per-section YAML blocks, §8.0 must be a dedicated ```yaml block (not ```text) with tactical_brief: as the sole root key
     - Strategic Domain: config.yaml `loop.max_iterations` controls the number of outer Ralph Loop cycles (worker + reviewer pass pairs); `loop.phase_max_iterations` controls the number of inner tool-call iterations per phase; these are distinct values and must not be conflated in T04 prompt notes
@@ -1187,6 +1186,7 @@ See [workflow.md](workflow.md).
 | 9.8     | 2026-06-25 | Added P03 §1.4.1 exception: initial implementation from approved design does not require issue or change documents; forward path is design → T04 → execution → review; corrective loop triggered only by AEL BLOCKED or test failure |
 | 9.9     | 2026-06-28 | P08 §1.9: added §1.9.9 Audit Modes (strategic / tactical); split §1.9.4 into §1.9.4.1 strategic-led and §1.9.4.2 tactical-led (AEL audit loop); §1.9.2 mode-selection note; §1.9.5 T08 template and tactical archive note; registered T08-audit.md in §1.1.17 Templates and the ToC; append-only, existing §1.9.x not renumbered |
 | 9.10    | 2026-07-02 | P09 §1.10.2: prompt creation clause conditioned on source_ref (design-sourced vs change-sourced, §1.4.1 exception); tactical_brief/context-budget directives scoped to target_profile == ael; coupled_docs directives conditioned on source_ref; P03 §1.4.1: added cross-reference to P09 source_ref discrimination; resolves issue-713437bc (T04 schema hard-coded AEL-exclusivity and change-document-exclusivity, contradicting §1.4.1 exception and multi-profile Tactical Domain architecture) |
+| 9.11    | 2026-07-08 | P01 §1.2.8 and P09 §1.10.2: replaced retired `budget.py` file-existence precondition with orchestrator.py's own tiered context-window resolver (config.yaml override → live omlx_model_status query → per-model config.yaml override → unknown); context-budget.md now written automatically at AEL startup; Strategic Domain gate is a direct omlx_model_status call rather than a file-existence check (change-d42e64a9, Stream B) |
 
 ---
 [Return to Table of Contents](<#table of contents>)

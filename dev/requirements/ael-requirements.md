@@ -80,7 +80,7 @@ The orchestrator shall connect to one or more MCP servers defined in `config.yam
 The orchestrator shall parse Mistral plain-text tool call format (`[TOOL_CALLS]...[ARGS]...` in the `content` field with `tool_calls: null`) in addition to the OpenAI structured `tool_calls` format.
 
 **FR-AEL-005 — Context budget enforcement**
-The orchestrator shall estimate message token count per iteration and enforce configurable warn and abort thresholds expressed as fractions of the model context window.
+The orchestrator shall estimate message token count per iteration and enforce configurable warn and abort thresholds expressed as fractions of the model context window, where the context window is resolved via a tiered chain: config.yaml explicit override → live oMLX query (settings.max_context_window) → config.yaml per-model override → unresolved (warn).
 
 **FR-AEL-006 — State directory management**
 The orchestrator shall read and write loop state files (`task.md`, `iteration.txt`, `work-summary.txt`, `work-complete.txt`, `review-result.txt`, `review-feedback.txt`, `.ralph-complete`, `RALPH-BLOCKED.md`) to the configured state directory.
@@ -101,7 +101,7 @@ On SHIP, the orchestrator shall write `.ralph-complete` to the state directory. 
 The orchestrator shall write a timestamped log file (`ael_YYYYMMDD-HHMMSS.LOG`) to the state directory. The log shall include INFO, WARNING, DEBUG, and ERROR levels. The final log entry shall be `AEL end rc=N` on all exits including unexpected termination.
 
 **FR-AEL-012 — Context budget report**
-At startup, the orchestrator shall write `context-budget.md` to the state directory with context window size, thresholds, headroom estimate, and guidance for the Strategic Domain.
+At startup, the orchestrator shall write `context-budget.md` to the state directory with context window size (as resolved per FR-AEL-005's tiered chain), thresholds, headroom estimate, and guidance for the Strategic Domain. This file is retained for human/govwatch visibility; the Strategic Domain's T04-authoring precondition instead calls `omlx_model_status` directly rather than checking for this file's presence (P09 §1.10.2).
 
 **FR-AEL-013 — MCP error handling**
 The orchestrator shall detect MCP tool errors, inject a corrective user message, and write `RALPH-BLOCKED.md` after a configurable consecutive error threshold is reached.
@@ -219,6 +219,7 @@ The tasks directory path shall be configurable via `config.yaml` under `pipeline
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-03-26 | Initial document — as-built requirements (FR-AEL-001 to FR-AEL-015, NFR-AEL-001 to NFR-AEL-005) and proposed requirements (FR-AEL-P01 to FR-AEL-P12) |
+| 1.1 | 2026-07-08 | FR-AEL-005 and FR-AEL-012 reworded to reflect the tiered context-window resolver replacing the retired standalone budget.py; FR-AEL-012 notes the Strategic Domain's T04 precondition now calls omlx_model_status directly rather than checking file presence (change-d42e64a9) |
 
 ---
 
