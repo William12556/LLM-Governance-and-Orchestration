@@ -38,7 +38,6 @@ Terminal output legend (rich TUI):
 import argparse
 import asyncio
 import datetime
-import glob
 import hashlib
 import json
 import logging
@@ -49,9 +48,14 @@ import subprocess
 import sys
 import time
 import traceback
+import urllib.parse
+import urllib.request
 import uuid
 
 import yaml
+
+# Project root derived from working directory, consistent with _archive_audit_artifacts() precedent.
+PROJECT_ROOT: str = os.getcwd()
 from openai import AsyncOpenAI
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -337,6 +341,51 @@ def load_yaml(path: str) -> dict:
         return yaml.safe_load(f)
 
 
+def _substitute_project_root(config: dict) -> dict:
+    """
+    Substitute the literal string '{PROJECT_ROOT}' with PROJECT_ROOT in mcp_servers.
+
+    Walks config['mcp_servers'] and for every server definition, replaces
+    '{PROJECT_ROOT}' in the 'command' string and each string in the 'args' list.
+    The 'env' dict values are also processed if they contain the placeholder.
+
+    Args:
+        config: The parsed config.yaml contents (modified in place)
+
+    Returns:
+        The same config dict (for chaining convenience)
+    """
+    mcp_servers = config.get("mcp_servers", {})
+    placeholder = "{PROJECT_ROOT}"
+
+    for server_name, server_def in mcp_servers.items():
+        if not isinstance(server_def, dict):
+            continue
+
+        # Substitute in 'command'
+        cmd = server_def.get("command")
+        if isinstance(cmd, str) and placeholder in cmd:
+            server_def["command"] = cmd.replace(placeholder, PROJECT_ROOT)
+
+        # Substitute in 'args' list
+        args = server_def.get("args")
+        if isinstance(args, list):
+            server_def["args"] = [
+                arg.replace(placeholder, PROJECT_ROOT) if isinstance(arg, str) and placeholder in arg else arg
+                for arg in args
+            ]
+
+        # Substitute in 'env' dict values
+        env = server_def.get("env")
+        if isinstance(env, dict):
+            server_def["env"] = {
+                k: v.replace(placeholder, PROJECT_ROOT) if isinstance(v, str) and placeholder in v else v
+                for k, v in env.items()
+            }
+
+    return config
+
+
 def read_state(state_dir: str, filename: str) -> str:
     path = os.path.join(state_dir, filename)
     return open(path).read().strip() if os.path.exists(path) else ""
@@ -372,72 +421,110 @@ def reset_state(state_dir: str) -> int:
     return 0
 
 
-def resolve_context_window(
-    model_name: str,
-    models_dir: str,
-    override: int | None,
-    log: logging.Logger,
-    model_overrides: dict | None = None,
-) -> int | None:
+def _query_omlx_context_window(model_name: str, base_url: str) -> int | None:
     """
-    Resolve the model context window in tokens.
+    Query the oMLX admin API for the context window of a specific model.
 
-    Priority:
-      1. config.yaml context.context_window global override (if set)
-      2. F18: config.yaml context.model_context_windows per-model override (if set)
-      3. max_position_embeddings from model config.json on disk
-         Searches models_dir for the exact model directory (not arbitrary glob match).
-         Handles both top-level and text_config-nested layout.
+    Builds the admin URL by stripping a trailing '/v1' from base_url and
+    appending '/admin/api/models?model_id=<model_name>'.
 
-    Returns the context window as int, or None if not determinable.
+    Returns:
+        The value of settings.max_context_window for the matching model entry,
+        or None if the query fails or the value is absent.
+
+    This function never raises — all exceptions are caught and logged at WARNING.
     """
-    if override is not None:
-        log.info("context window: %d (config global override)", override)
-        return override
-
-    # F18: Check per-model override from config
-    if model_overrides and model_name in model_overrides:
-        ctx = model_overrides[model_name]
-        log.info("context window: %d (config per-model override for '%s')", ctx, model_name)
-        return int(ctx)
-
-    if not models_dir:
-        log.debug("context window: models_dir not set — skipping disk lookup")
-        return None
-
-    # F18: Match exact model directory instead of arbitrary glob
-    # Try direct path first, then search subdirectories
-    candidate_paths = [
-        os.path.join(models_dir, model_name, "config.json"),
-    ]
-    # Also check one level of subdirectories (e.g., models_dir/mlx-community/model_name)
-    for subdir in os.listdir(models_dir) if os.path.isdir(models_dir) else []:
-        candidate_paths.append(os.path.join(models_dir, subdir, model_name, "config.json"))
-
-    cfg_path = None
-    for path in candidate_paths:
-        if os.path.exists(path):
-            cfg_path = path
-            break
-
-    if not cfg_path:
-        log.debug("context window: no config.json found for '%s' under %s", model_name, models_dir)
-        return None
-
+    log = logging.getLogger("ael")
     try:
-        with open(cfg_path) as f:
-            cfg = json.load(f)
-        # Try top-level first, then text_config (Mistral3 / vision model layout)
-        ctx = (
-            cfg.get("max_position_embeddings")
-            or (cfg.get("text_config") or {}).get("max_position_embeddings")
-        )
-        if ctx:
-            log.info("context window: %d (from %s)", ctx, cfg_path)
-            return int(ctx)
-        log.debug("context window: max_position_embeddings not found in %s", cfg_path)
+        # Strip trailing '/v1' to get admin root
+        admin_root = base_url.rstrip("/")
+        if admin_root.endswith("/v1"):
+            admin_root = admin_root[:-3]
+
+        # Build admin API URL
+        encoded_model = urllib.parse.quote(model_name, safe="")
+        url = f"{admin_root}/admin/api/models?model_id={encoded_model}"
+
+        log.debug("querying oMLX admin API: %s", url)
+
+        # Make request with short timeout
+        req = urllib.request.Request(url, method="GET")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+
+        # Parse response: find matching model entry
+        models = data.get("models", [])
+        for entry in models:
+            if entry.get("id") == model_name:
+                settings = entry.get("settings", {})
+                ctx = settings.get("max_context_window")
+                if ctx is not None:
+                    log.debug("oMLX admin query: found max_context_window=%d for '%s'", ctx, model_name)
+                    return int(ctx)
+                log.debug("oMLX admin query: settings.max_context_window is null for '%s'", model_name)
+                return None
+
+        log.debug("oMLX admin query: no matching model entry for '%s'", model_name)
+        return None
+
     except Exception as exc:
-        log.warning("context window: failed to read %s: %s", cfg_path, exc)
+        log.warning("oMLX admin query failed for '%s': %s", model_name, exc)
+        return None
+
+
+def resolve_context_window(model_name: str, config: dict) -> int | None:
+    """
+    Resolve the model context window in tokens using a four-tier chain.
+
+    Tier 1: config['context']['context_window'] if not null (explicit global override)
+    Tier 2: Live query to oMLX admin endpoint for settings.max_context_window
+    Tier 3: config['context']['model_context_windows'][model_name] if present
+    Tier 4: Return None (context window unknown)
+
+    Args:
+        model_name: The model id as configured in omlx.default_model
+        config: The parsed config.yaml contents
+
+    Returns:
+        Context window size in tokens, or None if unresolved at every tier.
+    """
+    log = logging.getLogger("ael")
+    ctx_cfg = config.get("context", {})
+    tiers_tried = []
+
+    # Tier 1: Explicit global override
+    override = ctx_cfg.get("context_window")
+    if override is not None:
+        log.info("context window: %d (tier 1: config global override)", override)
+        return int(override)
+    tiers_tried.append("tier 1 (global override): null")
+
+    # Tier 2: Live oMLX admin query
+    omlx_cfg = config.get("omlx", {})
+    base_url = omlx_cfg.get("base_url", "")
+    if base_url:
+        live_ctx = _query_omlx_context_window(model_name, base_url)
+        if live_ctx is not None:
+            log.info("context window: %d (tier 2: live oMLX admin query)", live_ctx)
+            return live_ctx
+        tiers_tried.append("tier 2 (live oMLX query): null or failed")
+    else:
+        tiers_tried.append("tier 2 (live oMLX query): skipped (no base_url)")
+
+    # Tier 3: Per-model override from config
+    model_overrides = ctx_cfg.get("model_context_windows", {})
+    if model_name in model_overrides:
+        ctx = model_overrides[model_name]
+        log.info("context window: %d (tier 3: config per-model override for '%s')", ctx, model_name)
+        return int(ctx)
+    tiers_tried.append(f"tier 3 (per-model override): no entry for '{model_name}'")
+
+    # Tier 4: Unresolved
+    log.warning(
+        "context window: unresolved for '%s' — %s",
+        model_name,
+        "; ".join(tiers_tried),
+    )
     return None
 
 
@@ -1641,7 +1728,6 @@ async def main_async(args: argparse.Namespace) -> int:
 
     # Resolve context budget config
     ctx_cfg        = config.get("context", {})
-    models_dir     = ctx_cfg.get("models_dir", "")
     budget_warn    = ctx_cfg.get("budget_warn_pct", 0.80)
     budget_abort   = ctx_cfg.get("budget_abort_pct", 0.95)
 
@@ -1684,18 +1770,15 @@ async def main_async(args: argparse.Namespace) -> int:
         interval=readiness.get("poll_interval_seconds", 2.0),
     )
 
-    # Resolve context window
-    # F18: Support per-model context window overrides from config
-    _model_ctx_overrides = ctx_cfg.get("model_context_windows", {})
-    context_window = resolve_context_window(
-        model, models_dir, ctx_cfg.get("context_window"), log,
-        model_overrides=_model_ctx_overrides
-    )
+    # Resolve context window using four-tier chain
+    context_window = resolve_context_window(model, config)
     if context_window:
         console.print(f"[blue][ael] context window: {context_window:,} tokens ({escape(model)})[/blue]")
     else:
         console.print("[yellow][ael] context window: unknown — budget tracking disabled[/yellow]")
 
+    # Substitute {PROJECT_ROOT} placeholders in mcp_servers before connection
+    _substitute_project_root(config)
     mcp = MCPClient(config.get("mcp_servers", {}))
     await mcp.connect()
 

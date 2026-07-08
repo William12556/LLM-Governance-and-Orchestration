@@ -13,7 +13,7 @@ mcp_servers:
     args:
       - "-y"
       - "@j0hanz/filesystem-mcp@latest"
-      - "/Users/williamwatson/Documents/GitHub/LLM-Governance-and-Orchestration"
+      - "{PROJECT_ROOT}"
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
 
@@ -39,14 +39,13 @@ loop:
   state_dir: "ai/state/ralph"
 
 # Context budget
-# context_window: null resolves from model config.json on disk.
-# Set explicitly to override (e.g. when model is remote and not stored locally).
-# F18: model_context_windows allows per-model overrides (absent falls back to detected value).
+# context_window: null attempts a live query to the oMLX admin API, then falls
+# back to model_context_windows per-model overrides.
+# Set explicitly to override all tiers (e.g. when model is remote and admin API unavailable).
 context:
-  models_dir: "/Users/williamwatson/ai-models"
-  context_window: null      # tokens; null = read from model config.json
+  context_window: null      # tokens; null = try live oMLX query, then per-model override
   budget_warn_pct: 0.80     # print warning at this fraction of context window
   budget_abort_pct: 0.95    # abort phase at this fraction
-  # Per-model context window overrides (optional)
+  # Per-model context window overrides (tier 3 fallback when live query returns null)
   model_context_windows:
     "North-Mini-Code-1.0-6bit": 262144
