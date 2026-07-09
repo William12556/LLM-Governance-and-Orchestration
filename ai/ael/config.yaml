@@ -17,11 +17,8 @@ mcp_servers:
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
 
-  mcp-grep:
-    command: "/Users/williamwatson/mcp-grep-env/bin/python"
-    args:
-      - "-m"
-      - "mcp_grep.server"
+  mcp-ripgrep:
+    command: "/Users/williamwatson/mcp-ripgrep/venv/bin/mcp-ripgrep"
 
 # Inference endpoint readiness
 readiness:
