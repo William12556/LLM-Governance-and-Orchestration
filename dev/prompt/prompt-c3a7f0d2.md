@@ -7,7 +7,7 @@ prompt_info:
   id: "prompt-c3a7f0d2"
   task_type: "optimization"
   source_ref: "change-c3a7f0d2"
-  target_profile: "ael"
+  target_profile: "claude_code"
   date: "2026-07-15"
   iteration: 1
   coupled_docs:
