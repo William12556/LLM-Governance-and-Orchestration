@@ -8,7 +8,7 @@ issue_info:
   title: "F25 system-message mutation defeats oMLX prefix cache in run_phase"
   date: "2026-07-15"
   reporter: ""
-  status: "open"
+  status: "closed"
   severity: "medium"
   type: "performance"
   iteration: 1
@@ -90,6 +90,11 @@ version_history:
     author: ""
     changes:
       - "Initial issue"
+  - version: "1.1"
+    date: "2026-07-15"
+    author: ""
+    changes:
+      - "Closed: implemented and verified in orchestrator.py; triple moved to closed/"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

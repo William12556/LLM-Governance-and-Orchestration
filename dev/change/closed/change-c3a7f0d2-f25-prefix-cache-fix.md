@@ -8,7 +8,7 @@ change_info:
   title: "Preserve oMLX prefix cache: remove per-iteration system-message mutation in run_phase"
   date: "2026-07-15"
   author: ""
-  status: "proposed"
+  status: "verified"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -120,6 +120,11 @@ version_history:
     author: ""
     changes:
       - "Initial change proposal"
+  - version: "1.1"
+    date: "2026-07-15"
+    author: ""
+    changes:
+      - "Implemented and verified in orchestrator.py; triple moved to closed/"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

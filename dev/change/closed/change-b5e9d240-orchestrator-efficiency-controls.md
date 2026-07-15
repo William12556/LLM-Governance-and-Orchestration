@@ -8,7 +8,7 @@ change_info:
   title: "Add opt-in, config-gated controls: output-token cap, tool-result truncation, tactical_brief strictness"
   date: "2026-07-15"
   author: ""
-  status: "proposed"
+  status: "verified"
   priority: "low"
   iteration: 1
   coupled_docs:
@@ -152,6 +152,11 @@ version_history:
     author: ""
     changes:
       - "Initial change proposal"
+  - version: "1.1"
+    date: "2026-07-15"
+    author: ""
+    changes:
+      - "Implemented and verified in orchestrator.py and config.yaml; triple moved to closed/"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

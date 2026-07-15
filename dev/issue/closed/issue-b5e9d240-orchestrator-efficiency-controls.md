@@ -8,7 +8,7 @@ issue_info:
   title: "Orchestrator lacks opt-in controls for output-token cap, tool-result size, and tactical_brief strictness"
   date: "2026-07-15"
   reporter: ""
-  status: "open"
+  status: "closed"
   severity: "low"
   type: "performance"
   iteration: 1
@@ -82,6 +82,11 @@ version_history:
     author: ""
     changes:
       - "Initial issue"
+  - version: "1.1"
+    date: "2026-07-15"
+    author: ""
+    changes:
+      - "Closed: three controls implemented and verified in orchestrator.py and config.yaml; triple moved to closed/"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
