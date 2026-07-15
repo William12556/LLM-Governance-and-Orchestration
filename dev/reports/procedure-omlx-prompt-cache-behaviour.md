@@ -14,6 +14,7 @@ Created: 2026 July 15
 [6.0 Measurement](<#6.0 measurement>)
 [7.0 Interpretation and Decision Matrix](<#7.0 interpretation and decision matrix>)
 [8.0 Confounds and Precautions](<#8.0 confounds and precautions>)
+[9.0 Results](<#9.0 results>)
 [Version History](<#version history>)
 
 ---
@@ -74,7 +75,7 @@ Let `P` be a fixed, large prefix (target ~2,000–4,000 tokens) authored as a si
 6. Repeat steps 3–5 `K` times (K ≥ 10). Discard the first repetition of each condition (warm-up).
 7. Aggregate per condition: median and interquartile range of the dependent variable.
 
-A minimal client (direct `AsyncOpenAI` against `base_url`, `stream=True`, `time.monotonic()` around first-chunk arrival) is sufficient. `curl` with `--no-buffer` against `/v1/chat/completions` is an acceptable alternative for TTFT. The `omlx` MCP tools are not recommended here — their timing granularity is too coarse to isolate prefill.
+The `omlx` MCP tools (`omlx_chat`, `omlx_completion`) are sufficient to execute this procedure, because oMLX returns `usage.prompt_tokens_details.cached_tokens` — a direct, structural cache-hit signal that does not depend on timing precision (see §6.0). For a defensible *latency* figure the server-reported `total_time` is coarse, so a streaming client (direct `AsyncOpenAI` against `base_url`, `stream=True`, `time.monotonic()` around first-chunk arrival) is preferred; `curl` with `--no-buffer` against `/v1/chat/completions` is an acceptable alternative for TTFT.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -84,10 +85,11 @@ A minimal client (direct `AsyncOpenAI` against `base_url`, `stream=True`, `time.
 
 Priority order for the dependent variable:
 
-1. **Server-reported prompt-eval timing.** If oMLX logs or returns per-request prompt token count and prompt-eval duration (or prompt tokens/sec), use it — this isolates prefill from generation directly.
-2. **Client-side TTFT.** With `stream=true` and `max_tokens=1`, measure wall-clock time from request send to first streamed content chunk. TTFT is dominated by prefill when output is a single token.
+1. **`cached_tokens` (primary signal).** oMLX returns `usage.prompt_tokens_details.cached_tokens` in every completion response. This is a direct, deterministic measure of how much of the prompt prefix was reused from cache, independent of timing noise. A value near `prompt_tokens` indicates near-total prefix reuse; a value near zero indicates a cold or invalidated prefix. This signal alone establishes whether caching occurred and where divergence collapsed it.
+2. **Server-reported `total_time` (secondary).** oMLX returns `usage.total_time` (seconds). With `max_tokens = 1` it is dominated by prefill and serves as a coarse latency proxy. Resolution is ~0.01 s; treat as indicative, not a rigorous mean.
+3. **Client-side TTFT (optional, for rigorous latency).** With streaming and `max_tokens = 1`, measure wall-clock time to the first streamed chunk. Not available through the non-streaming MCP tools; requires a direct client.
 
-Record per request: condition, repetition index, prompt token count, prompt-eval time (if available), TTFT (ms).
+Record per request: condition, repetition index, `prompt_tokens`, `cached_tokens`, `total_time`.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -124,11 +126,64 @@ Decisions:
 
 ---
 
+## 9.0 Results
+
+### 9.1 Run metadata
+
+- Date: 2026-07-15. Executed via `omlx` MCP tools (`omlx_completion`, `omlx_chat`) against the running oMLX server.
+- Model: `mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit` (loaded, `is_default: true` at run time — diverges from the config.yaml Tactical default; caching is a server property, not a model property).
+- Parameters: `max_tokens = 1`, `temperature = 0`. Primary signal `cached_tokens`; secondary `total_time`.
+- Cache granularity observed: ~256-token blocks (cached values were 256 and 512).
+
+### 9.2 Completions endpoint
+
+Single-prompt analogue via `/v1/completions`.
+
+| Condition | prompt_tokens | cached_tokens | total_time (s) |
+|---|---|---|---|
+| Cold (unique prefix) | 276 | 0 | 2.56 |
+| Identical repeat | 276 | 256 | 0.84 |
+| S — stable prefix, volatile at tail | 294 | 256 | 1.04 |
+| M — volatile early (front) | 295 | 0 | 2.83 |
+
+### 9.3 Chat endpoint
+
+Real loop message structure via `/v1/chat/completions`: stable system (worker instructions) + user (task and accumulated context). F25 = status appended to the system message (the `messages[0]` mutation); Fix = status as a trailing message with a static system prefix. Payload is identical (554 tokens); only the *position* of the status text differs.
+
+| Condition | prompt_tokens | cached_tokens | total_time (s) |
+|---|---|---|---|
+| Cold | 539 | 0 | 4.39 |
+| Repeat (r1 / r2 / r3) | 539 | 512 | 0.87 / 0.83 / 0.83 |
+| F25 — status in system (r1 / r2 / r3) | 554 | 256 | 2.84 / 2.84 / 2.84 |
+| Fix — status trailing (r1 / r2 / r3) | 554 | 512 | 1.05 / 1.05 / 1.07 |
+
+### 9.4 Findings
+
+- **H0 rejected.** oMLX performs cross-request prefix KV caching. Identical repeats reuse the prefix (`cached_tokens` 256 / 512) and cut `total_time` 67–80% versus cold.
+- **Chat template is cache-stable.** Identical chat repeats reused 512 tokens, so the template injects no volatile per-request content that would defeat caching independently.
+- **F25 forfeits the cache for everything after `messages[0]`.** Mutating the system message moves the divergence point ahead of the user and accumulated-context region, dropping `cached_tokens` from 512 to 256 and roughly tripling `total_time` (0.83 s → 2.84 s).
+- **The fix recovers it.** Relocating the identical status text to a trailing message preserved 512 cached tokens and cut `total_time` to 1.05 s — a 63% reduction versus F25 on an identical payload, the position of the volatile text being the only difference.
+- The 554-token case understates the real cost: accumulated tool output grows across iterations, so the region F25 forces to recompute grows with iteration count.
+
+### 9.5 Decision
+
+Per §7.0 the outcome is **S << C and M ≈ C**: implement the F25 prefix fix — keep the system prefix static and relocate the iteration-status to a trailing message. Route as a source change through the T03 → T02 → T04 triple.
+
+### 9.6 Deviations from the drafted method
+
+- `cached_tokens` replaced TTFT as the primary signal (§6.0 revised). It is a stronger, timing-independent measure and made execution feasible through the non-streaming MCP tools.
+- N = 3 per chat condition rather than K ≥ 10. Variance was negligible (F25 pinned at 2.84 s; Fix 1.05–1.07 s), so medians are reported as indicative. A K ≥ 10 streaming run remains the route to a formal latency figure.
+
+[Return to Table of Contents](<#table of contents>)
+
+---
+
 ## Version History
 
 | Version | Date | Description |
 |---|---|---|
 | 0.1 | 2026-07-15 | Initial procedure |
+| 0.2 | 2026-07-15 | Added §9.0 Results (MCP-executed run: completions and chat endpoints); revised §5.0 and §6.0 to make `cached_tokens` the primary signal |
 
 ---
 
