@@ -1975,8 +1975,8 @@ async def main_async(args: argparse.Namespace) -> int:
                                     max_completion_tokens=max_completion_tokens,
                                     max_tool_result_chars=max_tool_result_chars)
         else:  # loop
-            worker_model   = args.worker_model   or model
-            reviewer_model = args.reviewer_model or model
+            worker_model   = args.worker_model   or omlx_cfg.get("worker_model")   or model
+            reviewer_model = args.reviewer_model or omlx_cfg.get("reviewer_model") or model
             rc = await run_loop(client, mcp, worker_model, reviewer_model,
                                 work_recipe, rev_recipe, task, max_iter, phase_max_iter,
                                 state_dir, log,
