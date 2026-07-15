@@ -35,6 +35,22 @@ loop:
   phase_duration_minutes: 30         # F28: soft cap on a single phase's wall-clock cost during audit-run refinement
   state_dir: "ai/state/ralph"
 
+# Execution controls (opt-in, default disabled)
+# These controls are independent and activate only when their config key is set.
+execution:
+  # max_completion_tokens: Cap output length by passing max_tokens to the completion call.
+  # When null (default), max_tokens is omitted and the model uses its default limit.
+  max_completion_tokens: null
+
+  # max_tool_result_chars: Truncate tool results exceeding this character count.
+  # Uses head/tail with an elision marker. When null (default), no truncation.
+  max_tool_result_chars: null
+
+  # strict_tactical_brief: When true and target_profile is 'ael', fail fast with a
+  # clear error if no valid tactical_brief is found instead of falling back to the
+  # raw document. When false (default), warn and use the raw document.
+  strict_tactical_brief: false
+
 # Context budget
 # context_window: null attempts a live query to the oMLX admin API, then falls
 # back to model_context_windows per-model overrides.
