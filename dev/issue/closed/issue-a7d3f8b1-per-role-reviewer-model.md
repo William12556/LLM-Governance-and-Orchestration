@@ -8,7 +8,7 @@ issue_info:
   title: "Orchestrator cannot set a persistent per-role reviewer or worker model from config"
   date: "2026-07-15"
   reporter: ""
-  status: "open"
+  status: "closed"
   severity: "low"
   type: "enhancement"
   iteration: 1
@@ -80,6 +80,11 @@ version_history:
     author: ""
     changes:
       - "Initial issue"
+  - version: "1.1"
+    date: "2026-07-15"
+    author: ""
+    changes:
+      - "Closed: config-driven per-role resolution and Magistral reviewer config implemented and verified in orchestrator.py and config.yaml; triple moved to closed/"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
