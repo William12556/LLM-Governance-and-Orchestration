@@ -85,7 +85,7 @@ Ordered by leverage and certainty. Source-code changes route through the T03 →
 |---|---|---|---|
 | 1 | F25 prefix fix (keep system message static) | Restores prefix-cache reuse; ~63% prefill reduction, growing with context | Scoped — triple `c3a7f0d2` (Option A) |
 | 2 | Truncate/deduplicate large tool results before append | Bounds monotonic in-phase context growth (3.5) | Recommended; not scoped |
-| 3 | Investigate tool-schema duplication | Removing the redundant `tools=` payload cuts a fixed per-call cost (3.6) | Investigate; measure tool-call fidelity before/after |
+| 3 | Tool-schema deduplication | Tested: without `tools=`, Devstral emits non-parseable prose, not the `[TOOL_CALLS]` protocol — `tools=` is load-bearing, not redundant | Rejected (2026-07-15) |
 | 4 | Set a `max_tokens` ceiling on completion calls | Bounds worst-case output latency (3.7) | Recommended; low risk |
 | 5 | Downsize the reviewer model | Review is verification, not synthesis (3.8) | Recommended |
 | 6 | Speculative decoding / prefill acceleration | Latency gains on prefill-heavy loops | Deferred — model incompatibility (3.10); needs a compatible draft model |
@@ -132,6 +132,7 @@ headroomlabs-ai, 2026. *Headroom* [online]. GitHub. Available at: https://github
 | Version | Date | Description |
 |---|---|---|
 | 0.1 | 2026-07-15 | Initial report |
+| 0.2 | 2026-07-15 | Item 3 (tool-schema dedup) investigated via omlx MCP and rejected — `tools=` is load-bearing; outcome recorded in section 5.0 |
 
 ---
 
