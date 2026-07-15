@@ -833,6 +833,9 @@ async def run_phase(
     tool_list = format_tool_signatures(tools)
     system_prompt = recipe.get("instructions", "").replace("{{TOOLS}}", tool_list)
 
+    # Static iteration budget note (replaces F25 per-iteration mutation for oMLX prefix cache compatibility)
+    system_prompt += f"\n\n[ITERATION BUDGET] This phase has a budget of {max_iterations} iteration(s)."
+
     # F24: for audit runs, inject the next unchecked item directly into the
     # work-phase task so the model doesn't have to re-derive it each iteration
     # by reading and parsing the full audit-index.md / audit-uml.md.
@@ -877,14 +880,6 @@ async def run_phase(
             console.print(f"\n[yellow][ael] phase wall-clock cap ({phase_duration_seconds/60:.0f} min) reached[/yellow]")
             log.warning("phase wall-clock cap (%.0fs) reached at iteration %d", phase_duration_seconds, iteration)
             return 0, ""
-
-        # F25: refresh system message with an iteration countdown each pass so
-        # the model can self-regulate pacing instead of being cut off abruptly.
-        _remaining = max_iterations - iteration + 1
-        _status = f"[ITERATION STATUS] {iteration}/{max_iterations} ({_remaining} remaining)"
-        if _remaining <= max(5, max_iterations // 5):
-            _status += " — budget running low; finish the current item and call work-complete soon."
-        messages[0]["content"] = system_prompt + "\n\n" + _status
 
         # Context budget check before API call
         if context_window is not None:
