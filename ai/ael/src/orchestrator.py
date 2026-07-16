@@ -885,13 +885,15 @@ async def run_phase(
     phase_duration_seconds: float | None = None,
     max_completion_tokens: int | None = None,
     max_tool_result_chars: int | None = None,
-) -> tuple[int, str]:
+) -> tuple[int, str, set[str]]:
     """
     Single phase (worker or reviewer): inject tools, send completions,
     dispatch tool calls, loop until no tool calls remain.
-    Returns (exit_code, final_message) where:
+    Returns (exit_code, final_message, read_paths) where:
       - exit_code: 0 on success, 1 on failure
       - final_message: the terminal assistant response text (empty on failure or tool exit)
+      - read_paths: set of abspath-normalized file paths read via read/read_file/read_text_file
+                    (populated for review phase; empty for worker phase)
     """
     is_worker_phase = "REVIEW" not in phase_label.upper()
     # F5: review phase gets read-only tool subset; worker gets full toolset
@@ -947,7 +949,7 @@ async def run_phase(
         if phase_duration_seconds is not None and (time.monotonic() - _phase_start) > phase_duration_seconds:
             console.print(f"\n[yellow][ael] phase wall-clock cap ({phase_duration_seconds/60:.0f} min) reached[/yellow]")
             log.warning("phase wall-clock cap (%.0fs) reached at iteration %d", phase_duration_seconds, iteration)
-            return 0, ""
+            return 0, "", set(_read_counts.keys()) if not is_worker_phase else set()
 
         # Context budget check before API call
         if context_window is not None:
@@ -961,7 +963,7 @@ async def run_phase(
                 console.print("[red]  budget exceeded — aborting phase[/red]")
                 log.error("context budget abort: %d / %d tokens (%.1f%%)",
                           estimated, context_window, fraction * 100)
-                return 1, ""
+                return 1, "", set()
             elif status == "warn":
                 console.print(_ctx_bar(estimated, context_window, status))
                 log.warning("context budget warn: %d / %d tokens (%.1f%%)",
@@ -979,7 +981,7 @@ async def run_phase(
             )
         except RuntimeError:
             # Persistent failure — RALPH-BLOCKED.md already written
-            return 1, ""
+            return 1, "", set()
 
         message = response.choices[0].message
         content = message.content or ""
@@ -1061,12 +1063,14 @@ async def run_phase(
                 write_state(state_dir, "RALPH-BLOCKED.md", blocked_msg)
                 log.error("BLOCKED: worker final response contains unparsed tool markers")
                 console.print("[red][ael] BLOCKED: worker final response malformed[/red]")
-                return 1, ""
+                return 1, "", set()
             console.print(Panel(escape(content), title="[green]response[/green]", border_style="green"))
             # F13: only worker phase writes work-summary.txt; review phase preserves it
             if is_worker_phase:
                 write_state(state_dir, "work-summary.txt", content)
-            return 0, content
+            # Return normalized read paths for review phase (empty for worker)
+            _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
+            return 0, content, _read_paths
 
         # Dispatch tool calls and inject results
         for tc in tool_calls:
@@ -1135,7 +1139,7 @@ async def run_phase(
                         f"[red][ael] BLOCKED: repeated identical failed call "
                         f"({_fail_n} attempts)[/red]"
                     )
-                    return 1, ""
+                    return 1, "", set()
 
             # Corrective guidance is embedded in the tool result content rather
             # than injected as a separate user message.  A standalone user message
@@ -1223,7 +1227,7 @@ async def run_phase(
                         f"[red][ael] BLOCKED: MCP error threshold "
                         f"({mcp_error_threshold}) reached[/red]"
                     )
-                    return 1, ""
+                    return 1, "", set()
             else:
                 mcp_error_count = 0
                 # P4: post-write Python syntax check
@@ -1259,11 +1263,13 @@ async def run_phase(
             log.info("work-complete.txt detected — phase complete")
             console.print()
             console.print("[green][ael] work-complete detected[/green]")
-            return 0, ""
+            _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
+            return 0, "", _read_paths
 
     console.print(f"\n[red][ael] max iterations ({max_iterations}) reached[/red]")
     log.warning("max iterations %d reached", max_iterations)
-    return 1, ""
+    _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
+    return 1, "", _read_paths
 
 
 def run_preflight_check(task: str, log: logging.Logger) -> str:
@@ -1529,6 +1535,42 @@ def _count_unchecked_audit_items(state_dir: str, log: logging.Logger) -> int:
     return count
 
 
+def _extract_deliverables(state_dir: str, log: logging.Logger) -> set[str]:
+    """
+    Extract file paths from work-summary.txt that exist on disk.
+
+    Returns a set of abspath-normalized paths. Used by the read-evidence SHIP
+    gate to validate that the reviewer inspected each deliverable.
+
+    Extraction regex matches path-like tokens (with extensions) in various
+    formats: bare paths, quoted paths, backtick-fenced paths.
+    """
+    summary_path = os.path.join(state_dir, "work-summary.txt")
+    if not os.path.exists(summary_path):
+        log.debug("_extract_deliverables: work-summary.txt absent")
+        return set()
+
+    summary_content = open(summary_path).read()
+
+    # Extract file paths: match patterns like path/to/file.ext, "path/to/file.ext"
+    # Similar pattern to _run_syntax_gate but for all file types, not just .py
+    path_pattern = r'["\'\`]?([\w./\-]+\.\w+)["\'\`]?'
+    candidates = re.findall(path_pattern, summary_content)
+
+    # Deduplicate, normalize, and filter to existing files
+    seen: set[str] = set()
+    deliverables: set[str] = set()
+    for p in candidates:
+        if p in seen:
+            continue
+        seen.add(p)
+        if os.path.exists(p):
+            deliverables.add(os.path.abspath(p))
+
+    log.debug("_extract_deliverables: %d files from work-summary.txt", len(deliverables))
+    return deliverables
+
+
 async def run_loop(
     client: AsyncOpenAI,
     mcp: MCPClient,
@@ -1614,18 +1656,18 @@ async def run_loop(
 
         # Work phase
         console.print("\n[bold blue]▶ WORK PHASE[/bold blue]")
-        rc, _ = await run_phase(client, mcp, worker_model, work_recipe,
-                                task, phase_max_iterations, state_dir, log,
-                                phase_label="WORKER",
-                                context_window=context_window,
-                                budget_warn_pct=budget_warn_pct,
-                                budget_abort_pct=budget_abort_pct,
-                                mcp_error_threshold=mcp_error_threshold,
-                                max_tool_calls_per_iter=max_tool_calls_per_iter,
-                                project_root=project_root,
-                                phase_duration_seconds=phase_duration_seconds,
-                                max_completion_tokens=max_completion_tokens,
-                                max_tool_result_chars=max_tool_result_chars)
+        rc, _, _ = await run_phase(client, mcp, worker_model, work_recipe,
+                                   task, phase_max_iterations, state_dir, log,
+                                   phase_label="WORKER",
+                                   context_window=context_window,
+                                   budget_warn_pct=budget_warn_pct,
+                                   budget_abort_pct=budget_abort_pct,
+                                   mcp_error_threshold=mcp_error_threshold,
+                                   max_tool_calls_per_iter=max_tool_calls_per_iter,
+                                   project_root=project_root,
+                                   phase_duration_seconds=phase_duration_seconds,
+                                   max_completion_tokens=max_completion_tokens,
+                                   max_tool_result_chars=max_tool_result_chars)
         log.info("work phase rc=%d", rc)
         if rc != 0:
             console.print("[red]✗ WORK PHASE FAILED[/red]")
@@ -1667,18 +1709,20 @@ async def run_loop(
         review_task = _review_header + f"Review the work in state directory '{state_dir}'."
         if _syntax_result:
             review_task = _syntax_result + "\n" + review_task
-        rc, reviewer_final_msg = await run_phase(client, mcp, reviewer_model, review_recipe,
-                                                  review_task, phase_max_iterations, state_dir, log,
-                                                  phase_label="REVIEWER",
-                                                  context_window=context_window,
-                                                  budget_warn_pct=budget_warn_pct,
-                                                  budget_abort_pct=budget_abort_pct,
-                                                  mcp_error_threshold=mcp_error_threshold,
-                                                  max_tool_calls_per_iter=max_tool_calls_per_iter,
-                                                  project_root=project_root,
-                                                  phase_duration_seconds=phase_duration_seconds,
-                                                  max_completion_tokens=max_completion_tokens,
-                                                  max_tool_result_chars=max_tool_result_chars)
+        rc, reviewer_final_msg, _reviewer_read_paths = await run_phase(
+            client, mcp, reviewer_model, review_recipe,
+            review_task, phase_max_iterations, state_dir, log,
+            phase_label="REVIEWER",
+            context_window=context_window,
+            budget_warn_pct=budget_warn_pct,
+            budget_abort_pct=budget_abort_pct,
+            mcp_error_threshold=mcp_error_threshold,
+            max_tool_calls_per_iter=max_tool_calls_per_iter,
+            project_root=project_root,
+            phase_duration_seconds=phase_duration_seconds,
+            max_completion_tokens=max_completion_tokens,
+            max_tool_result_chars=max_tool_result_chars,
+        )
         log.info("review phase rc=%d", rc)
         if rc != 0:
             console.print("[red]✗ REVIEW PHASE FAILED[/red]")
@@ -1738,13 +1782,41 @@ async def run_loop(
                         f"Proceed to audit the next unchecked item."
                     )
                 else:
-                    console.print(Panel(
-                        f"[bold]✓ SHIPPED[/bold] after {i} loop iteration(s)",
-                        border_style="green",
-                    ))
-                    log.info("SHIPPED iteration=%d", i)
-                    write_state(state_dir, ".ralph-complete", f"COMPLETE: iteration {i}")
-                    return 0
+                    # Read-evidence SHIP gate: non-audit (ralph) path only.
+                    # Verify reviewer read each deliverable before accepting SHIP.
+                    _read_gate_pass = True
+                    if _audit_original_count is None:
+                        _deliverables = _extract_deliverables(state_dir, log)
+                        if _deliverables:
+                            _unread = _deliverables - _reviewer_read_paths
+                            if _unread:
+                                _read_gate_pass = False
+                                log.warning(
+                                    "read-evidence SHIP gate: %d unread deliverable(s) — overriding SHIP",
+                                    len(_unread),
+                                )
+                                console.print(
+                                    f"[yellow][ael] read-evidence SHIP gate: {len(_unread)} unread deliverable(s) "
+                                    f"— overriding SHIP to REVISE[/yellow]"
+                                )
+                                _unread_list = "\n".join(f"  - {p}" for p in sorted(_unread))
+                                write_state(
+                                    state_dir, "review-feedback.txt",
+                                    f"Read-evidence gate failed: the following deliverable(s) were not read:\n"
+                                    f"{_unread_list}\n\n"
+                                    f"Read each file before issuing SHIP."
+                                )
+                        else:
+                            log.debug("read-evidence SHIP gate: no deliverables — gate is no-op")
+
+                    if _read_gate_pass:
+                        console.print(Panel(
+                            f"[bold]✓ SHIPPED[/bold] after {i} loop iteration(s)",
+                            border_style="green",
+                        ))
+                        log.info("SHIPPED iteration=%d", i)
+                        write_state(state_dir, ".ralph-complete", f"COMPLETE: iteration {i}")
+                        return 0
 
         feedback = read_state(state_dir, "review-feedback.txt")
         if feedback:
@@ -1939,16 +2011,16 @@ async def main_async(args: argparse.Namespace) -> int:
                 log.warning("clearing stale work-complete.txt from prior run")
                 console.print("[yellow][ael] clearing stale work-complete.txt from prior run[/yellow]")
                 os.remove(_stale)
-            rc, _ = await run_phase(client, mcp, model, work_recipe, task, phase_max_iter,
-                                    state_dir, log, phase_label="WORKER",
-                                    context_window=context_window,
-                                    budget_warn_pct=budget_warn,
-                                    budget_abort_pct=budget_abort,
-                                    mcp_error_threshold=mcp_error_thresh,
-                                    max_tool_calls_per_iter=max_tool_calls,
-                                    project_root=project_root,
-                                    max_completion_tokens=max_completion_tokens,
-                                    max_tool_result_chars=max_tool_result_chars)
+            rc, _, _ = await run_phase(client, mcp, model, work_recipe, task, phase_max_iter,
+                                       state_dir, log, phase_label="WORKER",
+                                       context_window=context_window,
+                                       budget_warn_pct=budget_warn,
+                                       budget_abort_pct=budget_abort,
+                                       mcp_error_threshold=mcp_error_thresh,
+                                       max_tool_calls_per_iter=max_tool_calls,
+                                       project_root=project_root,
+                                       max_completion_tokens=max_completion_tokens,
+                                       max_tool_result_chars=max_tool_result_chars)
         elif args.mode == "reviewer":
             # F11: Clear stale phase signals for single-phase reviewer mode
             _stale = os.path.join(state_dir, "work-complete.txt")
@@ -1964,16 +2036,16 @@ async def main_async(args: argparse.Namespace) -> int:
                 f"[END RUNTIME CONTEXT]\n\n"
                 f"Review the work in state directory '{state_dir}'."
             )
-            rc, _ = await run_phase(client, mcp, model, rev_recipe, _review_task, phase_max_iter,
-                                    state_dir, log, phase_label="REVIEWER",
-                                    context_window=context_window,
-                                    budget_warn_pct=budget_warn,
-                                    budget_abort_pct=budget_abort,
-                                    mcp_error_threshold=mcp_error_thresh,
-                                    max_tool_calls_per_iter=max_tool_calls,
-                                    project_root=project_root,
-                                    max_completion_tokens=max_completion_tokens,
-                                    max_tool_result_chars=max_tool_result_chars)
+            rc, _, _ = await run_phase(client, mcp, model, rev_recipe, _review_task, phase_max_iter,
+                                       state_dir, log, phase_label="REVIEWER",
+                                       context_window=context_window,
+                                       budget_warn_pct=budget_warn,
+                                       budget_abort_pct=budget_abort,
+                                       mcp_error_threshold=mcp_error_thresh,
+                                       max_tool_calls_per_iter=max_tool_calls,
+                                       project_root=project_root,
+                                       max_completion_tokens=max_completion_tokens,
+                                       max_tool_result_chars=max_tool_result_chars)
         else:  # loop
             worker_model   = args.worker_model   or omlx_cfg.get("worker_model")   or model
             reviewer_model = args.reviewer_model or omlx_cfg.get("reviewer_model") or model
