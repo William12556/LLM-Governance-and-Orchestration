@@ -45,7 +45,7 @@ This guide covers the steps from cloning the repository to running the first AEL
 | Node.js | 18+ (for Filesystem MCP server) |
 | Claude Desktop | Current release — Strategic Domain |
 | oMLX | Current release — Tactical Domain inference server |
-| MCP servers | `Filesystem` (`@j0hanz/filesystem-mcp`) and `mcp-grep` configured in Claude Desktop |
+| MCP servers | `Filesystem` (`@j0hanz/filesystem-mcp`) and `mcp-ripgrep` configured in Claude Desktop |
 
 Install oMLX and download Devstral before proceeding. See [setup-apple-silicon-mlx.md](setup-apple-silicon-mlx.md).
 
@@ -99,6 +99,7 @@ Three implementation profiles are available. For a full comparison see [guide-pr
 | Profile | Tactical Domain | Best for |
 |---|---|---|
 | `mlx_devstral_small_2_2512_6bit.md` | AEL + Devstral (local) | Automated loops on Apple Silicon |
+| `mlx_devstral_magistral_heterogeneous.md` | AEL + Devstral (worker) / Magistral (reviewer), local | Automated loops with a distinct reviewer model |
 | `claude.md` | Claude Code (Anthropic API) | Manual execution, no local GPU required |
 | `claude-omlx.md` | Claude Code CLI + Devstral (local) | Manual execution on Apple Silicon |
 
@@ -118,7 +119,8 @@ Open `ai/ael/config.yaml` and update:
 omlx:
   base_url: "http://127.0.0.1:8000/v1"
   api_key: "local"                          # match your oMLX API key
-  default_model: "<model-id>"               # model ID as reported by oMLX /v1/models
+  default_model: "<worker-model-id>"        # worker model ID as reported by oMLX /v1/models
+  reviewer_model: "<reviewer-model-id>"     # optional; falls back to default_model
 
 mcp_servers:
   filesystem:
@@ -130,14 +132,13 @@ mcp_servers:
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
 
-  mcp-grep:
-    command: "/path/to/mcp-grep-env/bin/python"
-    args:
-      - "-m"
-      - "mcp_grep.server"
+  mcp-ripgrep:
+    command: "/path/to/mcp-ripgrep/venv/bin/mcp-ripgrep"
 
 context:
-  models_dir: "/path/to/your/ai-models"    # directory containing downloaded MLX models
+  model_context_windows:                    # per-model overrides; used when the live oMLX query returns null
+    "<worker-model-id>": 262144
+    "<reviewer-model-id>": 131072
 ```
 
 To find the model ID, query oMLX with your configured API key:
@@ -146,15 +147,9 @@ To find the model ID, query oMLX with your configured API key:
 curl -s http://localhost:8000/v1/models -H "Authorization: Bearer local"
 ```
 
-### 5.2 Generate context budget
+### 5.2 Context budget report
 
-Run once after setup and after any model change:
-
-```bash
-python ai/ael/src/budget.py
-```
-
-This writes `ai/state/ralph/context-budget.md`. The Strategic Domain reads this file before authoring T04 prompts.
+`context-budget.md` is written automatically by the orchestrator at every startup — no separate step is required. Read `ai/state/ralph/context-budget.md` after the first run (and after any model change) before authoring T04 prompts.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -212,6 +207,7 @@ The Strategic Domain coordinates each step. Human approval gates are required be
 | 1.1 | 2026-06-14 | Updated budget output path to ai/state/ralph/context-budget.md |
 | 1.2 | 2026-06-16 | Updated §3.2: replaced skel/ copy workflow with bin/propagate.sh |
 | 1.3 | 2026-06-16 | Updated §4.0 profile filename reference: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
+| 1.4 | 2026-07-16 | §2.2 and §5.1: mcp-grep → mcp-ripgrep; §5.1: added reviewer_model and model_context_windows, removed retired models_dir. §5.2: removed standalone budget.py step (context-budget.md is now written automatically). §4.0: added heterogeneous profile |
 
 ---
 

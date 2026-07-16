@@ -35,7 +35,7 @@ The Strategic Domain performs all preparation steps before launching the AEL. Th
 
 ### 2.1 Generate the UML Map
 
-The Strategic Domain reads the target `src/` tree using the Filesystem MCP and mcp-grep, then produces a Mermaid class diagram covering modules, classes, and key functions. This is saved as `ai/state/ralph/audit-uml.md`.
+The Strategic Domain reads the target `src/` tree using the Filesystem MCP and mcp-ripgrep, then produces a Mermaid class diagram covering modules, classes, and key functions. This is saved as `ai/state/ralph/audit-uml.md`.
 
 The UML serves two purposes:
 - Orients the worker each iteration without requiring it to re-traverse the codebase
@@ -84,7 +84,7 @@ Format — one item per line, unchecked:
 - [ ] src/mcp_client.py :: MCPClient.connect
 - [ ] src/mcp_client.py :: MCPClient.call_tool
 - [ ] src/parser.py :: parse_tool_calls
-- [ ] src/budget.py :: resolve_context_window
+- [ ] src/orchestrator.py :: resolve_context_window
 ```
 
 Order items from most complex to least. Present the index to the human for review before proceeding.
@@ -262,6 +262,7 @@ mv ai/workspace/audit/audit-<uuid>-<name>.md ai/workspace/audit/closed/
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/audit → ai/workspace/audit, workspace/prompt → ai/workspace/prompt |
 | 1.2 | 2026-06-16 | Updated §7.5 cross-reference: P08 §1.9.7 → §1.9.8, following governance.md merge of duplicate Audit Closure sections |
 | 1.3 | 2026-06-28 | Noted automatic recipe selection on audit-index.md presence (§1.0); corrected §8.0 duration-limit row to `.ralph-timeout` / exit code 2 |
+| 1.4 | 2026-07-16 | §2.1: mcp-grep → mcp-ripgrep. §2.2: example checklist item src/budget.py → src/orchestrator.py (resolve_context_window moved into orchestrator.py; budget.py retired) |
 
 ---
 

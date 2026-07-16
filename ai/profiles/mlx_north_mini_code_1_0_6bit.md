@@ -114,8 +114,8 @@ Parser compatibility is **unverified** for this profile. Confirm that the orches
 
 | Avoid | Prefer |
 |---|---|
-| `You can use the grep tool to search` | `Use the mcp-grep__grep tool to search` |
-| `Search for X in the directory` | `Call mcp-grep__grep with pattern X and path Y` |
+| `You can use the grep tool to search` | `Use the mcp-ripgrep__search tool to search` |
+| `Search for X in the directory` | `Call mcp-ripgrep__search with pattern X and path Y` |
 
 Name tools explicitly in recipe prompts.
 
@@ -198,6 +198,7 @@ This profile is provisional pending evaluation. Open items:
 |---|---|---|
 | 0.1 | 2026-06-26 | Initial draft; provisional profile for North Mini Code 1.0 6bit under evaluation as Tactical Domain. Facts verified against oMLX admin endpoint and on-disk model config |
 | 0.2 | 2026-06-26 | Added Apache 2.0 licence, 30B/3B parameter figures, official CohereLabs card reference; corrected context 500K → 256K per Cohere specification |
+| 0.3 | 2026-07-16 | Tool-guidance example: mcp-grep__grep → mcp-ripgrep__search |
 
 ---
 

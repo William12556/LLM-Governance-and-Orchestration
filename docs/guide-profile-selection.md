@@ -77,7 +77,7 @@ The primary profile. The orchestrator (`orchestrator.py`) runs a worker/reviewer
 | Inference server | oMLX running on `http://127.0.0.1:8000` |
 | Model | Devstral Small 2 (2512) — download via HuggingFace |
 | Python deps | `pip install -r ai/ael/requirements.txt` |
-| MCP servers | Filesystem and mcp-grep configured in Claude Desktop |
+| MCP servers | Filesystem and mcp-ripgrep configured in Claude Desktop |
 
 **Setup:** See [setup-apple-silicon-mlx.md](setup-apple-silicon-mlx.md) for oMLX and model installation.
 
@@ -108,7 +108,7 @@ Manual profile using Claude Code as the Tactical Domain. The Strategic Domain au
 | Hardware | Any — no GPU required |
 | Anthropic API | Valid API key configured |
 | Claude Code | `npm install -g @anthropic-ai/claude-code` |
-| MCP servers | Filesystem and mcp-grep configured in Claude Desktop |
+| MCP servers | Filesystem and mcp-ripgrep configured in Claude Desktop |
 
 **Tactical context file:** `CLAUDE.md` (at project root)
 
@@ -134,7 +134,7 @@ Manual profile using the Claude Code CLI pointed at a local oMLX endpoint. Combi
 | Inference server | oMLX running on `http://127.0.0.1:8000` |
 | Model | Devstral Small 2 (2512) |
 | Claude Code | `npm install -g @anthropic-ai/claude-code` |
-| MCP servers | Filesystem and mcp-grep configured in Claude Desktop |
+| MCP servers | Filesystem and mcp-ripgrep configured in Claude Desktop |
 
 **Tactical context file:** `CLAUDE.md` (at project root)
 
@@ -169,6 +169,7 @@ The AEL profile is the only profile that supports the automated audit loop (`aud
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Relocated paths under ai/: state → ai/state/ralph/, workspace/ → ai/workspace/ |
 | 1.2 | 2026-06-16 | Updated profile filename references: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
+| 1.3 | 2026-07-16 | mcp-grep → mcp-ripgrep in §3.1, §3.2, §3.3 prerequisites tables |
 
 ---
 
