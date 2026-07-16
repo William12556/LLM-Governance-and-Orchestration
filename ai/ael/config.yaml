@@ -64,4 +64,4 @@ context:
   model_context_windows:
     "North-Mini-Code-1.0-6bit": 262144
     "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit": 262144   # vendor-validated; overrides unvalidated live 393216 RoPE ceiling
-    "Magistral-Small-2509-MLX-6bit": 131072
+    "Magistral-Small-2509-MLX-6bit": 40960   # vendor-recommended effective window; overrides 131072 native max (accuracy degrades past 40k)
