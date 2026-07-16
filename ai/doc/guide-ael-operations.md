@@ -44,7 +44,7 @@ State files reside in `ai/state/ralph/` (configured via `loop.state_dir` in `con
 | `review-feedback.txt` | Reviewer | Specific feedback for next worker iteration |
 | `.ralph-complete` | Orchestrator | Completion marker (see §5.0 for content variants) |
 | `RALPH-BLOCKED.md` | Worker | Unrecoverable failure details; seeds T03 issue |
-| `context-budget.md` | `budget.py` | Context window sizing report for Strategic Domain |
+| `context-budget.md` | Orchestrator | Context window sizing report for Strategic Domain |
 | `ael_<timestamp>.LOG` | Orchestrator | Full debug log; preserved across reset |
 
 ### 2.2 Audit Loop additions
@@ -85,9 +85,8 @@ mcp_servers:
       - "<allowed-root-path>"
     env:
       PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
-  mcp-grep:
-    command: "<path-to-python>"
-    args: ["-m", "mcp_grep.server"]
+  mcp-ripgrep:
+    command: "<path-to-mcp-ripgrep>"
 
 # Endpoint readiness polling
 readiness:
@@ -190,13 +189,7 @@ The `AEL end rc=N` line is always written to the `.LOG` file on any clean exit. 
 
 ### 6.1 Initial setup
 
-Run `budget.py` once after configuring `config.yaml` and after any model change:
-
-```bash
-python ai/ael/src/budget.py
-```
-
-This writes `ai/state/ralph/context-budget.md`. Read this file before authoring any AEL-targeted T04 prompt (P09 §1.10.2).
+`context-budget.md` is written automatically by the orchestrator at every startup (`write_context_report()`, run before the first phase). No separate invocation is required; a standalone `budget.py` script previously performed this role and has been retired (change-d42e64a9). Read `ai/state/ralph/context-budget.md` after the first run following any config or model change, before authoring any AEL-targeted T04 prompt (P09 §1.10.2).
 
 ### 6.2 Budget thresholds
 
@@ -280,7 +273,7 @@ The orchestrator selects recipes from `ai/ael/recipes/` relative to `orchestrato
 
 **Cause:** Accumulated message history exceeded `budget_abort_pct` of the context window.
 
-**Remediation:** Reduce `tactical_brief` size. Run `--mode reset`. Re-run `budget.py` to refresh the report.
+**Remediation:** Reduce `tactical_brief` size. Run `--mode reset`. The next run refreshes `context-budget.md` automatically.
 
 ### 8.5 oMLX model not loading
 
@@ -315,6 +308,7 @@ curl -s http://localhost:8000/v1/models -H "Authorization: Bearer local"
 | 1.1 | 2026-06-14 | Relocated state to ai/state/ralph/ (config.yaml example, prose); workspace/ → ai/workspace/ |
 | 1.2 | 2026-07-02 | Rescoped §6.1 and §6.3 to AEL-targeted T04 prompts only; reconciled tactical_brief size guidance with orchestrator.py hard ceiling (issue-713437bc) |
 | 1.3 | 2026-07-16 | §3.0 config example: added reviewer_model, execution.* opt-in controls, model_context_windows; removed retired models_dir; corrected context_window comment. §6.5: corrected Devstral window to the 262144 vendor value and the tiered resolver; added the Magistral reviewer window (b5e9d240, a7d3f8b1) |
+| 1.4 | 2026-07-16 | §2.1: context-budget.md writer corrected budget.py → Orchestrator. §3.0: mcp-grep example → mcp-ripgrep. §6.1 and §8.4: removed retired standalone budget.py invocation; context-budget.md is written automatically at orchestrator startup |
 
 ---
 

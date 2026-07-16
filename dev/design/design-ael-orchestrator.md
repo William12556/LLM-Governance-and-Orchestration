@@ -94,7 +94,7 @@ graph TD
     OMLXADMIN["oMLX admin API<br/>(live context window query)"]
     LLM["oMLX /v1<br/>(AsyncOpenAI client)"]
     MCPC["MCPClient"]
-    MCPS["MCP servers<br/>(stdio, e.g. filesystem, mcp-grep)"]
+    MCPS["MCP servers<br/>(stdio, e.g. filesystem, mcp-ripgrep)"]
     RECIPE["Recipe YAML<br/>ralph-work / ralph-review /<br/>audit-work / audit-review"]
     RUNLOOP["run_loop()"]
     RUNPHASE["run_phase()"]
@@ -671,6 +671,7 @@ Carried from `ael-requirements.md` §Open Issues, annotated against current desi
 |---|---|---|
 | 0.1 | 2026-07-09 | Initial design document reverse-engineered from ael-requirements.md v1.1 and ai/ael/src/orchestrator.py (plus mcp_client.py, parser.py); no prior design existed for this component |
 | 0.2 | 2026-07-16 | Updated for c3a7f0d2 (removed §6.2 per-iteration system-prompt countdown), b5e9d240 (added execution.* opt-in controls to §4.2 and §5.3), a7d3f8b1 (default_model → Devstral 8bit; added omlx.worker_model/reviewer_model to §4.2 and §8.1). §11.0 element-registry signatures pending re-sync from source |
+| 0.3 | 2026-07-16 | §3.1 component diagram: corrected mcp-grep → mcp-ripgrep |
 
 ---
 
