@@ -48,7 +48,7 @@ For configuration, invocation, audit loop, govwatch, and ael-mcp detail, see [do
 | Python | 3.11+ |
 | Git | Any recent version |
 | Strategic Domain | Claude Desktop (or equivalent frontier LLM with MCP support) |
-| MCP servers | `Filesystem` and `mcp-grep` configured in the Strategic Domain tool |
+| MCP servers | `Filesystem` and `mcp-ripgrep` configured in the Strategic Domain tool |
 | `govwatch` | `pip install -r ai/src/requirements-govwatch.txt` — required for governance monitoring TUI |
 | Python MCP SDK | `pip install -r ai/ael/requirements.txt` — required for AEL orchestrator |
 | `ael-mcp` | Optional — Claude Desktop AEL interface; clone from `https://github.com/William12556/ael-mcp`; requires `mcp` Python package |
@@ -60,10 +60,10 @@ Required for the MLX inference backend (Tactical Domain on Apple Silicon).
 | Item           | Requirement                                                |
 | -------------- | ---------------------------------------------------------- |
 | Chip           | Apple M-series (M1 or later)                               |
-| Unified memory | 24 GB minimum (6bit); 48 GB+ for BF16                     |
+| Unified memory | 24 GB minimum (6bit worker only); 48 GB+ recommended for 8bit or heterogeneous worker+reviewer setups |
 | `mlx_lm`       | 0.21+ — required dependency of oMLX (`pip install mlx_lm`) |
 | `omlx`         | Required inference server (`pip install omlx`)             |
-| Model          | Devstral Small 2 (2512) 6bit                               |
+| Model          | Devstral Small 2 (2512) — 6bit or 8bit; optional Magistral Small 2509 6bit as a heterogeneous reviewer |
 
 Full setup instructions: [Apple Silicon + MLX Setup Guide](docs/setup-apple-silicon-mlx.md)
 
@@ -109,7 +109,7 @@ bin/release.sh <version>
 
 ### Prerequisites
 
-- MCP servers: Filesystem and mcp-grep configured in your Strategic Domain tool
+- MCP servers: Filesystem and mcp-ripgrep configured in your Strategic Domain tool
 - Git and GitHub Desktop (or equivalent)
 - Tooling per selected implementation profile (see `ai/profiles/`)
 
@@ -126,6 +126,7 @@ bin/release.sh <version>
 | ----------- | ---------------------- | ------------------ |
 | `claude.md` | Claude Code (optional) | Manual — human invokes per task |
 | `mlx_devstral_small_2_2512_6bit.md` | MLX + Devstral Small 2 2512 (primary) | AEL / Ralph Loop |
+| `mlx_devstral_magistral_heterogeneous.md` | MLX + Devstral (worker) / Magistral (reviewer) | AEL / Ralph Loop |
 
 ## Important Notice
 
@@ -172,6 +173,7 @@ HUNTLEY, G., 2026. *Everything is a ralph loop* [online]. Available from: https:
 | 3.4 | 2026-06-16 | Updated Implementation Profiles table: mlx_devstral_small_2_2512_Q8.md → mlx_devstral_small_2_2512_6bit.md |
 | 3.5 | 2026-06-18 | Added Installation section (user and developer paths); updated Getting Started; updated Repository Structure with bootstrap.sh, release.sh, guide-install.md |
 | 3.6 | 2026-06-18 | Condensed Orchestration section (detail moved to docs/guide-orchestration.md); removed Repository Structure section; removed Devstral rationale paragraph |
+| 3.7 | 2026-07-16 | mcp-grep → mcp-ripgrep (Requirements, Getting Started); Requirements Model row now notes 6bit/8bit and the optional Magistral reviewer; added heterogeneous profile to Implementation Profiles table |
 
 ---
 
