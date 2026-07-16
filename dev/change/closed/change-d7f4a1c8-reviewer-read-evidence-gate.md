@@ -6,7 +6,7 @@ change_info:
   title: "Reviewer read-evidence gate: require deliverable reads before SHIP"
   date: "2026-07-16"
   author: "William Watson"
-  status: "proposed"
+  status: "verified"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -102,6 +102,21 @@ implementation:
       owner: "Claude Code"
   rollback_procedure: "git revert orchestrator.py to prior version"
 
+verification:
+  implemented_date: "2026-07-16"
+  implemented_by: "Claude Code"
+  verification_date: "2026-07-16"
+  verified_by: "Claude Desktop (P08 strategic audit)"
+  test_results: >
+    All six T04 success criteria verified against source by inline review:
+    unread-deliverable REVISE override with feedback naming the file(s);
+    all-read SHIP; empty-deliverable-set no-op; abspath normalisation
+    preventing relative/absolute false-REVISE; audit gates unmodified;
+    no syntax errors (py_compile). One minor non-blocking inconsistency
+    (F28 phase-wall-clock-cap return path not abspath-normalized) logged
+    to dev/todo.md as a follow-up rather than reopening this cycle.
+  issues_found: []
+
 notes: >
   Execution path: Claude Code (manual single pass; human review gate per
   ai/profiles/claude.md 5.0). Tier 1 only. Exact surfacing mechanism left to
@@ -112,6 +127,10 @@ version_history:
     date: "2026-07-16"
     changes:
       - "Initial change document"
+  - version: "1.1"
+    date: "2026-07-16"
+    changes:
+      - "Implemented and verified against source (P08 strategic audit); change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
