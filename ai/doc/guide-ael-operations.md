@@ -72,7 +72,8 @@ Full configuration file with all fields:
 omlx:
   base_url: "http://127.0.0.1:8000/v1"  # oMLX API base URL
   api_key: "local"                        # oMLX bearer token
-  default_model: "<model-id>"            # model ID as reported by /v1/models
+  default_model: "<worker-model-id>"     # worker/base model ID as reported by /v1/models
+  reviewer_model: "<reviewer-model-id>"  # optional; reviewer-phase model (falls back to default_model)
 
 # MCP server definitions
 mcp_servers:
@@ -102,12 +103,20 @@ loop:
   preflight_check: false    # evaluate success criteria before first worker pass
   state_dir: "ai/state/ralph"   # state directory path (relative to project root)
 
+# Execution controls (opt-in, default disabled)
+execution:
+  max_completion_tokens: null   # cap output tokens when set; null = model default
+  max_tool_result_chars: null   # head/tail-truncate large tool results when set; null = none
+  strict_tactical_brief: false  # true + ael profile: fail fast on missing tactical_brief
+
 # Context budget
 context:
-  models_dir: "<path-to-model-storage>"  # local directory containing MLX models
-  context_window: null    # null = read from model config.json; or set explicit int
+  context_window: null    # null = try live oMLX query, then per-model override below
   budget_warn_pct: 0.80   # warn at this fraction of context window
   budget_abort_pct: 0.95  # abort phase at this fraction
+  model_context_windows:  # tier-3 per-model overrides (used when the live query returns null)
+    "<worker-model-id>": 262144
+    "<reviewer-model-id>": 131072
 ```
 
 **Key distinctions:**
@@ -216,7 +225,7 @@ Remediation: reduce brief size, run `--mode reset`, retry.
 
 ### 6.5 Devstral context window
 
-Devstral Small 2 (2512) reports `max_context_window: 393216` tokens via oMLX `/v1/models/status`. The orchestrator reads this from the model's `config.json` on disk when `context.models_dir` is set. For audit runs with per-iteration bounded context, this window is rarely a practical constraint.
+Devstral Small 2 (2512) reports `max_context_window: 393216` via oMLX, but that figure is an unvalidated RoPE-scaling ceiling; the vendor-validated value is 262144. The orchestrator resolves the window through the four-tier chain (live oMLX query, then the per-model `context.model_context_windows` override) — `models_dir` and on-disk `config.json` reading were retired (change-d42e64a9). This project forces 262144 for the Devstral worker and 131072 for the Magistral reviewer via `model_context_windows`. Magistral does not expose a live `max_context_window`, so its override is required. For audit runs with per-iteration bounded context, this window is rarely a practical constraint.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -305,6 +314,7 @@ curl -s http://localhost:8000/v1/models -H "Authorization: Bearer local"
 | 1.0 | 2026-06-02 | Initial document |
 | 1.1 | 2026-06-14 | Relocated state to ai/state/ralph/ (config.yaml example, prose); workspace/ → ai/workspace/ |
 | 1.2 | 2026-07-02 | Rescoped §6.1 and §6.3 to AEL-targeted T04 prompts only; reconciled tactical_brief size guidance with orchestrator.py hard ceiling (issue-713437bc) |
+| 1.3 | 2026-07-16 | §3.0 config example: added reviewer_model, execution.* opt-in controls, model_context_windows; removed retired models_dir; corrected context_window comment. §6.5: corrected Devstral window to the 262144 vendor value and the tiered resolver; added the Magistral reviewer window (b5e9d240, a7d3f8b1) |
 
 ---
 

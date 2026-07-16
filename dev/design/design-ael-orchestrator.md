@@ -182,7 +182,9 @@ Derived from `ai/ael/config.yaml`. CLI flags override where noted (§8.1).
 |---|---|---|---|
 | `omlx.base_url` | str | `http://127.0.0.1:8000/v1` | oMLX OpenAI-compatible endpoint |
 | `omlx.api_key` | str | `"local"` | Passed to `AsyncOpenAI` (unused by oMLX) |
-| `omlx.default_model` | str | `North-Mini-Code-1.0-6bit` | Model id; overridden by `--model` |
+| `omlx.default_model` | str | `mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit` | Base model id (worker default); overridden by `--model` |
+| `omlx.worker_model` | str \| null | — (unset) | Optional worker-phase model; resolution `--worker-model` > this > `default_model` |
+| `omlx.reviewer_model` | str \| null | `Magistral-Small-2509-MLX-6bit` | Optional reviewer-phase model; resolution `--reviewer-model` > this > `default_model` |
 | `mcp_servers.<name>.command` / `.args` / `.env` | dict | — | Per-server stdio launch spec; `{PROJECT_ROOT}` placeholder substituted at runtime |
 | `readiness.timeout_seconds` | float | 60 | `await_model_ready` deadline |
 | `readiness.poll_interval_seconds` | float | 2 | `await_model_ready` poll interval |
@@ -193,6 +195,9 @@ Derived from `ai/ael/config.yaml`. CLI flags override where noted (§8.1).
 | `loop.preflight_check` | bool | false | Enable `run_preflight_check` before first worker iteration |
 | `loop.phase_duration_minutes` | float \| null | 30 | Soft wall-clock cap per phase (F28) |
 | `loop.state_dir` | str | `ai/state/ralph` | State directory, resolved to absolute path |
+| `execution.max_completion_tokens` | int \| null | null | Opt-in output cap; passed as `max_tokens` when set (b5e9d240) |
+| `execution.max_tool_result_chars` | int \| null | null | Opt-in head/tail truncation of tool results when set (b5e9d240) |
+| `execution.strict_tactical_brief` | bool | false | When true + `ael` profile, fail fast on a missing brief instead of raw-document fallback (b5e9d240) |
 | `context.context_window` | int \| null | null | Tier 1 explicit override (§7.0) |
 | `context.budget_warn_pct` | float | 0.80 | Warn threshold fraction |
 | `context.budget_abort_pct` | float | 0.95 | Abort threshold fraction |
@@ -258,6 +263,10 @@ boundary condition fires. Key behaviours:
   cap on the next loop iteration rather than aborting the run.
 - Audit runs: next unchecked `audit-index.md` item is prepended to the worker
   task each iteration.
+- Opt-in execution controls (§4.2, default off): `execution.max_completion_tokens`
+  caps output; `execution.max_tool_result_chars` head/tail-truncates large tool
+  results before append; `execution.strict_tactical_brief` fails fast on a missing
+  `ael` brief.
 
 ### 5.4 Ralph Loop Controller
 
@@ -383,7 +392,7 @@ stateDiagram-v2
 ### 6.2 Phase Iteration Flow
 
 Within a single `run_phase()` call, each of up to `phase_max_iterations` inner
-iterations: refresh system prompt with iteration countdown → context budget
+iterations: context budget
 check → completion call (bounded retry, §9.0) → parse tool calls (OpenAI
 structured, else Mistral/Cohere text) → truncate to `max_tool_calls_per_iteration`
 → dispatch each call through the validation guards (§5.7) → append results →
@@ -423,8 +432,8 @@ AEL startup rather than by a separate script.
 | `--mode` | `loop` | `worker` \| `reviewer` \| `loop` \| `reset` |
 | `--task` | — | Task string, or path to a task file |
 | `--model` | `omlx.default_model` | Model for all phases |
-| `--worker-model` | `--model` value | Loop mode: worker-phase model override |
-| `--reviewer-model` | `--model` value | Loop mode: reviewer-phase model override |
+| `--worker-model` | `omlx.worker_model`, else `--model`/`default_model` | Loop mode: worker-phase model override |
+| `--reviewer-model` | `omlx.reviewer_model`, else `--model`/`default_model` | Loop mode: reviewer-phase model override |
 | `--max-iterations` | `loop.max_iterations` | Outer iteration limit override |
 | `--duration` | none (no limit) | Wall-clock time limit in hours |
 
@@ -661,6 +670,7 @@ Carried from `ael-requirements.md` §Open Issues, annotated against current desi
 | Version | Date | Description |
 |---|---|---|
 | 0.1 | 2026-07-09 | Initial design document reverse-engineered from ael-requirements.md v1.1 and ai/ael/src/orchestrator.py (plus mcp_client.py, parser.py); no prior design existed for this component |
+| 0.2 | 2026-07-16 | Updated for c3a7f0d2 (removed §6.2 per-iteration system-prompt countdown), b5e9d240 (added execution.* opt-in controls to §4.2 and §5.3), a7d3f8b1 (default_model → Devstral 8bit; added omlx.worker_model/reviewer_model to §4.2 and §8.1). §11.0 element-registry signatures pending re-sync from source |
 
 ---
 
