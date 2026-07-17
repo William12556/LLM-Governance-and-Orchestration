@@ -1,0 +1,144 @@
+Created: 2026 July 17
+
+```yaml
+issue_info:
+  id: "issue-5bdc2d9b"
+  title: "AEL orchestrator SHIP gate does not verify pytest results for modified/added tests"
+  date: "2026-07-17"
+  reporter: "William Watson"
+  status: "open"
+  severity: "medium"
+  type: "enhancement"
+  iteration: 1
+  coupled_docs:
+    change_ref: ""
+    change_iteration: null
+
+source:
+  origin: "code_review"
+  test_ref: ""
+  description: >
+    Review of T04 prompt-authoring instructions and the AEL orchestrator's
+    existing SHIP-gate family (read-evidence gate, audit coverage/scope gate)
+    found no gate that executes pytest and inspects the result before accepting
+    a reviewer's SHIP verdict in the non-audit (ralph) loop. T04 v1.11 now
+    instructs deliverable.format_requirements to request pytest execution, and
+    governance P06 §1.7.15 now mandates a Claude-Code-side PostToolUse pytest
+    hook (ai/skills/validation/run-tests.md), but neither mechanism is
+    orchestrator-enforced: a reviewer can still emit SHIP without pytest having
+    been run, or after a failing run, for AEL-executed tasks (target_profile:
+    ael), since the tactical_brief path used for AEL does not carry
+    deliverable.format_requirements.
+
+affected_scope:
+  components:
+    - name: "orchestrator (run_phase, run_loop)"
+      file_path: "ai/ael/src/orchestrator.py"
+  designs: []
+  version: "current"
+
+reproduction:
+  prerequisites: "Ralph Loop (--mode loop, ael target profile), reviewer that emits SHIP without running or despite a failing pytest suite."
+  steps:
+    - "T04 prompt with target_profile: ael and coupled test files under tests/ is issued to AEL"
+    - "Worker completes; work-summary.txt lists deliverable files including modified tests/ paths"
+    - "Reviewer final message begins with SHIP without having run pytest, or despite pytest failing"
+    - "run_loop accepts SHIP; no gate cross-checks test execution or result"
+  frequency: "always"
+  reproducibility_conditions: "Applies to every ael-profile task touching tests/; independent of reviewer model."
+  preconditions: ""
+  test_data: ""
+  error_output: ""
+
+behavior:
+  expected: >
+    SHIP is accepted for tasks touching tests/ only when pytest has been run
+    against the affected test paths and exits 0. A SHIP issued without a
+    passing run is overridden to REVISE, mirroring the existing read-evidence
+    and audit coverage gates.
+  actual: >
+    SHIP acceptance depends only on the reviewer's final-message token
+    (_normalize_verdict); pytest execution and result are not checked.
+  impact: "AEL-shipped code with modified/added tests/ can ship without the test suite having actually passed."
+  workaround: "Manual post-SHIP pytest run by Strategic Domain before T06 acceptance."
+
+environment:
+  python_version: ""
+  os: ""
+  dependencies: []
+  domain: ""
+
+analysis:
+  root_cause: >
+    No SHIP-gate function inspects test execution state; existing gates
+    (read-evidence, audit coverage/scope) check reviewer read behaviour and
+    checklist state, not command execution results.
+  technical_notes: >
+    Precedent: the read-evidence SHIP gate (issue-d7f4a1c8/change-d7f4a1c8)
+    established the pattern — deterministic, orchestrator-side gate that
+    overrides SHIP to REVISE with feedback naming the deficiency. A pytest
+    SHIP gate would follow the same shape: on SHIP verdict, if the deliverable
+    set (from work-summary.txt) includes any path under tests/ or src/,
+    require evidence that pytest was executed and passed (e.g. exit-code
+    capture from a tool call, or a required worker-reported test-result
+    block) before accepting; otherwise override to REVISE naming the missing
+    or failing evidence. Exact evidence-capture mechanism (parse worker tool
+    calls vs. require a structured result field) is a design decision for the
+    T02 change document.
+  related_issues:
+    - issue_ref: "issue-d7f4a1c8"
+      relationship: "related"
+
+resolution:
+  assigned_to: ""
+  target_date: ""
+  approach: ""
+  change_ref: ""
+  resolved_date: ""
+  resolved_by: ""
+  fix_description: ""
+
+verification:
+  verified_date: ""
+  verified_by: ""
+  test_results: ""
+  closure_notes: ""
+
+prevention:
+  preventive_measures: ""
+  process_improvements: ""
+
+verification_enhanced:
+  verification_steps: []
+  verification_results: ""
+
+traceability:
+  design_refs: []
+  change_refs: []
+  test_refs: []
+
+notes: >
+  Companion to T04 v1.11 (deliverable.format_requirements pytest instruction)
+  and governance 9.12 (P06 §1.7.15 mandatory PostToolUse pytest hook,
+  ai/skills/validation/run-tests.md). Those two changes address claude_code
+  and claude_omlx target profiles; this issue addresses the remaining ael
+  target profile gap via orchestrator-side enforcement.
+
+loop_context:
+  was_loop_execution: false
+  blocked_at_iteration: 0
+  failure_mode: ""
+  last_review_feedback: ""
+
+version_history:
+  - version: "1.0"
+    date: "2026-07-17"
+    author: "William Watson"
+    changes:
+      - "Initial issue"
+
+metadata:
+  copyright: "Copyright (c) 2026 William Watson. MIT License."
+  template_version: "1.3"
+  schema_type: "t03_issue"
+```

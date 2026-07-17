@@ -1,7 +1,7 @@
 # Todo
 
 ## Active
-- [ ]
+- [ ] issue-5bdc2d9b — orchestrator pytest SHIP gate (ael target profile); awaiting T02 change
 
 ## Planned
 - [ ] Validate REVISE→fix→SHIP convergence path at runtime
