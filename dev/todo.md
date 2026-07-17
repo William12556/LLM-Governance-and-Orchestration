@@ -1,7 +1,7 @@
 # Todo
 
 ## Active
-- [ ] issue-5bdc2d9b / change-5bdc2d9b — orchestrator pytest SHIP gate (ael target profile); change proposed, awaiting approval + T04
+- [ ] prompt-5bdc2d9b — orchestrator pytest SHIP gate (ael target profile); T04 ready, awaiting Claude Code execution (target_profile: claude_code)
 
 ## Planned
 - [ ] Validate REVISE→fix→SHIP convergence path at runtime
