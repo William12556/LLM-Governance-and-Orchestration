@@ -6,13 +6,13 @@ issue_info:
   title: "AEL orchestrator SHIP gate does not verify pytest results for modified/added tests"
   date: "2026-07-17"
   reporter: "William Watson"
-  status: "open"
+  status: "investigating"
   severity: "medium"
   type: "enhancement"
   iteration: 1
   coupled_docs:
-    change_ref: ""
-    change_iteration: null
+    change_ref: "change-5bdc2d9b"
+    change_iteration: 1
 
 source:
   origin: "code_review"
@@ -136,6 +136,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue"
+  - version: "1.1"
+    date: "2026-07-17"
+    author: "William Watson"
+    changes:
+      - "Coupled to change-5bdc2d9b (proposed); status open → investigating"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
