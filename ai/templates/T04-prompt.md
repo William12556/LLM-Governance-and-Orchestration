@@ -15,7 +15,7 @@ Created: 2025-12-12
 ## Template
 
 ```yaml
-# T04 Prompt Template v1.10 - YAML Format
+# T04 Prompt Template v1.11 - YAML Format
 # Optimized for Strategic Domain → Tactical Domain filesystem communication
 # Designed for minimal token usage while maintaining completeness
 
@@ -113,6 +113,7 @@ testing:
 deliverable:
   format_requirements:
     - "Save generated code directly to specified paths"
+    - "Execute pytest suite for affected test paths on completion; report pass/fail summary"
   files:
     - path: "src/<component>/<file>.py"
       content: ""
@@ -158,7 +159,7 @@ notes: ""
 ## Schema
 
 ```yaml
-# T04 Prompt Schema v1.10
+# T04 Prompt Schema v1.11
 $schema: http://json-schema.org/draft-07/schema#
 type: object
 required:
@@ -542,6 +543,7 @@ properties:
 | 1.8     | 2026-06-14 | Relocated example paths under ai/: knowledge_references comment and element_registry source example use ai/workspace/ |
 | 1.9     | 2026-06-16 | Standardised copyright footer format |
 | 1.10    | 2026-07-02 | Added prompt_info.target_profile (enum: ael, claude_code, claude_omlx); coupled_docs required only when source_ref is change-sourced (allOf/if-then); tactical_brief required only when target_profile is ael (allOf/if-then); reworded tactical_brief comment and schema description (plain-text → prose value, F5); corrected stale embedded version labels v1.0 → v1.10 (F8); resolves issue-713437bc |
+| 1.11    | 2026-07-17 | Added deliverable.format_requirements default entry instructing pytest suite execution on completion, applicable to claude_code/claude_omlx/ael target profiles |
 
 ---
 
