@@ -229,13 +229,16 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Templates contain YAML structure and JSON Schema validation rules
   - §1.1.18 Skills Management (Claude Code profiles only)
     - Tactical Domain: Utilizes skills from .claude/ for reusable workflows
+    - Canonical source: ai/skills/ — provisioned into .claude/ during P01 §1.2.8; mirrors .claude/ subdirectory organization
     - Skills organization: governance/, testing/, validation/, audit/ subdirectories under .claude/
     - Hot-reload enabled: Skill modifications activate without session restart
     - Forked contexts: Validation skills execute in isolated sub-agent contexts
     - Lifecycle hooks: PreToolUse (schema validation), PostToolUse (compliance verification), Stop (cleanup)
-    - Skills repository: Project-specific skills checked into git for team sharing
+    - Skills repository: Project-specific skills checked into git for team sharing (.claude/settings.json tracked; .claude/settings.local.json gitignored)
     - Implementation: See ai/profiles/claude.md or ai/profiles/claude-omlx.md
-    - Common skills examples:
+    - Mandatory skill:
+      - ai/skills/validation/run-tests.md: PostToolUse pytest execution (P06 §1.7.15); required for claude_code and claude_omlx target profiles
+    - Illustrative skill examples (not yet defined as canonical templates):
       - .claude/governance/validate-design.md: Schema validation before T04 prompt creation
       - .claude/testing/generate-pytest.md: Automated pytest generation from T05 documentation
       - .claude/validation/coupling-check.md: Verify iteration synchronization in coupled documents
@@ -316,7 +319,7 @@ ai/dashboard-alerts.md
 
 # Tactical Domain
 CLAUDE.local.md
-.claude/settings.json
+.claude/settings.local.json
 .claude/commands/
 
 # other
@@ -367,8 +370,10 @@ test.txt
         │       │   ├── closed/
         │       │   └── result/
         │       │       └── closed/
-        ├── .claude/                  # Claude Code profiles only (excluded from git)
-        │   └── settings.json
+        ├── .claude/                  # Claude Code profiles only; most contents git-tracked (see §1.2.2 excludes)
+        │   ├── settings.json         # Team-shared, git-tracked
+        │   ├── hooks/                # Hook scripts (e.g. run-tests.sh), git-tracked
+        │   └── validation/           # Skill docs provisioned from ai/skills/, git-tracked
         ├── CLAUDE.md                 # Claude Code profiles only (team shared)
         ├── CLAUDE.local.md           # Claude Code profiles only (excluded from git)
         ├── venv/                     # Python virtual environment (excluded from git)
@@ -405,6 +410,7 @@ pip list
       - Ensure Anthropic API key is configured
       - Create `CLAUDE.md` at project root with project context
       - Create `.claude/` directory structure per §1.2.6
+      - Provision mandatory skill: follow ai/skills/validation/run-tests.md §2.0 to install `.claude/hooks/run-tests.sh` and merge its PostToolUse block into `.claude/settings.json` (§1.1.18)
       - Reference: [claude.md](profiles/claude.md)
     - **claude-omlx profile** (Tactical Domain = Claude Code CLI → oMLX → Devstral):
       - Ensure oMLX is running on `http://127.0.0.1:8000` with Devstral loaded
@@ -412,6 +418,7 @@ pip list
       - No Anthropic API key required
       - Create `CLAUDE.md` at project root with project context
       - Create `.claude/` directory structure per §1.2.6
+      - Provision mandatory skill: follow ai/skills/validation/run-tests.md §2.0 to install `.claude/hooks/run-tests.sh` and merge its PostToolUse block into `.claude/settings.json` (§1.1.18)
       - Reference: [claude-omlx.md](profiles/claude-omlx.md)
     - **ael-mcp setup (Claude Desktop profile, optional)**:
       - Clone: `git clone https://github.com/William12556/ael-mcp`
@@ -799,13 +806,13 @@ pip install dist/*.whl
     - Permanent tests: Maintain regression suite in component subdirectories
     - Script lifecycle: Archive or remove validation scripts post-verification
     - Validation sequence mandatory before document closure
-    - **Validation Hooks (Tactical Domain):**
+    - **Validation Hooks (Tactical Domain, claude_code/claude_omlx profiles — mandatory):**
       - PreToolUse hook: Validates design constraints before code generation
       - PostToolUse hook: Executes targeted tests after file modification
       - Hook failures trigger checkpoint rewind automatically
       - Design validation: Verifies requirements traceability, architecture compliance
-      - Code validation: Executes pytest for modified component
-      - Hook configuration: Defined in <skills_dir>/validation/
+      - Code validation: Executes pytest for modified component; canonical template ai/skills/validation/run-tests.md (§1.1.18)
+      - Hook configuration: Provisioned from ai/skills/validation/ into .claude/hooks/ and .claude/settings.json per P01 §1.2.8
       - Hook scope: File-level (per modification) and iteration-level (batch)
       - Validation logs: Captured in session metadata for audit trail
   - §1.7.16 Test Type Selection
@@ -1187,6 +1194,7 @@ See [workflow.md](workflow.md).
 | 9.9     | 2026-06-28 | P08 §1.9: added §1.9.9 Audit Modes (strategic / tactical); split §1.9.4 into §1.9.4.1 strategic-led and §1.9.4.2 tactical-led (AEL audit loop); §1.9.2 mode-selection note; §1.9.5 T08 template and tactical archive note; registered T08-audit.md in §1.1.17 Templates and the ToC; append-only, existing §1.9.x not renumbered |
 | 9.10    | 2026-07-02 | P09 §1.10.2: prompt creation clause conditioned on source_ref (design-sourced vs change-sourced, §1.4.1 exception); tactical_brief/context-budget directives scoped to target_profile == ael; coupled_docs directives conditioned on source_ref; P03 §1.4.1: added cross-reference to P09 source_ref discrimination; resolves issue-713437bc (T04 schema hard-coded AEL-exclusivity and change-document-exclusivity, contradicting §1.4.1 exception and multi-profile Tactical Domain architecture) |
 | 9.11    | 2026-07-08 | P01 §1.2.8 and P09 §1.10.2: replaced retired `budget.py` file-existence precondition with orchestrator.py's own tiered context-window resolver (config.yaml override → live omlx_model_status query → per-model config.yaml override → unknown); context-budget.md now written automatically at AEL startup; Strategic Domain gate is a direct omlx_model_status call rather than a file-existence check (change-d42e64a9, Stream B) |
+| 9.12    | 2026-07-17 | P06 §1.7.15 Validation Hooks made mandatory for claude_code/claude_omlx profiles; P00 §1.1.18 adds canonical skill source ai/skills/ and mandatory skill entry (ai/skills/validation/run-tests.md); P01 §1.2.6 corrected .claude/ git-tracking comment (was incorrectly marked wholly excluded) and expanded tree; P01 §1.2.8 adds mandatory skill provisioning step to both Claude Code profiles; P01 §1.2.2 .gitignore corrected .claude/settings.json → .claude/settings.local.json to match Claude Code's team-shared-settings convention |
 
 ---
 [Return to Table of Contents](<#table of contents>)
