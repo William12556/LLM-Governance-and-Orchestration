@@ -1458,6 +1458,99 @@ def _run_syntax_gate(state_dir: str, log: logging.Logger) -> str:
     return gate_block
 
 
+def _run_pytest_gate(state_dir: str, log: logging.Logger, project_root: str) -> str:
+    """
+    F6b: Run pytest on deliverable-derived test targets and return a summary for the reviewer.
+
+    Extracts deliverables from work-summary.txt via _extract_deliverables, maps them to
+    test targets (tests/ paths direct; src/<component>/ -> tests/<component>/ if exists),
+    runs pytest, and returns a [TEST GATE] block to inject into the reviewer task.
+    Returns empty string if no test-relevant targets resolve.
+
+    Status interpretation:
+      - PASS: pytest ran successfully with exit code 0
+      - FAIL: pytest ran but reported test failures (exit code != 0)
+      - UNCHECKED: pytest could not be run (missing, timeout, exception)
+
+    Only FAIL triggers the SHIP override in run_loop; UNCHECKED and empty-result do not.
+    """
+    deliverables = _extract_deliverables(state_dir, log)
+    if not deliverables:
+        log.debug("pytest gate: no deliverables — gate is no-op")
+        return ""
+
+    # Resolve test targets from deliverables
+    targets: set[str] = set()
+    for path in deliverables:
+        # Normalize to relative path for pattern matching
+        if project_root and path.startswith(project_root):
+            rel_path = path[len(project_root):].lstrip(os.sep)
+        else:
+            rel_path = path
+
+        # Direct include for tests/ paths
+        if rel_path.startswith("tests" + os.sep) or rel_path.startswith("tests/"):
+            if os.path.exists(path):
+                targets.add(path)
+        # Map src/<component>/ to tests/<component>/ if that directory exists
+        elif rel_path.startswith("src" + os.sep) or rel_path.startswith("src/"):
+            parts = rel_path.split(os.sep)
+            if len(parts) >= 2:
+                component = parts[1]
+                test_dir = os.path.join(project_root, "tests", component) if project_root else os.path.join("tests", component)
+                if os.path.isdir(test_dir):
+                    targets.add(test_dir)
+
+    if not targets:
+        log.debug("pytest gate: no test-relevant targets resolved — gate is no-op")
+        return ""
+
+    # Run pytest
+    target_list = sorted(targets)
+    log.info("pytest gate: running pytest on %d target(s): %s", len(target_list), target_list)
+
+    try:
+        proc = subprocess.run(
+            [sys.executable, "-m", "pytest"] + target_list + ["-q"],
+            capture_output=True,
+            text=True,
+            cwd=project_root if project_root else None,
+            timeout=300,  # 5 minute timeout
+        )
+        if proc.returncode == 0:
+            status = "PASS"
+        else:
+            status = "FAIL"
+        output = proc.stdout + proc.stderr
+    except Exception as exc:
+        status = "UNCHECKED"
+        output = f"pytest execution failed: {exc}"
+        log.warning("pytest gate: execution failed — %s", exc)
+        log.debug("pytest gate exception traceback:\n%s", traceback.format_exc())
+
+    # Truncate output to last 1000 chars for readability
+    if len(output) > 1000:
+        output = "...(truncated)...\n" + output[-1000:]
+
+    target_list_str = "\n".join(f"  - {t}" for t in target_list)
+    gate_block = (
+        f"[TEST GATE: {status}]\n"
+        f"The orchestrator ran pytest on {len(target_list)} test target(s):\n"
+        f"{target_list_str}\n\n"
+        f"Output:\n{output.strip()}\n"
+        f"[END TEST GATE]\n"
+    )
+
+    if status == "PASS":
+        log.info("pytest gate: %d target(s), status=%s", len(target_list), status)
+        console.print(f"[dim][ael] pytest gate: {status} ({len(target_list)} targets)[/dim]")
+    else:
+        log.warning("pytest gate: %d target(s), status=%s", len(target_list), status)
+        console.print(f"[yellow][ael] pytest gate: {status} ({len(target_list)} targets)[/yellow]")
+
+    return gate_block
+
+
 def _parse_audit_items(index_path: str) -> list[tuple[bool, str]]:
     """
     F17: Shared parser for audit-index.md items.
@@ -1699,6 +1792,9 @@ async def run_loop(
         # F6: Run syntax gate and inject result into reviewer task
         _syntax_result = _run_syntax_gate(state_dir, log)
 
+        # F6b: Run pytest gate and inject result into reviewer task
+        _pytest_result = _run_pytest_gate(state_dir, log, project_root)
+
         # F16: Prepend [AEL RUNTIME CONTEXT] to review_task for consistent framing
         _review_header = (
             f"[AEL RUNTIME CONTEXT]\n"
@@ -1707,6 +1803,9 @@ async def run_loop(
             f"[END RUNTIME CONTEXT]\n\n"
         )
         review_task = _review_header + f"Review the work in state directory '{state_dir}'."
+        # Prepend gate results to review_task
+        if _pytest_result:
+            review_task = _pytest_result + "\n" + review_task
         if _syntax_result:
             review_task = _syntax_result + "\n" + review_task
         rc, reviewer_final_msg, _reviewer_read_paths = await run_phase(
@@ -1808,6 +1907,20 @@ async def run_loop(
                                 )
                         else:
                             log.debug("read-evidence SHIP gate: no deliverables — gate is no-op")
+
+                        # Pytest SHIP gate: non-audit (ralph) path only.
+                        # Override SHIP to REVISE if pytest gate reported FAIL.
+                        if _read_gate_pass and "[TEST GATE: FAIL]" in _pytest_result:
+                            _read_gate_pass = False
+                            log.warning("pytest SHIP gate: test failures detected — overriding SHIP")
+                            console.print(
+                                "[yellow][ael] pytest SHIP gate: test failures detected "
+                                "— overriding SHIP to REVISE[/yellow]"
+                            )
+                            write_state(
+                                state_dir, "review-feedback.txt",
+                                f"Pytest gate failed: tests did not pass.\n\n{_pytest_result}"
+                            )
 
                     if _read_gate_pass:
                         console.print(Panel(
