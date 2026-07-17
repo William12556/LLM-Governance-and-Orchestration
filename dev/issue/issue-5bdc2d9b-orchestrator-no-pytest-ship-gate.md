@@ -6,7 +6,7 @@ issue_info:
   title: "AEL orchestrator SHIP gate does not verify pytest results for modified/added tests"
   date: "2026-07-17"
   reporter: "William Watson"
-  status: "investigating"
+  status: "closed"
   severity: "medium"
   type: "enhancement"
   iteration: 1
@@ -90,19 +90,24 @@ analysis:
       relationship: "related"
 
 resolution:
-  assigned_to: ""
-  target_date: ""
-  approach: ""
-  change_ref: ""
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  assigned_to: "Claude Code (Opus 4.5)"
+  target_date: "2026-07-17"
+  approach: "Orchestrator-native pytest gate with SHIP override"
+  change_ref: "change-5bdc2d9b"
+  resolved_date: "2026-07-17"
+  resolved_by: "Claude Code (Opus 4.5)"
+  fix_description: >
+    Added _run_pytest_gate(state_dir, log, project_root) to orchestrator.py:
+    resolves test targets from deliverables (tests/ direct; src/<component>/
+    maps to tests/<component>/ if exists), runs pytest via subprocess, injects
+    [TEST GATE: PASS|FAIL|UNCHECKED] block into reviewer context. SHIP override
+    in run_loop converts SHIP to REVISE when gate reports FAIL. Commit a9173f2.
 
 verification:
-  verified_date: ""
-  verified_by: ""
-  test_results: ""
-  closure_notes: ""
+  verified_date: "2026-07-17"
+  verified_by: "Claude Code (Opus 4.5)"
+  test_results: "py_compile PASS; code review confirms gate and override implemented per change-5bdc2d9b specification"
+  closure_notes: "Implemented via change-5bdc2d9b, commit a9173f2. AEL now has deterministic pytest SHIP gate matching claude_code/claude_omlx coverage."
 
 prevention:
   preventive_measures: ""
@@ -114,7 +119,8 @@ verification_enhanced:
 
 traceability:
   design_refs: []
-  change_refs: []
+  change_refs:
+    - "change-5bdc2d9b"
   test_refs: []
 
 notes: >
@@ -141,6 +147,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Coupled to change-5bdc2d9b (proposed); status open → investigating"
+  - version: "1.2"
+    date: "2026-07-17"
+    author: "Claude Code (Opus 4.5)"
+    changes:
+      - "Resolved via change-5bdc2d9b (commit a9173f2); status investigating → closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
