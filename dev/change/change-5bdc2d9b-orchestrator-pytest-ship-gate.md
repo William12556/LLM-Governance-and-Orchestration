@@ -6,7 +6,7 @@ change_info:
   title: "Orchestrator-native pytest SHIP gate for AEL (ael target profile)"
   date: "2026-07-17"
   author: "William Watson"
-  status: "proposed"
+  status: "closed"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -198,11 +198,16 @@ implementation:
     (bin/propagate.sh) once verified and closed.
 
 verification:
-  implemented_date: ""
-  implemented_by: ""
-  verification_date: ""
-  verified_by: ""
-  test_results: ""
+  implemented_date: "2026-07-17"
+  implemented_by: "Claude Code (Opus 4.5)"
+  verification_date: "2026-07-17"
+  verified_by: "Claude Code (Opus 4.5)"
+  test_results: >
+    py_compile: PASS (no syntax errors). Code review confirms: (1)
+    _run_pytest_gate added with correct subprocess/injection pattern;
+    (2) call site alongside _run_syntax_gate; (3) SHIP override in
+    non-audit path keyed on [TEST GATE: FAIL]; (4) UNCHECKED and
+    empty-target-set do not trigger override. Commit a9173f2.
   issues_found: []
 
 traceability:
@@ -232,6 +237,16 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — proposed"
+  - version: "1.1"
+    date: "2026-07-17"
+    author: "William Watson"
+    changes:
+      - "Approved; T04 prompt-5bdc2d9b authored (target_profile: claude_code)"
+  - version: "1.2"
+    date: "2026-07-17"
+    author: "Claude Code (Opus 4.5)"
+    changes:
+      - "Implemented and closed; commit a9173f2"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
