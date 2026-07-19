@@ -6,7 +6,7 @@ issue_info:
   title: "AEL orchestrator SHIP gate does not verify pytest results for modified/added tests"
   date: "2026-07-17"
   reporter: "William Watson"
-  status: "closed"
+  status: "resolved"
   severity: "medium"
   type: "enhancement"
   iteration: 1
@@ -105,9 +105,9 @@ resolution:
 
 verification:
   verified_date: "2026-07-17"
-  verified_by: "Claude Code (Opus 4.5)"
-  test_results: "py_compile PASS; code review confirms gate and override implemented per change-5bdc2d9b specification"
-  closure_notes: "Implemented via change-5bdc2d9b, commit a9173f2. AEL now has deterministic pytest SHIP gate matching claude_code/claude_omlx coverage."
+  verified_by: "Claude Desktop (P08 strategic audit)"
+  test_results: "Independently confirmed against source (see change-5bdc2d9b verification.test_results for the full item-by-item audit); Claude Code's implementation and self-check hold up under independent review"
+  closure_notes: "Implemented via change-5bdc2d9b, commit a9173f2; independently verified by Claude Desktop (P08 strategic audit), 2026-07-17. AEL now has a deterministic pytest SHIP gate matching claude_code/claude_omlx coverage."
 
 prevention:
   preventive_measures: ""
@@ -151,7 +151,12 @@ version_history:
     date: "2026-07-17"
     author: "Claude Code (Opus 4.5)"
     changes:
-      - "Resolved via change-5bdc2d9b (commit a9173f2); status investigating → closed"
+      - "Resolved via change-5bdc2d9b (commit a9173f2); status investigating → resolved"
+  - version: "1.3"
+    date: "2026-07-17"
+    author: "William Watson"
+    changes:
+      - "Independently verified against source (Claude Desktop, P08 strategic audit); verified_by corrected to reflect Strategic Domain audit rather than implementer self-attestation; issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

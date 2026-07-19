@@ -1,9 +1,10 @@
 # Todo
 
 ## Active
-- [ ] prompt-5bdc2d9b — orchestrator pytest SHIP gate (ael target profile); T04 ready, awaiting Claude Code execution (target_profile: claude_code)
+- [ ]
 
 ## Planned
+- [ ] Live Ralph Loop smoke test of the pytest SHIP gate (change-5bdc2d9b) against a project with an existing tests/ directory
 - [ ] Validate REVISE→fix→SHIP convergence path at runtime
 - [ ] Propagate current orchestrator to GTach
 - [ ] Propagate current orchestrator to e-Paper-IP-Display

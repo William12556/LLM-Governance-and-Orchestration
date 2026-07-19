@@ -6,7 +6,7 @@ change_info:
   title: "Orchestrator-native pytest SHIP gate for AEL (ael target profile)"
   date: "2026-07-17"
   author: "William Watson"
-  status: "closed"
+  status: "verified"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -201,13 +201,40 @@ verification:
   implemented_date: "2026-07-17"
   implemented_by: "Claude Code (Opus 4.5)"
   verification_date: "2026-07-17"
-  verified_by: "Claude Code (Opus 4.5)"
+  verified_by: "Claude Desktop (P08 strategic audit)"
   test_results: >
-    py_compile: PASS (no syntax errors). Code review confirms: (1)
-    _run_pytest_gate added with correct subprocess/injection pattern;
-    (2) call site alongside _run_syntax_gate; (3) SHIP override in
-    non-audit path keyed on [TEST GATE: FAIL]; (4) UNCHECKED and
-    empty-target-set do not trigger override. Commit a9173f2.
+    Independent inline source review (no code-execution tool available to
+    Claude Desktop against this filesystem; same constraint and method as
+    change-d7f4a1c8). Confirms Claude Code's self-reported py_compile PASS
+    claim is consistent with a clean structural read, and additionally
+    verifies, item by item against this document's nine success criteria:
+    _run_pytest_gate (line ~1461) returns "" on an empty target set (line
+    ~1504-1506); resolves targets via the tests/ direct / src/<component>/
+    -> tests/<component>/ heuristic exactly as specified; wraps
+    subprocess.run in try/except with all exceptions mapped to status
+    UNCHECKED, never FAIL (line ~1525-1529); formats
+    [TEST GATE: PASS|FAIL|UNCHECKED] with truncated output, matching
+    _run_syntax_gate's block style; is called once before REVIEW PHASE
+    alongside _run_syntax_gate (line ~1796) and injected into review_task
+    (line ~1807-1808); the run_loop SHIP override (line ~1911-1922) is
+    guarded inside the non-audit ("else") branch only, applies via
+    `_read_gate_pass and "[TEST GATE: FAIL]" in _pytest_result`
+    (status strings are mutually exclusive substrings — no PASS/UNCHECKED
+    false-positive risk), and writes review-feedback.txt naming the failing
+    target(s) through the embedded gate block; the audit-path SHIP/coverage/
+    scope gate block is unmodified; _run_syntax_gate's own call site and
+    non-blocking character are unmodified; subprocess/sys/traceback/os were
+    already imported at module level, no new imports required. One
+    deviation from the T04 tactical_brief noted and accepted as a sound
+    implementation choice: the override reuses the read-evidence gate's
+    _read_gate_pass flag as a single shared SHIP-eligibility flag rather
+    than a second independent override variable — functionally equivalent,
+    and it means a prior read-evidence failure suppresses a redundant
+    pytest-failure overwrite of review-feedback.txt, which is reasonable
+    (one blocking reason is sufficient). No live Ralph Loop smoke test was
+    performed (none available to Claude Desktop); this remains the one
+    open item noted in this document's testing_requirements.test_approach,
+    not a blocker to verification.
   issues_found: []
 
 traceability:
@@ -246,7 +273,12 @@ version_history:
     date: "2026-07-17"
     author: "Claude Code (Opus 4.5)"
     changes:
-      - "Implemented and closed; commit a9173f2"
+      - "Implemented; commit a9173f2"
+  - version: "1.3"
+    date: "2026-07-17"
+    author: "William Watson"
+    changes:
+      - "Independently verified against source (Claude Desktop, P08 strategic audit); status corrected closed → verified (T02 schema has no closed enum value); verified_by corrected to reflect Strategic Domain audit rather than implementer self-attestation; change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
