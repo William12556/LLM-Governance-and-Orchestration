@@ -195,11 +195,13 @@ verification:
     Recorded in change-d1f4a83b. Isolated execution of all four changed units
     against synthetic inputs, plus live run 7135e75d against dev/smoke-n1.
   closure_notes: >
-    Left open. Implementer and verifier are the same session, and N1 is a
-    governance-integrity fix in the same code region that has now produced
-    defects on three consecutive review passes. Independent verification is
-    required before closure, per the standard this project applied to
-    change-a2f9c4d1 and change-e4b1a7c3.
+    Left open at the time of self-verification. Implementer and verifier were
+    the same session, and N1 is a governance-integrity fix in the same code
+    region that had produced defects on three consecutive review passes.
+    Closed at William Watson's explicit instruction on 2026-07-29 (dev/audit
+    review), overriding the stated independent-verification precondition; see
+    change-d1f4a83b operator_closure_2026_07_29. N1 remains unconfirmed live
+    and is recorded in dev/task.md.
 
 prevention:
   preventive_measures: >
@@ -238,6 +240,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue from independent verification of change-3b9e6d72, change-f5c28a04 and change-8c1a4f5e"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Closed at operator instruction (dev/audit review); closure_notes updated to record the operator closure decision and the items (N1 live confirmation) still outstanding"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

@@ -18,10 +18,10 @@ executed. Full evidence:
 | `a2f9c4d1` | open — its successor `f5c28a04` does not clear; finding N1 shows the vacuous-gate condition persists at the final-response exit |
 | `b7e3d5a9` | **closed** — independently audited, verified, no findings |
 | `e4b1a7c3` | **closed** — independently verified live; F4 resolved by `8c1a4f5e` |
-| `3b9e6d72` | open — 22-case independent re-derivation passes; pass 2 confirmed live, pass 1 never emitted by a reviewer; no SHIP reached; finding N3 |
-| `f5c28a04` | open — F1, reset idempotency and log archiving confirmed live; three test cases unexercised; findings N1 and N2 |
+| `3b9e6d72` | **closed (2026-07-29, operator instruction)** — 22-case independent re-derivation passes; pass 2 confirmed live; pass 1 and a live SHIP remain unexercised at closure |
+| `f5c28a04` | **closed (2026-07-29, operator instruction)** — F1, reset idempotency and log archiving confirmed live; three test cases remain unexercised at closure |
 | `8c1a4f5e` | **closed** — independently verified live, including the anchoring case the implementing session could not demonstrate; no findings |
-| `d1f4a83b` | open (new) — corrects N1–N4; implemented and self-verified, independent verification outstanding |
+| `d1f4a83b` | **closed (2026-07-29, operator instruction)** — corrects N1–N4; implemented and self-verified; N1 unconfirmed live at closure |
 
 **No SHIP has yet been observed.** Three live runs this session
 (`e73caef0`, `8c2040d3`, `7135e75d`, plus `1df4e55d`) terminated on budget, not
@@ -397,6 +397,7 @@ nothing blocks propagation.
 | 0.1 | 2026-07-29 | Initial backlog consolidating P08 audit findings and session carry-over |
 | 0.2 | 2026-07-29 | Added §0.0 Status recording direct implementation of §1, §2.1, §2.3, §3.1 and §4.2–4.4 under triples f5c28a04, 3b9e6d72 and 8c1a4f5e, with two documented deviations; added §7.0 recording the §3.4 downstream audit result |
 | 0.3 | 2026-07-29 | §0.0 status table updated with the outcome of the Cowork remediation session: e4b1a7c3 and 8c1a4f5e closed, a2f9c4d1 / 3b9e6d72 / f5c28a04 left open with reasons, new triple d1f4a83b opened; item 3.2 (paths never exercised) and 4.1 (commit propagate.sh) discharged; no SHIP observed |
+| 0.4 | 2026-07-29 | Status table updated: 3b9e6d72, f5c28a04, d1f4a83b closed at William Watson's explicit instruction during a dev/audit review, overriding each document's own stated independent-verification/live-SHIP precondition; unresolved items consolidated in dev/task.md |
 
 ---
 

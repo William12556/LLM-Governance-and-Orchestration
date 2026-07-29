@@ -68,10 +68,18 @@ canonical policy documents, and grammar-constrained decoding.
 | `a2f9c4d1` | left open | Successor `f5c28a04` does not clear. Finding N1 shows the vacuous-gate condition persists at the final-response exit — run `8c2040d3` cycles 1 and 3 |
 | `b7e3d5a9` | already closed | No action; verified in the prior P08 audit |
 | `e4b1a7c3` | **closed** | §5.3; all five test cases and three validation criteria re-derived live, including a pre/post comparison of the `ai/state/` leak |
-| `3b9e6d72` | left open | §5.1; 22-case re-derivation passes, pass 2 confirmed live, pass 1 never emitted by any reviewer, no SHIP reached, finding N3 |
-| `f5c28a04` | left open | §5.2; F1, reset idempotency and log archiving confirmed live; three test cases unexercised; findings N1, N2 |
+| `3b9e6d72` | **closed (2026-07-29, operator instruction)** | §5.1; 22-case re-derivation passes, pass 2 confirmed live; pass 1 and a live SHIP remain unexercised — see `change-3b9e6d72` `operator_closure_2026_07_29` |
+| `f5c28a04` | **closed (2026-07-29, operator instruction)** | §5.2; F1, reset idempotency and log archiving confirmed live; three test cases remain unexercised — see `change-f5c28a04` `operator_closure_2026_07_29` |
 | `8c1a4f5e` | **closed** | §5.3; F4 precondition reproduced against the pre-change script and shown fixed; anchoring demonstrated behaviourally for the first time |
-| `d1f4a83b` | **opened**, left open | §7.0; corrects N1–N4; implementer and verifier are the same session |
+| `d1f4a83b` | **opened, closed (2026-07-29, operator instruction)** | §7.0; corrects N1–N4; implementer and verifier are the same session; N1 unconfirmed live — see `change-d1f4a83b` `operator_closure_2026_07_29` |
+
+**Note (2026-07-29, dev/audit review):** `3b9e6d72`, `f5c28a04` and `d1f4a83b`
+were closed at William Watson's explicit instruction during a review of
+`dev/audit`, overriding the independent-verification and live-SHIP
+preconditions each document itself stated. The specific items left
+unverified at closure are recorded in each change document's
+`operator_closure_2026_07_29` block and consolidated in `dev/task.md`. This
+is disclosed rather than represented as a passing re-verification.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -570,6 +578,7 @@ already been removed; its run logs are preserved at
 |---|---|---|
 | 1.0 | 2026-07-29 | Initial report — execution record for dev/cowork-remediation-prompt-2026-07-29.md |
 | 1.1 | 2026-07-29 | §7.4 completed with the outcome of run 1df4e55d; §9.0 updated with the fourth commit and the committed log evidence; §11.0 reduced to the push and the two judgment items |
+| 1.2 | 2026-07-29 | Disposition table updated: `3b9e6d72`, `f5c28a04`, `d1f4a83b` closed at William Watson's explicit instruction during a dev/audit review, overriding the independent-verification/live-SHIP preconditions each stated; unresolved items consolidated in dev/task.md |
 
 ---
 

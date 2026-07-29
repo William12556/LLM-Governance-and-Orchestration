@@ -6,7 +6,7 @@ change_info:
   title: "Per-cycle manifest lifetime; exhaustion return code from phase outcome; move/rename destination recording; reset idempotency; opt-in run-log archive"
   date: "2026-07-29"
   author: "William Watson"
-  status: "implemented"
+  status: "closed"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -332,11 +332,23 @@ independent_verification_2026_07_29:
     source as `path` and a destination outside project_root passes F4
     containment. Reproduced by isolated execution.
   closure_disposition: >
-    Left open. Three of seven test cases are unexercised, and finding N1 shows
-    the change's central benefit is not delivered at one of the four worker
-    exits. The evidence obtained is nonetheless substantial: the F1 defect this
-    change was written to close is now directly observed to be closed, twice,
-    which no prior session had achieved.
+    Left open at the time of independent verification. Three of seven test
+    cases were unexercised, and finding N1 showed the change's central benefit
+    was not delivered at one of the four worker exits. The evidence obtained
+    was nonetheless substantial: the F1 defect this change was written to
+    close was directly observed to be closed, twice, which no prior session
+    had achieved. N1 was subsequently corrected under change-d1f4a83b.
+
+operator_closure_2026_07_29:
+  closed_by: "William Watson"
+  basis: >
+    Closed at William Watson's explicit instruction on 2026-07-29, review of
+    dev/audit. The three unexercised test cases (worker-authored
+    work-summary.txt then exhaustion; move_file deliverable; log_archive_dir
+    unset) and the dependency on change-3b9e6d72 reaching a live SHIP remain
+    unexercised as of this closure — recorded here rather than represented as
+    satisfied. This is an operator closure decision, not a claim that every
+    success criterion was independently re-derived.
 
 traceability:
   design_updates: []
@@ -370,6 +382,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Added independent_verification_2026_07_29: F1 per-cycle manifest behaviour, reset idempotency and log archiving all confirmed live; three test cases remain unexercised; findings N1 (high) and N2 (medium) raised and corrected under change-d1f4a83b; triple left open"
+  - version: "1.2"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Closed at operator instruction (dev/audit review); status implemented -> closed; operator_closure_2026_07_29 recorded, naming the test cases still unexercised at closure"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

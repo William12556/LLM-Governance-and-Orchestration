@@ -6,7 +6,7 @@ change_info:
   title: "Verdict parsing accepts an isolated SHIP/REVISE line, last occurrence winning; leading-token rule retained as fallback"
   date: "2026-07-29"
   author: "William Watson"
-  status: "implemented"
+  status: "closed"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -232,10 +232,23 @@ independent_verification_2026_07_29:
     inapplicable leading-token strip" holds only when a verdict is present.
     Corrected under change-d1f4a83b, which is itself unverified independently.
   closure_disposition: >
-    Left open. Two conditions are unmet: the change document's own gating
-    verification (a run reaching an actual SHIP), and finding N3, whose
-    correction has not been independently verified. Neither is a defect in the
-    parsing logic, which is correct on every input tested.
+    Left open at the time of independent verification. Two conditions were
+    unmet: the change document's own gating verification (a run reaching an
+    actual SHIP), and finding N3, whose correction had not been independently
+    verified. Neither is a defect in the parsing logic, which is correct on
+    every input tested. N3 was subsequently corrected under change-d1f4a83b.
+
+operator_closure_2026_07_29:
+  closed_by: "William Watson"
+  basis: >
+    Closed at William Watson's explicit instruction on 2026-07-29, review of
+    dev/audit. The parsing logic itself is independently verified correct on
+    all twenty-two cases tested, including the exact adversarial form
+    observed live (run a2d10058). The gating condition this document itself
+    named — a live run reaching SHIP — remains unmet as of this closure and
+    is recorded in dev/task.md rather than represented as satisfied. This is
+    an operator closure decision, not a claim that the gating verification
+    was newly met.
 
 traceability:
   design_updates: []
@@ -263,6 +276,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Added independent_verification_2026_07_29: twenty-two-case re-derivation of all three helpers; pass 2 confirmed live, pass 1 not emitted by any reviewer this session; no SHIP reached; finding N3 raised against the change's feedback-mangling benefit and corrected under change-d1f4a83b; triple left open"
+  - version: "1.2"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Closed at operator instruction (dev/audit review); status implemented -> closed; operator_closure_2026_07_29 recorded, naming the gating live-SHIP verification still unmet at closure"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

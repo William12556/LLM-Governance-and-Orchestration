@@ -6,7 +6,7 @@ change_info:
   title: "Append an observed-write manifest at the final-response exit; validate every write-tool path argument; strip only an actual verdict token; skip the continue prompt when stdin is not a terminal"
   date: "2026-07-29"
   author: "William Watson"
-  status: "implemented"
+  status: "closed"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -262,6 +262,17 @@ verification:
     - "Verified by the implementing session only. Independent verification is outstanding, and is the stated precondition for closure."
     - "Observation, not a defect of this change: in run 1df4e55d the reviewer issued REVISE on the grounds that 'the worker did not write work-summary.txt' when a synthesised manifest was present and had been read. If the reviewer objects to an orchestrator-supplied manifest on principle, N1's appended section will meet the same objection. This is reviewer-recipe calibration, out of scope here."
 
+operator_closure_2026_07_29:
+  closed_by: "William Watson"
+  basis: >
+    Closed at William Watson's explicit instruction on 2026-07-29, review of
+    dev/audit. The document's own stated precondition for closure —
+    independent verification, distinct from the implementing session — was not
+    met at the time of writing. This is an operator closure decision overriding
+    that stated precondition, not a claim that independent verification was
+    subsequently performed. N1 in particular remains unconfirmed live; recorded
+    in dev/task.md rather than represented as resolved.
+
 traceability:
   design_updates: []
   related_changes:
@@ -289,6 +300,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — implemented from issue-d1f4a83b findings N1-N4"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Closed at operator instruction (dev/audit review); status implemented -> closed; operator_closure_2026_07_29 recorded, naming N1's live confirmation as still outstanding at closure"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

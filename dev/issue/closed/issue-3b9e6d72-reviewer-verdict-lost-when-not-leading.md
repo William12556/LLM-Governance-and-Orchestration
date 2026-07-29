@@ -125,8 +125,14 @@ verification:
     declaration; a message stating REVISE then later SHIP resolving to SHIP;
     empty, whitespace-only and verdict-free input all defaulting to REVISE.
   closure_notes: >
-    Not verified against a live model. A Ralph Loop run reaching an actual SHIP
-    is required before closure.
+    Not verified against a live model as of implementation. Independent
+    verification on 2026-07-29 confirmed the parsing logic correct on
+    twenty-two cases, including live exercise of pass 2 across four review
+    phases; pass 1 (isolated trailing verdict) and a run reaching an actual
+    SHIP remain unexercised. Closed at William Watson's explicit instruction on
+    2026-07-29 (dev/audit review); see change-3b9e6d72
+    operator_closure_2026_07_29 for the basis and the items still outstanding
+    at closure.
 
 prevention:
   preventive_measures: >
@@ -172,6 +178,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue from run a2d10058 log analysis"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Closed at operator instruction (dev/audit review); closure_notes updated to reflect the 2026-07-29 independent verification and the operator closure decision"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

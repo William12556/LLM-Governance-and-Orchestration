@@ -138,10 +138,13 @@ verification:
     copies .LOG and .log, idempotent on re-run, ignores non-log files, safe when
     state_dir is absent.
   closure_notes: >
-    Not verified end-to-end. A live Ralph Loop run of three or more cycles is
-    required to observe the per-cycle clear and the corrected exhaustion return
-    code in situ. That run also depends on issue-3b9e6d72, without which no SHIP
-    is reachable.
+    Not verified end-to-end as of implementation. Independent verification on
+    2026-07-29 confirmed the per-cycle clear and corrected exhaustion return
+    code live, twice (see change-f5c28a04 independent_verification_2026_07_29).
+    Three of seven test cases remain unexercised. Closed at William Watson's
+    explicit instruction on 2026-07-29 (dev/audit review); see
+    change-f5c28a04 operator_closure_2026_07_29 for the basis and the items
+    still outstanding at closure.
 
 prevention:
   preventive_measures: >
@@ -187,6 +190,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue consolidating P08 audit findings F1/F2/F3 with adjacent backlog items 2.3, 3.1 and 4.2"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Closed at operator instruction (dev/audit review); closure_notes updated to reflect the 2026-07-29 independent live verification and the operator closure decision"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
