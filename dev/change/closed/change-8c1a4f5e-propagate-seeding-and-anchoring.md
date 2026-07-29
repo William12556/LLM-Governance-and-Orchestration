@@ -6,7 +6,7 @@ change_info:
   title: "Evaluate the context.md seed condition before the preview early exit; anchor path-specific excludes; drop redundant --ignore-existing"
   date: "2026-07-29"
   author: "William Watson"
-  status: "implemented"
+  status: "closed"
   priority: "medium"
   iteration: 1
   coupled_docs:
@@ -172,15 +172,36 @@ verification:
   implemented_date: "2026-07-29"
   implemented_by: "Claude Desktop (Opus 5)"
   verification_date: "2026-07-29"
-  verified_by: "Claude Desktop (Opus 5)"
+  verified_by: "Claude (Cowork remediation session, Opus 5) — independent of the implementing session"
   test_results: >
-    bash -n clean. Case (a) target current except context.md: previously
-    'Target is up to date', now reports the pending seed and writes a
-    byte-identical context.md on confirmation. Case (b) fully current: up to
-    date, exit 0. Case (c) empty: full list plus seed line. Re-run of (a) after
-    seeding: up to date. Declining at the prompt: 'Aborted.', no changes.
-  issues_found:
-    - "The anchoring change is verified by inspection and by case (b) only; no test target contains a nested workspace/ or config.yaml."
+    Verified independently and live, re-derived against the script rather than
+    accepted from the implementing session's record. bash -n clean;
+    set -euo pipefail present.
+
+    Case (a), the F4 precondition proper — target identical to source with
+    timestamps preserved so the dry run yields no changes, and context.md
+    absent: preview prints "(no framework files differ)" and
+    "seed         context.md (absent in target)", and on confirmation writes a
+    context.md byte-identical to the template. The same input run against a
+    reconstructed e4b1a7c3-only script prints "Target is up to date. No changes
+    to apply." and exits without seeding, so the defect and its correction are
+    demonstrated on identical input.
+
+    Case (b) fully current: up to date, exit 0, target context.md left with its
+    downstream content. Case (c) empty target: full file list plus the seed
+    line, both applied. Case (d) re-run after (a): up to date. Case (e)
+    declining: "Aborted.", neither transfer nor seed occurs.
+
+    Anchoring, previously inspection-only: the synthetic source carried
+    ai/doc/config.yaml and ai/doc/workspace/note.md alongside ai/ael/config.yaml
+    and ai/workspace/gov.md. Case (c) transferred the two nested files and
+    excluded the two anchored ones — the behavioural difference anchoring exists
+    to produce. ai/state/ and ai/dashboard-alerts.md excluded in the same run.
+
+    Live in the framework's own use: propagation to dev/smoke transferred only
+    ai/ael/src/orchestrator.py, preserved the target's filled-in context.md, and
+    created no ai/state in the target.
+  issues_found: []
 
 traceability:
   design_updates: []
@@ -201,6 +222,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — implemented directly from dev/remediation-2026-07-29.md §1.4, §4.3, §4.4"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Independently verified live in the Cowork remediation session; the anchoring criterion recorded as inspection-only at implementation is now demonstrated behaviourally; issues_found cleared; status closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

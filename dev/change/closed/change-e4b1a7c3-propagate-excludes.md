@@ -6,7 +6,7 @@ change_info:
   title: "Correct propagate.sh state exclude; protect and seed ai/context.md"
   date: "2026-07-29"
   author: "William Watson"
-  status: "approved"
+  status: "closed"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -155,9 +155,29 @@ implementation:
 verification:
   implemented_date: "2026-07-29"
   implemented_by: "Claude Desktop (Opus 5)"
-  verification_date: ""
-  verified_by: ""
-  test_results: ""
+  verification_date: "2026-07-29"
+  verified_by: "Claude (Cowork remediation session, Opus 5) — independent of the implementing session"
+  test_results: >
+    bash -n clean and set -euo pipefail present, both re-checked. All five test
+    cases and all three validation criteria exercised live against a synthetic
+    source tree carrying a populated ai/state/, an ai/ael/config.yaml, an
+    ai/workspace/ and an ai/dashboard-alerts.md.
+
+    Source ai/state/ populated: the pre-change script transferred state/leak.txt
+    into the target; the current script excludes it. Corroborated in the
+    framework's own use — propagation to dev/smoke transferred only
+    ai/ael/src/orchestrator.py and created no ai/state in the target.
+
+    Filled-in target ai/context.md: retained byte-for-byte, with the script
+    reporting "context.md: existing project copy preserved."
+
+    Target with no ai/context.md: seeded byte-identical to the template. The
+    narrow case audit finding F4 identified as failing here is supplied by
+    change-8c1a4f5e, independently verified and closed alongside this change.
+
+    Target ai/ael/config.yaml: unchanged. Framework source files changed:
+    propagated normally, with the preview and confirmation flow unaltered and
+    declining at the prompt producing neither transfer nor seed.
   issues_found: []
 
 traceability:
@@ -188,6 +208,11 @@ version_history:
     changes:
       - "Corrected an overstated benefit per P08 audit audit-p08-20260729 finding F4 (seeding pass unreachable when context.md was the target's only outstanding difference); delivered by change-8c1a4f5e"
       - "Added change-8c1a4f5e to traceability.related_changes as the corrective successor"
+  - version: "1.2"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Independently verified live in the Cowork remediation session; all five test cases and all three validation criteria re-derived, including a pre-change/post-change comparison of the state leak; change-8c1a4f5e closed F4; status closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

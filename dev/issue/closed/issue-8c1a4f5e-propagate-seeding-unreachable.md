@@ -101,18 +101,34 @@ resolution:
 
 verification:
   verified_date: "2026-07-29"
-  verified_by: "Claude Desktop (Opus 5)"
+  verified_by: "Claude (Cowork remediation session, Opus 5) — independent of the implementing session"
   test_results: >
-    bash -n clean. Exercised against three scratch targets: (a) current except
-    context.md absent — previously reported up to date, now reports the pending
-    seed and, on confirmation, writes a context.md byte-identical to the
-    template; (b) fully current — still reports up to date and exits 0; (c)
-    empty — reports the full file list plus the pending seed. Re-running (a)
-    after seeding reports up to date, confirming idempotency.
+    Re-derived independently rather than accepted from the implementing
+    session's record. bash -n clean and set -euo pipefail present, both
+    re-checked. Executed against a synthetic source tree carrying every exclude
+    category and five scratch targets: (a) current except context.md absent,
+    with timestamps preserved so CHANGES is genuinely empty — the exact F4
+    precondition — reports "(no framework files differ)" plus the pending seed
+    and writes a byte-identical context.md on confirmation; (a-regression) the
+    same case against a reconstructed e4b1a7c3-only script reports "Target is up
+    to date. No changes to apply." and never seeds, so the defect and its
+    correction are both demonstrated on the same input; (b) fully current —
+    up to date, exit 0; (c) empty target — full file list plus seed line, both
+    applied; (d) re-run after seeding — up to date; (e) declining at the prompt
+    — "Aborted.", neither transfer nor seed occurs.
+
+    The anchoring gap recorded at implementation is now closed. The synthetic
+    source contained ai/doc/config.yaml and ai/doc/workspace/note.md alongside
+    ai/ael/config.yaml and ai/workspace/gov.md. Case (c) transferred the two
+    nested files and excluded the two anchored ones, which is the behavioural
+    difference anchoring was introduced to produce and which no earlier test
+    target could show. ai/state/ and ai/dashboard-alerts.md were excluded in the
+    same run.
   closure_notes: >
-    The anchoring change (F6) is verified only by inspection and by case (b)
-    remaining up to date; no target in the test set contains a nested
-    workspace/ or config.yaml to demonstrate the difference.
+    Closed. Every success criterion in change-8c1a4f5e is satisfied by evidence
+    gathered in an independent session, including the one criterion its own
+    verification block recorded as inspection-only. No findings were raised
+    against this change during that verification.
 
 prevention:
   preventive_measures: >
@@ -158,6 +174,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue consolidating P08 audit findings F4, F5 and F6"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Independently verified live in the Cowork remediation session, including the F4 precondition against a reconstructed pre-change script and the anchoring case the implementing session could not demonstrate; no findings; issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

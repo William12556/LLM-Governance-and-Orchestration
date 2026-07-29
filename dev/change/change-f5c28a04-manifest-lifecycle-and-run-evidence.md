@@ -257,6 +257,87 @@ verification:
   issues_found:
     - "End-to-end behaviour unverified. Blocked on change-3b9e6d72; a three-cycle live run is required before closure."
 
+independent_verification_2026_07_29:
+  performed_by: "Claude (Cowork remediation session, Opus 5) — independent of the implementing session"
+  runs: "e73caef0 (3 cycles configured, phase_max_iterations 8), 8c2040d3 (3 cycles, 20), 7135e75d (2 cycles, 20), all against dev/smoke or dev/smoke-n1"
+  criteria:
+    - criterion: "Cycle 1 produces deliverables; cycle 2 produces none and exhausts its budget -> cycle 2 returns rc=1; the gates never see cycle 1's manifest again"
+      evidence: >
+        SATISFIED, live, and this is the first direct observation of the
+        behaviour the change exists to produce. Run e73caef0: cycle 1 exhausted
+        its eight iterations having written src/split.py, synthesis logged
+        "work-summary synthesized from 1 observed write(s)", rc=0, gates PASS,
+        reviewer REVISE. Cycle 2's worker issued eight tool calls — roots, ls,
+        three reads, a grep, and two further reads — and no write of any kind;
+        the log then reads "exhausted phase produced no deliverable manifest —
+        rc=1" and "work phase rc=1". Under the pre-change code this is exactly
+        the case that returned rc=0 on cycle 1's surviving manifest (audit
+        finding F1, run a2d10058). Reproduced a second time in run 7135e75d
+        cycle 2.
+      satisfied: true
+    - criterion: "--mode reset against a project with no state directory exits 0 with 'nothing to clear'"
+      evidence: >
+        SATISFIED, live, with a controlled comparison. reset_ael against
+        dev/smoke carrying the pre-change propagated orchestrator returned
+        {"returncode": 1, "output": "reset: state directory not found: ..."};
+        after propagating this change and with the state directory still
+        absent, the same call returned {"returncode": 0, ... "reset: state
+        directory not present: ... reset: nothing to clear"}.
+      satisfied: true
+    - criterion: "log_archive_dir set, run repeated -> prior logs copied once; re-runs copy nothing further"
+      evidence: >
+        SATISFIED, live, twice. Run e73caef0 logged "log archive dir:
+        .../dev/smoke/ai/logs" and copied ael_20260729-104442.LOG out of
+        state_dir. Run 8c2040d3 copied ael_20260729-123147.LOG and did not
+        re-copy 104442, which was already present at the destination.
+      satisfied: true
+    - criterion: "Worker writes work-summary.txt itself, then exhausts the budget -> phase returns 0 with that summary intact"
+      evidence: >
+        Not exercised. No worker in any run of this session wrote
+        work-summary.txt by its own hand. Satisfied by source reading only.
+      satisfied: "unverified"
+    - criterion: "Deliverable created via move_file -> recorded at the destination and appears in the manifest"
+      evidence: >
+        Not exercised live; no worker used a move or rename tool. The branch is
+        confirmed reachable — all four names are members of _WRITE_TOOLS — and
+        the ordering is confirmed by isolated execution of the extracted block.
+      satisfied: "unverified"
+    - criterion: "log_archive_dir unset -> no archiving; behaviour identical to before"
+      evidence: "Not exercised; both harnesses configured the key. Source-evident (the function returns 0 on a falsy archive_dir)."
+      satisfied: "unverified"
+    - criterion: "Worker reaches a normal final response -> F13 path unchanged; _manifest_written set; summary is the worker's final message"
+      evidence: >
+        SATISFIED as written, and that is the problem. Run 8c2040d3 cycles 1
+        and 3 both took this exit. The summary was the worker's final message
+        verbatim — in cycle 1, the single sentence "Let me run the manual test
+        to verify the implementation:" — and _manifest_written was set. See
+        finding N1 below.
+      satisfied: true
+  finding_raised: >
+    N1, recorded in issue-d1f4a83b, severity high. Because the F13 exit
+    persists the worker's final message verbatim and this change's
+    _manifest_written flag is set there unconditionally, a final response that
+    is not a manifest satisfies both the file's presence and the freshness
+    test. In run 8c2040d3 cycle 1 the worker had written src/split.py and
+    test_manual.py; _extract_deliverables returned 0 files, the syntax, pytest
+    and read-evidence gates all no-opped, and the reviewer reported that
+    split.py "was not found in the expected location". The per-cycle manifest
+    guarantee this change delivers at three exits therefore does not hold at
+    the fourth. Corrected under change-d1f4a83b, which is itself unverified
+    independently.
+
+    N2, same issue, severity medium: this change corrected the manifest side of
+    the `path or file_path or destination` ordering but not the scope-validation
+    side. _validate_write_scope still tests one value, so a move supplying its
+    source as `path` and a destination outside project_root passes F4
+    containment. Reproduced by isolated execution.
+  closure_disposition: >
+    Left open. Three of seven test cases are unexercised, and finding N1 shows
+    the change's central benefit is not delivered at one of the four worker
+    exits. The evidence obtained is nonetheless substantial: the F1 defect this
+    change was written to close is now directly observed to be closed, twice,
+    which no prior session had achieved.
+
 traceability:
   design_updates: []
   related_changes:
@@ -284,6 +365,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — implemented directly from dev/remediation-2026-07-29.md §1.1, §1.2, §1.3, §1.5, §2.3, §3.1, §4.2"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Added independent_verification_2026_07_29: F1 per-cycle manifest behaviour, reset idempotency and log archiving all confirmed live; three test cases remain unexercised; findings N1 (high) and N2 (medium) raised and corrected under change-d1f4a83b; triple left open"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

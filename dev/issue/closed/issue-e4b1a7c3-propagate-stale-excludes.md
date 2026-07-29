@@ -6,7 +6,7 @@ issue_info:
   title: "propagate.sh excludes a stale state path and does not protect project-specific ai/context.md"
   date: "2026-07-29"
   reporter: "William Watson"
-  status: "investigating"
+  status: "resolved"
   severity: "high"
   type: "defect"
   iteration: 1
@@ -104,15 +104,44 @@ resolution:
   target_date: "2026-07-29"
   approach: "Correct the state exclude to the post-restructure path; exclude context.md from the main pass and seed it with a second --ignore-existing pass"
   change_ref: "change-e4b1a7c3"
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  resolved_date: "2026-07-29"
+  resolved_by: "Claude Desktop (Opus 5), completed by change-8c1a4f5e"
+  fix_description: >
+    change-e4b1a7c3 replaced the dead 'ael/state/' exclude with an anchored
+    '/state/', excluded '/context.md' from the main transfer so a downstream
+    copy is never overwritten, and added a seeding pass for targets lacking the
+    file. change-8c1a4f5e completed the fix by evaluating the seed condition
+    before the preview's early exit, which is what made the seeding pass
+    reachable in its own use case (audit finding F4).
 
 verification:
-  verified_date: ""
-  verified_by: ""
-  test_results: ""
-  closure_notes: ""
+  verified_date: "2026-07-29"
+  verified_by: "Claude (Cowork remediation session, Opus 5) — independent of the implementing session"
+  test_results: >
+    All three validation criteria re-derived live, against a synthetic source
+    tree carrying a populated ai/state/ and every other exclude category.
+
+    "No ai/state/ in target after propagation": the same source and target pair
+    run against the pre-e4b1a7c3 script transferred state/leak.txt into the
+    target; run against the current script it is excluded. Corroborated in the
+    framework's own use — propagation to dev/smoke listed only
+    ai/ael/src/orchestrator.py and created no ai/state in the target.
+
+    "Filled-in target context.md survives propagation": a target whose
+    context.md contained downstream content retained it byte-for-byte, and the
+    script reported "context.md: existing project copy preserved."
+
+    "Target without ai/context.md receives the template": satisfied, including
+    the narrow case audit finding F4 identified as failing — see
+    issue-8c1a4f5e, whose fix supplies it.
+
+    bash -n clean; set -euo pipefail present; preview and confirmation flow
+    unchanged, with declining at the prompt producing no transfer and no seed.
+  closure_notes: >
+    Closed. The partial criterion recorded by the P08 audit (F4) is resolved by
+    change-8c1a4f5e, which is itself closed on independent live evidence. The
+    style findings F5 and F6 were also carried by that change. No finding
+    against change-e4b1a7c3 remains open.
 
 prevention:
   preventive_measures: >
@@ -166,6 +195,11 @@ version_history:
     author: "William Watson"
     changes:
       - "P08 audit audit-p08-20260729 verified the state-exclude and context.md-protection fixes but found the seeding pass unreachable in its own use case (F4), plus two style findings (F5, F6); corrective change-8c1a4f5e implemented; issue remains open pending independent audit of that change"
+  - version: "1.2"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "change-8c1a4f5e independently verified live in the Cowork remediation session, closing F4; all three validation criteria of change-e4b1a7c3 re-derived live, including a pre-change/post-change comparison demonstrating the state leak the exclude correction prevents; issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

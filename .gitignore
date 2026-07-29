@@ -30,6 +30,10 @@ venv/
 !ai/logs/
 !ai/logs/**
 
+# Run logs cited as evidence in a dev/audit report — retained with the report
+!dev/audit/logs-*/
+!dev/audit/logs-*/**
+
 # Obsidian
 .obsidian/
 *.canvas

@@ -119,21 +119,31 @@ def _validate_write_scope(tool_name: str, arguments: dict, project_root: str) ->
     if tool_name not in _WRITE_TOOLS:
         return None
 
-    # Extract path from common argument names
-    target_path = arguments.get("path") or arguments.get("file_path") or arguments.get("destination")
-    if not target_path:
+    # change-d1f4a83b (N2): every path argument a write tool carries is checked,
+    # not merely the first one present. The prior `path or file_path or
+    # destination` chain stopped at the first match, so a move or rename that
+    # supplied its source as `path` was validated on the source alone and its
+    # destination was never examined — a call relocating a file out of the
+    # project root passed the gate. Each path a call touches is a distinct
+    # containment obligation, so each is tested.
+    targets = [
+        arguments.get(key) for key in ("path", "file_path", "destination", "new_path")
+    ]
+    targets = [t for t in targets if isinstance(t, str) and t]
+    if not targets:
         return None  # Let MCP validate missing required args
 
     # Resolve to absolute and check containment
-    try:
-        resolved = os.path.abspath(target_path)
-        if not resolved.startswith(project_root + os.sep) and resolved != project_root:
-            return (
-                f"Scope violation: path '{target_path}' is outside the project root "
-                f"'{project_root}'. All writes must target paths within the project."
-            )
-    except Exception:
-        pass  # Let MCP handle malformed paths
+    for target_path in targets:
+        try:
+            resolved = os.path.abspath(target_path)
+            if not resolved.startswith(project_root + os.sep) and resolved != project_root:
+                return (
+                    f"Scope violation: path '{target_path}' is outside the project root "
+                    f"'{project_root}'. All writes must target paths within the project."
+                )
+        except Exception:
+            continue  # Let MCP handle malformed paths
 
     return None
 
@@ -192,6 +202,65 @@ def _synthesize_work_summary(
     log.warning(
         "work-summary synthesized from %d observed write(s) (%s)",
         len(deliverables), reason,
+    )
+    return True
+
+
+def _append_observed_manifest(
+    state_dir: str,
+    written_paths: set[str],
+    content: str,
+    log: logging.Logger,
+) -> bool:
+    """
+    change-d1f4a83b (N1): append an observed-write manifest to work-summary.txt
+    when the worker's own final response names none of the files it wrote.
+
+    F13 persists the worker's final message verbatim as work-summary.txt on the
+    normal-completion path, on the assumption that a worker which finishes
+    deliberately has written the manifest ralph-work.yaml PROCEDURE step 6 asks
+    for. That assumption does not hold: a final message may be a single
+    narrating sentence. _extract_deliverables then returns the empty set and the
+    syntax, pytest and read-evidence gates all no-op — the vacuous-pass
+    condition change-a2f9c4d1 set out to close, reached by the one exit that
+    change did not touch. Live-confirmed, run 8c2040d3 cycle 1.
+
+    The worker's own account is never overwritten, only extended, and only when
+    it names none of the observed deliverables. A worker that did write a proper
+    manifest is left untouched.
+
+    Returns True if a manifest section was appended.
+    """
+    state_dir_abs = os.path.abspath(state_dir)
+    deliverables = sorted(
+        p for p in written_paths
+        if not p.startswith(state_dir_abs + os.sep) and os.path.isfile(p)
+    )
+    if not deliverables:
+        return False
+    if any(os.path.basename(p) in content for p in deliverables):
+        log.debug("work-summary: final response already names a deliverable — no append")
+        return False
+
+    summary_path = os.path.join(state_dir, "work-summary.txt")
+    try:
+        with open(summary_path, "a") as fh:
+            fh.write(
+                "\n\nORCHESTRATOR-APPENDED MANIFEST\n\n"
+                "The worker's final response named none of the files it wrote\n"
+                "during this phase. This list was recorded from observed write\n"
+                "operations so that the review gates adjudicate this cycle's\n"
+                "actual output. It records what was written, not why.\n\n"
+                "Files written:\n"
+                + "".join(f"  {p}\n" for p in deliverables)
+            )
+    except OSError as exc:
+        log.warning("work-summary manifest append failed: %s", exc)
+        return False
+
+    log.warning(
+        "work-summary manifest appended from %d observed write(s) "
+        "(worker final response named none)", len(deliverables),
     )
     return True
 
@@ -315,6 +384,15 @@ def _strip_verdict(text: str) -> str:
         return "\n".join(kept).strip()
 
     tokens = text.strip().split(None, 1)
+    if not tokens:
+        return ""
+    # change-d1f4a83b (N3): drop the leading token only when it is itself a
+    # verdict. A reviewer message carrying no verdict anywhere still reaches
+    # this path, because _normalize_verdict defaults to REVISE; dropping its
+    # first word then removes an ordinary word of prose from the feedback the
+    # next worker reads.
+    if _is_verdict_line(tokens[0]) is None:
+        return text.strip()
     return tokens[1].strip() if len(tokens) > 1 else ""
 
 
@@ -1232,6 +1310,10 @@ async def run_phase(
             if is_worker_phase:
                 write_state(state_dir, "work-summary.txt", content)
                 _manifest_written = True
+                # change-d1f4a83b (N1): a final response is not necessarily a
+                # manifest. Append the observed deliverables when it names none,
+                # so the gates receive this cycle's actual output.
+                _append_observed_manifest(state_dir, _written_paths, content, log)
             # Return normalized read paths for review phase (empty for worker)
             _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
             return 0, content, _read_paths
@@ -1959,11 +2041,26 @@ async def run_loop(
         if i > max_iterations + _extra:
             console.print(f"\n[red]✗ max iterations ({max_iterations + _extra}) reached without SHIP[/red]")
             log.warning("max iterations %d reached without SHIP", max_iterations + _extra)
-            try:
-                console.print(f"[yellow][ael] Continue for another {max_iterations} iteration(s)? [y/N]: [/yellow]", end="")
-                answer = input().strip().lower()
-            except (EOFError, KeyboardInterrupt):
+            # change-d1f4a83b (N4): only prompt when there is a human at the
+            # other end. Launched through ael-mcp the orchestrator is detached
+            # and its stdin is neither a terminal nor closed, so input() blocks
+            # indefinitely: the run never reaches "AEL end", the process stays
+            # alive holding its MCP servers, and ael_status reports pid_alive
+            # forever. Live-observed, run 8c2040d3. Non-interactive runs take
+            # the documented default, which is to decline.
+            if not sys.stdin.isatty():
+                log.info("max iterations reached, stdin is not a terminal — declining to continue")
+                console.print(
+                    f"[yellow][ael] Continue for another {max_iterations} iteration(s)? "
+                    f"[y/N]: N (non-interactive)[/yellow]"
+                )
                 answer = "n"
+            else:
+                try:
+                    console.print(f"[yellow][ael] Continue for another {max_iterations} iteration(s)? [y/N]: [/yellow]", end="")
+                    answer = input().strip().lower()
+                except (EOFError, KeyboardInterrupt):
+                    answer = "n"
             if answer != "y":
                 return 1
             _extra += max_iterations

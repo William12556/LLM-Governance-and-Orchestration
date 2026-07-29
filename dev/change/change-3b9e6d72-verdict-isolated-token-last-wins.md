@@ -200,6 +200,43 @@ verification:
   issues_found:
     - "Not verified against a live model. A run reaching an actual SHIP remains outstanding and is the gating verification for this change and for change-f5c28a04."
 
+independent_verification_2026_07_29:
+  performed_by: "Claude (Cowork remediation session, Opus 5) — independent of the implementing session"
+  scope: >
+    Re-derived rather than accepted from the record above. _is_verdict_line,
+    _normalize_verdict and _strip_verdict were extracted by AST and executed
+    standalone against a twenty-two-case suite covering every scenario in
+    testing_requirements plus adversarial forms the change document does not
+    name: 'shipped', 'SHIPSHIP', a blockquoted '> SHIP', a fenced '```/SHIP/```',
+    a spaced 'S H I P', a numbered '1. SHIP', and a message whose isolated
+    'REVISE' precedes a sentence containing the word SHIP.
+  result: >
+    All twenty-two pass. Every validation_criteria entry is satisfied: the
+    module compiles; no input that previously returned SHIP now returns REVISE
+    (pass 2 preserves the leading-token contract exactly); unparseable input
+    still returns REVISE.
+  live_evidence: >
+    Pass 2 exercised live in four review phases across runs e73caef0, 8c2040d3
+    and 7135e75d — every reviewer verdict this session took the
+    'REVISE: <prose>' single-line form, which pass 2 reads correctly. Pass 1,
+    the isolated trailing verdict line this change exists to read, was NOT
+    emitted by the reviewer in any of those phases and therefore remains
+    unexercised live. No SHIP was reached in any run, so the change's stated
+    benefit — that a SHIP becomes reachable — is not demonstrated.
+  finding_raised: >
+    N3, recorded in issue-d1f4a83b. _strip_verdict's leading-token fallback
+    also fires for a reviewer message containing no verdict at all, which
+    reaches that path because _normalize_verdict defaults to REVISE. The next
+    worker then reads feedback with an ordinary word of prose removed, so this
+    change's benefit "REVISE feedback bodies are no longer mangled by an
+    inapplicable leading-token strip" holds only when a verdict is present.
+    Corrected under change-d1f4a83b, which is itself unverified independently.
+  closure_disposition: >
+    Left open. Two conditions are unmet: the change document's own gating
+    verification (a run reaching an actual SHIP), and finding N3, whose
+    correction has not been independently verified. Neither is a defect in the
+    parsing logic, which is correct on every input tested.
+
 traceability:
   design_updates: []
   related_changes:
@@ -221,6 +258,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — implemented directly from dev/remediation-2026-07-29.md §2.1, option 2"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Added independent_verification_2026_07_29: twenty-two-case re-derivation of all three helpers; pass 2 confirmed live, pass 1 not emitted by any reviewer this session; no SHIP reached; finding N3 raised against the change's feedback-mangling benefit and corrected under change-d1f4a83b; triple left open"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
