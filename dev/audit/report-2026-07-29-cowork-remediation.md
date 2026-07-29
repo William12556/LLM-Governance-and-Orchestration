@@ -456,14 +456,20 @@ clear.
 
 | Hash | Subject |
 |---|---|
-| `9b7fea6` | `fix(ael): correct verdict parsing and manifest lifecycle in orchestrator` |
-| `8c98de7` | `fix(propagate): evaluate context.md seed before the preview early exit` |
-| `289070e` | `docs(dev): record P08 audit, corrective triples and remediation backlog` |
+| `9b7fea6` | `fix(ael): correct verdict parsing and manifest lifecycle in orchestrator` — `change-3b9e6d72`, `change-f5c28a04`, `config.yaml`, `.gitignore` |
+| `8c98de7` | `fix(propagate): evaluate context.md seed before the preview early exit` — `change-8c1a4f5e`, carrying the previously uncommitted `change-e4b1a7c3` |
+| `289070e` | `docs(dev): record P08 audit, corrective triples and remediation backlog` — five triples, the audit, the backlog, `dev/smoke-fixtures/`, and the `b7e3d5a9` closure moves |
+| `fe5c09a` | `fix(ael): append an observed-write manifest at the final-response exit` — `change-d1f4a83b`, the two closures, the correction notes, this report and the five run logs it cites |
 
-All three carry a `Co-authored-by: Claude` trailer and Conventional Commits
-subjects. A fourth commit covering `change-d1f4a83b` and the closure edits is
-listed in §11.0 as a ready-to-paste command, since it depends on the report
-itself being written.
+All four carry a `Co-authored-by: Claude` trailer and Conventional Commits
+subjects. The working tree is clean apart from `.claude/`, which is left
+untracked deliberately.
+
+The five run logs cited in this report are committed at
+`dev/audit/logs-2026-07-29/`, with a `.gitignore` re-include for
+`dev/audit/logs-*/`. This is the first session in which the evidence base for an
+audit survives in version control — the P08 audit found four of its five cited
+logs already destroyed by the `*.log` pattern.
 
 **Nothing has been pushed.** See §3.1 and §11.0.
 
@@ -538,37 +544,20 @@ it amends.
    kill 22391    # run 8c2040d3, blocked in input() since 12:53
    ```
 
-2. **Commit the remediation triple and closure edits, then push.**
+2. **Push.** All four commits are made; only the push is outstanding.
 
    ```bash
    cd ~/Documents/GitHub/LLM-Governance-and-Orchestration
-   git add -A ai/ael/src/orchestrator.py dev/
-   git commit -m "fix(ael): append an observed-write manifest at the final-response exit
-
-   change-d1f4a83b closes four defects found while independently verifying
-   change-3b9e6d72, change-f5c28a04 and change-8c1a4f5e.
-
-   N1: F13 persisted the worker's final message verbatim as work-summary.txt,
-   so a response that named no file left _extract_deliverables empty and the
-   syntax, pytest and read-evidence gates all no-opped. A labelled manifest of
-   observed writes is now appended when the response names none of them.
-   N2: _validate_write_scope tested only the first path argument, admitting a
-   move or rename whose destination lay outside the project root.
-   N3: _strip_verdict dropped the leading token of a verdict-free message.
-   N4: the max-iterations continue prompt blocked forever on a non-terminal
-   stdin, orphaning ael-mcp-launched runs.
-
-   Closes triples e4b1a7c3 and 8c1a4f5e on independent live evidence; records
-   correction notes on 3b9e6d72 and f5c28a04, both left open.
-
-   Co-authored-by: Claude <noreply@anthropic.com>"
+   git log --oneline -4          # expect fe5c09a, 289070e, 8c98de7, 9b7fea6
    git push origin main
    ```
 
-3. **Remove the verification scratch project** when no longer wanted:
-   `rm -rf dev/smoke-n1`.
+3. **Decide** the two judgment items at §10.4.
 
-4. **Decide** the two judgment items at §10.4.
+Nothing else is required. `dev/smoke-n1`, the scratch verification project, has
+already been removed; its run logs are preserved at
+`dev/audit/logs-2026-07-29/`. `dev/smoke` is left in its post-run state with
+`ai/logs/` populated, as the harness intends.
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -579,6 +568,7 @@ it amends.
 | Version | Date | Description |
 |---|---|---|
 | 1.0 | 2026-07-29 | Initial report — execution record for dev/cowork-remediation-prompt-2026-07-29.md |
+| 1.1 | 2026-07-29 | §7.4 completed with the outcome of run 1df4e55d; §9.0 updated with the fourth commit and the committed log evidence; §11.0 reduced to the push and the two judgment items |
 
 ---
 
