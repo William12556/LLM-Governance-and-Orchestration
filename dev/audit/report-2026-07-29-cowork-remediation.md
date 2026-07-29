@@ -460,8 +460,9 @@ clear.
 | `8c98de7` | `fix(propagate): evaluate context.md seed before the preview early exit` — `change-8c1a4f5e`, carrying the previously uncommitted `change-e4b1a7c3` |
 | `289070e` | `docs(dev): record P08 audit, corrective triples and remediation backlog` — five triples, the audit, the backlog, `dev/smoke-fixtures/`, and the `b7e3d5a9` closure moves |
 | `fe5c09a` | `fix(ael): append an observed-write manifest at the final-response exit` — `change-d1f4a83b`, the two closures, the correction notes, this report and the five run logs it cites |
+| `812a15a` | `docs(dev): complete the Cowork remediation report with run 1df4e55d outcome` |
 
-All four carry a `Co-authored-by: Claude` trailer and Conventional Commits
+All five carry a `Co-authored-by: Claude` trailer and Conventional Commits
 subjects. The working tree is clean apart from `.claude/`, which is left
 untracked deliberately.
 
@@ -548,7 +549,7 @@ it amends.
 
    ```bash
    cd ~/Documents/GitHub/LLM-Governance-and-Orchestration
-   git log --oneline -4          # expect fe5c09a, 289070e, 8c98de7, 9b7fea6
+   git log --oneline -5          # expect 812a15a, fe5c09a, 289070e, 8c98de7, 9b7fea6
    git push origin main
    ```
 
