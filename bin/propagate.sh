@@ -42,11 +42,19 @@ fi
 # --- Excludes --------------------------------------------------------------
 # Project-specific files that must never be overwritten in the target.
 
+# Path-specific excludes are anchored with a leading '/' (relative to the
+# transfer root, ai/) so each matches only its intended file. Unanchored, a
+# basename pattern matches at any depth: 'workspace/' would also exclude a
+# downstream ai/doc/workspace/, and 'config.yaml' any config.yaml anywhere
+# under ai/. Only the genuinely depth-independent patterns below — editor and
+# interpreter droppings — remain unanchored.
+
 EXCLUDES=(
-    --exclude='config.yaml'        # project-specific AEL configuration
-    --exclude='workspace/'         # project-local governance documents
-    --exclude='ael/state/'         # ephemeral AEL state
-    --exclude='dashboard-alerts.md' # govwatch write target
+    --exclude='/ael/config.yaml'    # project-specific AEL configuration
+    --exclude='/context.md'         # project-specific conventions/stack; seeded below when absent
+    --exclude='/workspace/'         # project-local governance documents
+    --exclude='/state/'             # AEL runtime state (post-2026-06-16 path; was ael/state/)
+    --exclude='/dashboard-alerts.md' # govwatch write target
     --exclude='.DS_Store'
     --exclude='__pycache__/'
     --exclude='*.pyc'
@@ -60,15 +68,37 @@ EXCLUDES=(
 echo "=== Preview: ai -> ${PROJECT_AI} ==="
 echo ""
 
+# context.md is excluded from the transfer, so it is invisible to CHANGES. A
+# target differing from the source only by a missing context.md therefore
+# reported "up to date" and exited before reaching the seeding pass below —
+# making that pass unreachable in precisely the case it exists to serve, the
+# new project. The seed condition is evaluated here, before the early exit,
+# and admitted as work to be done.
+
+if [[ -f "${PROJECT_AI}/context.md" ]]; then
+    NEEDS_SEED="false"
+else
+    NEEDS_SEED="true"
+fi
+
 CHANGES=$(rsync --dry-run -av --itemize-changes "${EXCLUDES[@]}" \
     "${AI_SRC}/" "${PROJECT_AI}/" | grep '^>f' || true)
 
-if [[ -z "${CHANGES}" ]]; then
+if [[ -z "${CHANGES}" && "${NEEDS_SEED}" == "false" ]]; then
     echo "Target is up to date. No changes to apply."
     exit 0
 fi
 
-echo "${CHANGES}"
+if [[ -n "${CHANGES}" ]]; then
+    echo "${CHANGES}"
+else
+    echo "(no framework files differ)"
+fi
+
+if [[ "${NEEDS_SEED}" == "true" ]]; then
+    echo "seed         context.md (absent in target)"
+fi
+
 echo ""
 
 # --- Confirmation ----------------------------------------------------------
@@ -83,6 +113,21 @@ fi
 
 rsync -av "${EXCLUDES[@]}" \
     "${AI_SRC}/" "${PROJECT_AI}/"
+
+# --- Seed project-specific context ----------------------------------------
+# context.md is excluded from the transfer above so an existing downstream copy
+# is never overwritten. New projects still need the template, so seed it here.
+# NEEDS_SEED was evaluated before the preview's early exit; --ignore-existing is
+# not used, as the absence of the file is already established by that test.
+
+if [[ "${NEEDS_SEED}" == "true" ]]; then
+    rsync -a "${AI_SRC}/context.md" "${PROJECT_AI}/"
+    echo ""
+    echo "context.md: template seeded (new project). Fill it in before the first AEL run."
+else
+    echo ""
+    echo "context.md: existing project copy preserved."
+fi
 
 echo ""
 echo "Done. Review changes and commit manually."
