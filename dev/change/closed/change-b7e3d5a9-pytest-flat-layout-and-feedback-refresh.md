@@ -6,7 +6,7 @@ change_info:
   title: "Flat-layout test target resolution; per-cycle reviewer feedback refresh"
   date: "2026-07-29"
   author: "William Watson"
-  status: "approved"
+  status: "verified"
   priority: "high"
   iteration: 1
   coupled_docs:
@@ -163,9 +163,19 @@ implementation:
 verification:
   implemented_date: "2026-07-29"
   implemented_by: "Claude Desktop (Opus 5)"
-  verification_date: ""
-  verified_by: ""
-  test_results: ""
+  verification_date: "2026-07-29"
+  verified_by: "Claude Desktop (independent P08 audit session) — audit-p08-20260729"
+  test_results: >
+    Verified live and independently, in addition to source inspection. Run
+    a2d10058, both loop cycles: '[TEST GATE: PASS]' present in the reviewer
+    task with 'pytest gate: running pytest on 1 target(s)' naming
+    tests/test_split.py, confirming the flat-module fallback resolves and
+    executes for a deliverable src/split.py. Persisted fallback feedback
+    differed in length between cycle 1 (684 chars) and cycle 2 (790 chars),
+    confirming the per-cycle clear delivers fresh content rather than a
+    repeat. The worker's read of the prior cycle's feedback, before the clear
+    removes it, was separately confirmed. No defects found against either of
+    this change's two fixes.
   issues_found: []
 
 traceability:
@@ -192,6 +202,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — approved for direct implementation"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Independently verified by P08 audit audit-p08-20260729 (status: verified, no findings against this change); status approved → verified; change closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

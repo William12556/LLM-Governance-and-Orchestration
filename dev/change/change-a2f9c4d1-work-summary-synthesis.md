@@ -80,7 +80,15 @@ rational:
         for no work. Gating on observed deliverables preserves fail-fast for
         unproductive phases.
   benefits:
-    - "Closes a silent gate-bypass affecting three of four worker exits"
+    # Correction (2026-07-29, change-f5c28a04): the original wording here read
+    # "Closes a silent gate-bypass affecting three of four worker exits". The
+    # code as implemented did not support that claim. Synthesis declines to
+    # overwrite an existing work-summary.txt, and the file was cleared only once
+    # per run rather than once per cycle, so from cycle 2 onward a manifest left
+    # by the previous cycle suppressed synthesis and was re-presented to the
+    # gates. The bypass was narrowed, not closed. Closing it required the
+    # per-cycle clear added by change-f5c28a04.
+    - "Narrows a silent gate-bypass at three of four worker exits, for the first cycle of a run; fully closed by change-f5c28a04's per-cycle manifest clear"
     - "Deterministic — independent of worker recipe compliance"
     - "Restores the reviewer as arbiter of completeness on budget exhaustion"
     - "No new model-controlled capability or attack surface"
@@ -88,7 +96,14 @@ rational:
     - risk: "Synthesised manifest is mistaken for the worker's own account"
       mitigation: "Body is explicitly headed ORCHESTRATOR-GENERATED SUMMARY and states it records what was written, not why"
     - risk: "Synthesis masks a genuinely failed phase"
-      mitigation: "Writes nothing when no successful non-state writes were observed; never overwrites an existing summary; rc remains 1 when no deliverables were produced"
+      # Correction (2026-07-29, change-f5c28a04): the original mitigation ended
+      # "rc remains 1 when no deliverables were produced". As implemented, the
+      # exhaustion exit tested os.path.exists(work-summary.txt), which is
+      # satisfied by a manifest from any prior cycle. A worker that produced
+      # nothing in cycle 2+ therefore returned rc=0. Verified in run a2d10058,
+      # which contains exactly one write call, in cycle 1. change-f5c28a04
+      # replaces the existence test with this phase's own synthesis outcome.
+      mitigation: "Writes nothing when no successful non-state writes were observed; never overwrites an existing summary. The intended 'rc remains 1 when no deliverables were produced' guarantee did not hold as implemented and is delivered by change-f5c28a04"
     - risk: "A worker producing useless output each cycle now consumes all outer max_iterations rather than aborting after one"
       mitigation: "Bounded by max_iterations; F12 stall detection covers repeated identical REVISE feedback. Accepted."
     - risk: "Write-target tracking records paths from calls that appeared to succeed but did not"
@@ -200,6 +215,8 @@ traceability:
       relationship: "precedent (deterministic orchestrator-side enforcement)"
     - change_ref: "change-5bdc2d9b"
       relationship: "precedent (deliverable-set consumer)"
+    - change_ref: "change-f5c28a04"
+      relationship: "corrective successor — completes the manifest lifecycle this change left partial (F1/F2/F3) and corrects this document's overstated claims"
   related_issues:
     - issue_ref: "issue-a2f9c4d1"
       relationship: "resolves"
@@ -215,6 +232,12 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial change document — approved for direct implementation (option 1: both parts)"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Corrected two claims the implemented code did not support, per P08 audit and dev/remediation-2026-07-29.md §1.5: the gate-bypass benefit (narrowed, not closed) and the rc=1 mitigation (did not hold across cycles). Both are delivered by change-f5c28a04."
+      - "Added change-f5c28a04 to traceability.related_changes as the corrective successor"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

@@ -6,7 +6,7 @@ issue_info:
   title: "Pytest gate resolves no targets for flat src/ layouts; review-feedback.txt is never refreshed across loop iterations"
   date: "2026-07-29"
   reporter: "William Watson"
-  status: "investigating"
+  status: "resolved"
   severity: "high"
   type: "defect"
   iteration: 1
@@ -119,15 +119,34 @@ resolution:
   target_date: "2026-07-29"
   approach: "Flat-layout fallback in pytest target resolution; add review-feedback.txt to the per-cycle clear"
   change_ref: "change-b7e3d5a9"
-  resolved_date: ""
-  resolved_by: ""
-  fix_description: ""
+  resolved_date: "2026-07-29"
+  resolved_by: "Claude Desktop (Opus 5)"
+  fix_description: >
+    Added a flat-module fallback to _run_pytest_gate's src/ target-resolution
+    branch: when the tests/<component>/ directory mapping does not resolve,
+    tests test_<stem>.py then <stem>_test.py where stem is the deliverable's
+    basename. Added review-feedback.txt to the per-cycle clear_state call
+    immediately before the review phase, alongside work-complete.txt.
 
 verification:
-  verified_date: ""
-  verified_by: ""
-  test_results: ""
-  closure_notes: ""
+  verified_date: "2026-07-29"
+  verified_by: "Claude Desktop (independent P08 audit session) — audit-p08-20260729"
+  test_results: >
+    Verified live and independently. Run a2d10058 (both cycles): reviewer task
+    contains '[TEST GATE: PASS]' with 'pytest gate: running pytest on 1
+    target(s)' naming tests/test_split.py — the flat-layout fallback resolving
+    and executing where it previously no-opped. Cycle 1 and cycle 2 persisted
+    fallback feedback bodies of differing length (684 vs 790 chars), confirming
+    distinct content rather than a repeat of cycle 1. The worker was separately
+    confirmed to read the prior cycle's feedback before the per-cycle clear
+    removes it. No findings against this change; audit status "verified".
+  closure_notes: >
+    Closed per audit-p08-2026-07-29-orchestrator-changes.md, the only one of
+    the three audited changes to receive a clean "verified" status with no
+    findings. The stall-BLOCK threshold path and the pytest-FAIL/SHIP-override
+    path remain unexercised in all available evidence — disclosed as pre-
+    existing weak points, not defects of this fix, and not required for its
+    own two success criteria.
 
 prevention:
   preventive_measures: >
@@ -167,6 +186,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue from live dev/smoke run 531e5e76"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "Resolved via change-b7e3d5a9; independently verified by P08 audit audit-p08-20260729 (status: verified, no findings); issue closed"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."

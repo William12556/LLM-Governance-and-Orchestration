@@ -154,6 +154,20 @@ notes: >
   deployed ael-mcp build resolves state to .ael/ralph rather than
   ai/state/ralph, breaking ael_status.
 
+  Update (2026-07-29, P08 audit audit-p08-20260729): change-a2f9c4d1 as
+  implemented did not fully close this issue. The manifest it introduced was
+  cleared only once per run rather than once per cycle, so from loop cycle 2
+  onward a manifest left by a prior cycle suppressed synthesis and was
+  re-presented to the gates as though it were current — live-confirmed in run
+  a2d10058, which contains exactly one write call, in cycle 1, yet returned
+  rc=0 in cycle 2 with zero writes. A related defect (move/rename deliverables
+  recorded at their pre-move location) was found in the same review. Both are
+  addressed by change-f5c28a04, which narrows work-summary.txt's lifetime to a
+  single cycle and derives the exhaustion return code from the phase's own
+  outcome rather than file presence. This issue remains open pending
+  end-to-end verification of change-f5c28a04, which is itself blocked on
+  change-3b9e6d72 (no reviewer verdict was reachable as SHIP before that fix).
+
 loop_context:
   was_loop_execution: true
   blocked_at_iteration: 8
@@ -166,6 +180,11 @@ version_history:
     author: "William Watson"
     changes:
       - "Initial issue from live dev/smoke runs fc55ecf7 and 30a648c7"
+  - version: "1.1"
+    date: "2026-07-29"
+    author: "William Watson"
+    changes:
+      - "P08 audit audit-p08-20260729 found change-a2f9c4d1 incompletely closed this issue (stale-manifest and move/rename recording defects); corrective change-f5c28a04 implemented; issue remains open pending that change's end-to-end verification, itself blocked on change-3b9e6d72"
 
 metadata:
   copyright: "Copyright (c) 2026 William Watson. MIT License."
