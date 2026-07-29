@@ -10,6 +10,12 @@
 #     only tool able to read outside PROJECT_ROOT
 #   - max_iterations and phase_duration_minutes reduced so a non-converging
 #     phase fails fast
+#   - phase_max_iterations reduced 20 -> 8 after run fc55ecf7, where the worker
+#     solved the task in 4 minutes then spent 14 more writing verification
+#     scripts it had no tool to execute; raised to 12 after run fbd9993d, where
+#     8 proved too tight — the worker spent all 8 iterations orienting and
+#     never wrote anything. It issues one tool call per iteration and does not
+#     batch, so this value is effectively a tool-call budget.
 
 omlx:
   base_url: "http://127.0.0.1:8000/v1"

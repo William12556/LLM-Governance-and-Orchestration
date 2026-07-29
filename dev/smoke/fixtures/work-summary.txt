@@ -1,3 +1,0 @@
-Implemented split_into_chunks in src/split.py.
-
-Splits a list into n contiguous chunks of nearly equal size, preserving order.

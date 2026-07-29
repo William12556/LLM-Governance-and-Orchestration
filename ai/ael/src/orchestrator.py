@@ -138,6 +138,64 @@ def _validate_write_scope(tool_name: str, arguments: dict, project_root: str) ->
     return None
 
 
+def _synthesize_work_summary(
+    state_dir: str,
+    written_paths: set[str],
+    reason: str,
+    log: logging.Logger,
+) -> bool:
+    """
+    change-a2f9c4d1: reconstruct work-summary.txt from observed write operations
+    when a worker phase terminated without producing one.
+
+    ralph-work.yaml PROCEDURE step 6 instructs the worker to write this file, but
+    only the final-response exit (F13) persists it as a fallback. A phase that
+    exits on the wall-clock cap, the work-complete signal, or iteration
+    exhaustion leaves deliverables on disk with no manifest — and since
+    _extract_deliverables reads this file, the read-evidence, syntax and pytest
+    gates then pass vacuously.
+
+    Synthesis is deliberately conservative:
+      - never overwrites an existing work-summary.txt
+      - writes nothing when no successful write landed outside state_dir, so a
+        phase that genuinely produced nothing still presents no manifest
+      - labels itself plainly, so the reviewer does not mistake it for the
+        worker's own account of its reasoning
+
+    Returns True if a summary was written.
+    """
+    summary_path = os.path.join(state_dir, "work-summary.txt")
+    if os.path.exists(summary_path):
+        return False
+    if not written_paths:
+        log.debug("work-summary synthesis: no observed writes — skipping")
+        return False
+
+    state_dir_abs = os.path.abspath(state_dir)
+    deliverables = sorted(
+        p for p in written_paths
+        if not p.startswith(state_dir_abs + os.sep) and os.path.isfile(p)
+    )
+    if not deliverables:
+        log.debug("work-summary synthesis: no deliverables outside state_dir — skipping")
+        return False
+
+    body = (
+        "ORCHESTRATOR-GENERATED SUMMARY\n\n"
+        f"The worker phase ended ({reason}) without writing work-summary.txt.\n"
+        "This manifest was reconstructed from write operations observed during\n"
+        "the phase. It records what was written, not why.\n\n"
+        "Files written:\n"
+        + "".join(f"  {p}\n" for p in deliverables)
+    )
+    write_state(state_dir, "work-summary.txt", body)
+    log.warning(
+        "work-summary synthesized from %d observed write(s) (%s)",
+        len(deliverables), reason,
+    )
+    return True
+
+
 def _validate_audit_report_write(tool_name: str, arguments: dict, state_dir: str) -> str | None:
     """
     F21: Block writes to audit-report.md that would discard prior findings.
@@ -926,6 +984,7 @@ async def run_phase(
 
     mcp_error_count = 0
     _read_counts: dict[str, int] = {}  # P3: duplicate read tracking
+    _written_paths: set[str] = set()  # change-a2f9c4d1: successful write targets
     _failed_call_sigs: dict[str, int] = {}  # F27: repeated identical failed call tracking
 
     label = f"{phase_label} " if phase_label else ""
@@ -949,6 +1008,9 @@ async def run_phase(
         if phase_duration_seconds is not None and (time.monotonic() - _phase_start) > phase_duration_seconds:
             console.print(f"\n[yellow][ael] phase wall-clock cap ({phase_duration_seconds/60:.0f} min) reached[/yellow]")
             log.warning("phase wall-clock cap (%.0fs) reached at iteration %d", phase_duration_seconds, iteration)
+            # change-a2f9c4d1: persist a deliverable manifest before returning
+            if is_worker_phase:
+                _synthesize_work_summary(state_dir, _written_paths, "wall-clock cap reached", log)
             return 0, "", set(_read_counts.keys()) if not is_worker_phase else set()
 
         # Context budget check before API call
@@ -1110,6 +1172,18 @@ async def run_phase(
                         log.warning("duplicate read (count=%d): %s",
                                     _read_counts[_path], _path)
 
+            # change-a2f9c4d1: record successful write targets for work-summary
+            # synthesis. Only calls that raised no scope error, no audit-report
+            # error and no MCP error are treated as writes that actually landed.
+            if (tc["name"] in _WRITE_TOOLS
+                    and not _scope_err and not _report_err
+                    and not _is_mcp_error(result)):
+                _wpath = (tc["arguments"].get("path")
+                          or tc["arguments"].get("file_path")
+                          or tc["arguments"].get("destination"))
+                if _wpath:
+                    _written_paths.add(os.path.abspath(_wpath))
+
             # F27: repeated identical failed call tracking. Diagnostic calls
             # (stat/grep/read) commonly intervene between retries, defeating a
             # simple consecutive-call counter, so failures are counted per
@@ -1263,12 +1337,23 @@ async def run_phase(
             log.info("work-complete.txt detected — phase complete")
             console.print()
             console.print("[green][ael] work-complete detected[/green]")
+            # change-a2f9c4d1: persist a deliverable manifest before returning
+            if is_worker_phase:
+                _synthesize_work_summary(state_dir, _written_paths, "work-complete signal", log)
             _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
             return 0, "", _read_paths
 
     console.print(f"\n[red][ael] max iterations ({max_iterations}) reached[/red]")
     log.warning("max iterations %d reached", max_iterations)
     _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
+    # change-a2f9c4d1: iteration exhaustion is a budget boundary, not a failure.
+    # Synthesise a manifest and let the reviewer adjudicate when the phase
+    # produced deliverables; retain rc=1 only when it produced nothing.
+    if is_worker_phase:
+        _synthesize_work_summary(state_dir, _written_paths, "iteration budget exhausted", log)
+        if os.path.exists(os.path.join(state_dir, "work-summary.txt")):
+            log.info("exhausted phase has a deliverable manifest — proceeding to review")
+            return 0, "", _read_paths
     return 1, "", _read_paths
 
 
@@ -1500,6 +1585,18 @@ def _run_pytest_gate(state_dir: str, log: logging.Logger, project_root: str) -> 
                 test_dir = os.path.join(project_root, "tests", component) if project_root else os.path.join("tests", component)
                 if os.path.isdir(test_dir):
                     targets.add(test_dir)
+                else:
+                    # change-b7e3d5a9: flat-layout fallback. For src/<name>.py the
+                    # component-directory mapping above tests isdir("tests/<name>.py"),
+                    # which can never hold, so the gate resolved nothing and silently
+                    # enforced nothing. Fall back to the flat module convention.
+                    _stem = os.path.splitext(os.path.basename(rel_path))[0]
+                    for _candidate in (f"test_{_stem}.py", f"{_stem}_test.py"):
+                        _test_file = (os.path.join(project_root, "tests", _candidate)
+                                      if project_root else os.path.join("tests", _candidate))
+                        if os.path.isfile(_test_file):
+                            targets.add(_test_file)
+                            break
 
     if not targets:
         log.debug("pytest gate: no test-relevant targets resolved — gate is no-op")
@@ -1786,7 +1883,12 @@ async def run_loop(
             continue
 
         # Review phase — clear worker signal before reviewer starts
-        clear_state(state_dir, "work-complete.txt")
+        # change-b7e3d5a9: review-feedback.txt is cleared here, per cycle, not only
+        # at loop start. The worker has already consumed the prior cycle's feedback
+        # during its phase; without this clear the `if not existing_feedback:` guard
+        # freezes cycle 1's feedback for the whole run, so later reviewers are
+        # discarded and F12 stall detection compares the file to itself.
+        clear_state(state_dir, "work-complete.txt", "review-feedback.txt")
         console.print("\n[bold blue]▶ REVIEW PHASE[/bold blue]")
 
         # F6: Run syntax gate and inject result into reviewer task
