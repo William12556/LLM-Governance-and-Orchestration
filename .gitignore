@@ -35,6 +35,15 @@ workspace/proposal/closed/
 # AEL ephemeral state
 ai/state/ralph/
 
+# dev/smoke harness — propagated framework copy and generated deliverable.
+# The harness definition (task.md, tests/, fixtures/, config.reference.yaml)
+# remains tracked.
+dev/smoke/ai/
+dev/smoke/src/
+dev/eval/.venv/
+dev/eval/.env
+dev/eval/results/
+
 # Model-specific configs (local only)
 .model-config.local.yaml
 

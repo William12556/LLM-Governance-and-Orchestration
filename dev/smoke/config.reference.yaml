@@ -1,0 +1,58 @@
+# Reference AEL configuration for the dev/smoke harness.
+#
+# Copy to ai/ael/config.yaml after running bin/propagate.sh — propagate
+# excludes config.yaml, so it is never created or overwritten by propagation.
+#
+# Deltas from the canonical ai/ael/config.yaml:
+#   - reviewer_model set to the 8-bit Magistral (canonical still names 6-bit)
+#   - explicit context window entry for the 8-bit reviewer, for reproducibility
+#   - mcp-ripgrep omitted: it is declared without path arguments and is the
+#     only tool able to read outside PROJECT_ROOT
+#   - max_iterations and phase_duration_minutes reduced so a non-converging
+#     phase fails fast
+
+omlx:
+  base_url: "http://127.0.0.1:8000/v1"
+  api_key: "local"
+  default_model: "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit"
+  reviewer_model: "Magistral-Small-2509-MLX-8bit"
+
+# Filesystem MCP is confined to PROJECT_ROOT. The placeholder is substituted
+# by _substitute_project_root() before MCPClient connects.
+mcp_servers:
+  filesystem:
+    command: "/usr/local/bin/npx"
+    args:
+      - "-y"
+      - "@j0hanz/filesystem-mcp@latest"
+      - "{PROJECT_ROOT}"
+    env:
+      PATH: "/opt/homebrew/opt/node@24/bin:/usr/local/bin:/usr/bin:/bin"
+
+readiness:
+  timeout_seconds: 60
+  poll_interval_seconds: 2
+
+loop:
+  max_iterations: 2
+  phase_max_iterations: 20
+  mcp_error_threshold: 3
+  max_tool_calls_per_iteration: 10
+  preflight_check: false
+  phase_duration_minutes: 10
+  # Must remain ai/state/ralph: ael-mcp hardcodes this path for status
+  # reporting and log placement.
+  state_dir: "ai/state/ralph"
+
+execution:
+  max_completion_tokens: null
+  max_tool_result_chars: null
+  strict_tactical_brief: false
+
+context:
+  context_window: null
+  budget_warn_pct: 0.80
+  budget_abort_pct: 0.95
+  model_context_windows:
+    "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit": 262144
+    "Magistral-Small-2509-MLX-8bit": 40960   # vendor-recommended effective window
