@@ -237,36 +237,85 @@ def _is_mcp_error(result: str) -> bool:
     return any(result.startswith(p) for p in _MCP_ERROR_PREFIXES)
 
 
+def _is_verdict_line(line: str) -> str | None:
+    """
+    Return 'SHIP' or 'REVISE' if a line consists solely of that verdict token,
+    otherwise None.
+
+    A line qualifies when stripping every non-alphabetic character leaves
+    exactly the token. This admits the decorations models actually emit —
+    '**SHIP**', 'SHIP.', '### REVISE', '- REVISE:' — while rejecting any line
+    that also carries prose, so a verdict word occurring inside a sentence is
+    never mistaken for a declaration.
+    """
+    token = re.sub(r"[^A-Za-z]", "", line).upper()
+    return token if token in ("SHIP", "REVISE") else None
+
+
 def _normalize_verdict(text: str) -> str:
     """
     Normalize a review verdict string to SHIP or REVISE.
 
-    Handles various formats:
-      - 'SHIP', 'ship', 'SHIP.', '**SHIP**', 'SHIP!' -> 'SHIP'
-      - 'REVISE', 'revise', 'REVISE:', '**REVISE**' -> 'REVISE'
-      - 'SHIP: The code looks good...' -> 'SHIP' (leading token)
+    change-3b9e6d72: two passes, applied in order:
 
-    Returns 'SHIP' if the leading token (uppercased, non-alphanumerics stripped)
-    matches 'SHIP', otherwise returns 'REVISE'.
+      1. Isolated-line scan. Any line that is nothing but a verdict token is a
+         verdict declaration; the LAST such line wins. This is the pass that
+         matters in practice — a reviewer which explains its reasoning before
+         concluding places its verdict at the end, and under the previous
+         leading-token-only rule such a review could never ship.
+      2. Leading-token fallback. Preserves the original contract for the
+         'SHIP: the code looks good...' single-line form, where the verdict
+         opens the message and prose follows on the same line.
+
+    Handles decorated forms in both passes: 'SHIP', 'ship', 'SHIP.',
+    '**SHIP**', 'SHIP!' -> 'SHIP'.
+
+    Returns 'REVISE' unless a pass positively identifies SHIP — an
+    unparseable verdict must never ship.
     """
     if not text:
         return "REVISE"
 
-    # Extract first token: split on whitespace, take first word
+    # Pass 1: isolated verdict token on its own line; last occurrence wins.
+    trailing: str | None = None
+    for line in text.splitlines():
+        found = _is_verdict_line(line)
+        if found:
+            trailing = found
+    if trailing:
+        return trailing
+
+    # Pass 2: leading token of the message.
     tokens = text.strip().split()
     if not tokens:
         return "REVISE"
 
-    leading = tokens[0]
-
-    # Normalize: uppercase, strip non-alphanumerics
-    normalized = re.sub(r'[^A-Za-z]', '', leading).upper()
+    # Normalize: uppercase, strip non-alphabetics
+    normalized = re.sub(r'[^A-Za-z]', '', tokens[0]).upper()
 
     # SHIP set: exact match only
     if normalized == "SHIP":
         return "SHIP"
 
     return "REVISE"
+
+
+def _strip_verdict(text: str) -> str:
+    """
+    Return the reviewer's message with its verdict declaration removed, for use
+    as REVISE feedback body.
+
+    Removes every isolated verdict line (the form _normalize_verdict pass 1
+    reads). If none is present, falls back to dropping the leading token, which
+    is the form pass 2 reads.
+    """
+    lines = text.splitlines()
+    kept = [ln for ln in lines if not _is_verdict_line(ln)]
+    if len(kept) != len(lines):
+        return "\n".join(kept).strip()
+
+    tokens = text.strip().split(None, 1)
+    return tokens[1].strip() if len(tokens) > 1 else ""
 
 
 # State files cleared by reset (logs and context report excluded)
@@ -502,11 +551,17 @@ def reset_state(state_dir: str) -> int:
     """
     Remove all Ralph Loop state files from state_dir.
     Log files (ael_*.LOG) and context-budget.md are preserved.
-    Returns 0 on success, 1 if state_dir does not exist.
+    Returns 0 in all cases; reset is idempotent.
+
+    change-f5c28a04 (2.3): an absent state directory previously returned 1.
+    Reset is idempotent by intent — resetting nothing is the requested outcome
+    already obtaining, not a failure. The non-zero code surfaced through
+    ael-mcp's reset_ael as a spurious error on any project that had not yet run.
     """
     if not os.path.isdir(state_dir):
-        console.print(f"[yellow][ael] reset: state directory not found: {state_dir}[/yellow]")
-        return 1
+        console.print(f"[yellow][ael] reset: state directory not present: {state_dir}[/yellow]")
+        console.print("[green][ael] reset: nothing to clear[/green]")
+        return 0
     removed = []
     for name in _RESET_FILES:
         path = os.path.join(state_dir, name)
@@ -785,6 +840,48 @@ def clear_state(state_dir: str, *filenames: str) -> None:
             os.remove(path)
 
 
+def archive_prior_logs(state_dir: str, archive_dir: str | None) -> int:
+    """
+    change-f5c28a04 (3.1): copy run logs out of state_dir before a new run.
+
+    Run logs are written into state_dir, which is transient by design: it is
+    gitignored downstream, cleared by the smoke harness, and re-propagated over.
+    Logs cited as evidence in one session were therefore no longer present in
+    the next. The .gitignore '*.log' pattern additionally matches 'ael_*.LOG' on
+    a case-insensitive filesystem, so nothing recovers them from version
+    control either.
+
+    Opt-in: when archive_dir is null (the default) this is a no-op and behaviour
+    is unchanged, so downstream projects are unaffected until they configure it.
+    Existing archived files are never overwritten — the timestamped filenames
+    are already unique, and a collision would indicate a name reused rather than
+    a log superseded.
+
+    Returns the number of files copied.
+    """
+    if not archive_dir or not os.path.isdir(state_dir):
+        return 0
+
+    os.makedirs(archive_dir, exist_ok=True)
+    copied = 0
+    for name in sorted(os.listdir(state_dir)):
+        if not name.lower().endswith(".log"):
+            continue
+        src = os.path.join(state_dir, name)
+        dst = os.path.join(archive_dir, name)
+        if not os.path.isfile(src) or os.path.exists(dst):
+            continue
+        try:
+            shutil.copy2(src, dst)
+            copied += 1
+        except Exception as exc:
+            console.print(f"[yellow][ael] log archive: could not copy {escape(name)}: {escape(str(exc))}[/yellow]")
+
+    if copied:
+        console.print(f"[dim][ael] log archive: {copied} prior log(s) -> {escape(archive_dir)}[/dim]")
+    return copied
+
+
 def setup_logging(state_dir: str) -> logging.Logger:
     os.makedirs(state_dir, exist_ok=True)
     timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -985,6 +1082,10 @@ async def run_phase(
     mcp_error_count = 0
     _read_counts: dict[str, int] = {}  # P3: duplicate read tracking
     _written_paths: set[str] = set()  # change-a2f9c4d1: successful write targets
+    # change-f5c28a04 (F1): whether THIS phase produced work-summary.txt, by the
+    # worker's own hand. Tracked explicitly because file existence cannot
+    # distinguish a manifest written this cycle from one left by a prior cycle.
+    _manifest_written: bool = False
     _failed_call_sigs: dict[str, int] = {}  # F27: repeated identical failed call tracking
 
     label = f"{phase_label} " if phase_label else ""
@@ -1130,6 +1231,7 @@ async def run_phase(
             # F13: only worker phase writes work-summary.txt; review phase preserves it
             if is_worker_phase:
                 write_state(state_dir, "work-summary.txt", content)
+                _manifest_written = True
             # Return normalized read paths for review phase (empty for worker)
             _read_paths = {os.path.abspath(p) for p in _read_counts.keys()} if not is_worker_phase else set()
             return 0, content, _read_paths
@@ -1178,11 +1280,29 @@ async def run_phase(
             if (tc["name"] in _WRITE_TOOLS
                     and not _scope_err and not _report_err
                     and not _is_mcp_error(result)):
-                _wpath = (tc["arguments"].get("path")
-                          or tc["arguments"].get("file_path")
-                          or tc["arguments"].get("destination"))
+                # change-f5c28a04 (F3): for move/rename the deliverable ends up
+                # at the destination, so that is what the manifest must record.
+                # The source-first ordering below was inherited from
+                # _validate_write_scope, where the source is the correct subject
+                # for scope enforcement but the wrong one for manifest
+                # construction: a file created by move_file was recorded at its
+                # pre-move path, failed the isfile filter at synthesis, and was
+                # dropped from the manifest entirely.
+                if tc["name"] in ("move", "rename", "move_file", "rename_file"):
+                    _wpath = (tc["arguments"].get("destination")
+                              or tc["arguments"].get("new_path")
+                              or tc["arguments"].get("path")
+                              or tc["arguments"].get("file_path"))
+                else:
+                    _wpath = (tc["arguments"].get("path")
+                              or tc["arguments"].get("file_path")
+                              or tc["arguments"].get("destination"))
                 if _wpath:
-                    _written_paths.add(os.path.abspath(_wpath))
+                    _wabs = os.path.abspath(_wpath)
+                    _written_paths.add(_wabs)
+                    # F1: record that the worker supplied its own manifest.
+                    if _wabs == os.path.abspath(os.path.join(state_dir, "work-summary.txt")):
+                        _manifest_written = True
 
             # F27: repeated identical failed call tracking. Diagnostic calls
             # (stat/grep/read) commonly intervene between retries, defeating a
@@ -1349,11 +1469,22 @@ async def run_phase(
     # change-a2f9c4d1: iteration exhaustion is a budget boundary, not a failure.
     # Synthesise a manifest and let the reviewer adjudicate when the phase
     # produced deliverables; retain rc=1 only when it produced nothing.
+    #
+    # change-f5c28a04 (F1): the decision is made on THIS phase's own outcome —
+    # whether synthesis wrote a manifest now, or the worker wrote one during
+    # this phase — not on whether work-summary.txt exists on disk. The former
+    # test cannot distinguish a manifest produced this cycle from one left
+    # behind by a prior cycle, so a worker that wrote nothing in cycle 2+ still
+    # returned rc=0 and presented the previous cycle's deliverables to the
+    # gates.
     if is_worker_phase:
-        _synthesize_work_summary(state_dir, _written_paths, "iteration budget exhausted", log)
-        if os.path.exists(os.path.join(state_dir, "work-summary.txt")):
+        _synthesized = _synthesize_work_summary(
+            state_dir, _written_paths, "iteration budget exhausted", log
+        )
+        if _synthesized or _manifest_written:
             log.info("exhausted phase has a deliverable manifest — proceeding to review")
             return 0, "", _read_paths
+        log.warning("exhausted phase produced no deliverable manifest — rc=1")
     return 1, "", _read_paths
 
 
@@ -1844,6 +1975,20 @@ async def run_loop(
         write_state(state_dir, "iteration.txt", str(i))
         log.info("loop iteration %d/%d", i, max_iterations + _extra)
 
+        # change-f5c28a04 (F2): clear work-summary.txt per cycle, not only at
+        # loop start. Carried over, a prior cycle's manifest is read by
+        # _extract_deliverables and therefore by the read-evidence, syntax and
+        # pytest gates, which then adjudicate the previous cycle's deliverables
+        # as though they were this cycle's. It also suppresses synthesis at the
+        # wall-clock and work-complete exits, both of which decline to overwrite
+        # an existing manifest.
+        #
+        # Cleared here, before the work phase, rather than alongside
+        # review-feedback.txt before the review phase: the reviewer and all
+        # three gates consume this file, so clearing it at that point would
+        # remove the very manifest they exist to check.
+        clear_state(state_dir, "work-summary.txt")
+
         # Work phase
         console.print("\n[bold blue]▶ WORK PHASE[/bold blue]")
         rc, _, _ = await run_phase(client, mcp, worker_model, work_recipe,
@@ -1948,9 +2093,11 @@ async def run_loop(
         if verdict == "REVISE" and not result_raw and reviewer_final_msg:
             existing_feedback = read_state(state_dir, "review-feedback.txt")
             if not existing_feedback:
-                # Strip leading verdict token: first whitespace-delimited token
-                tokens = reviewer_final_msg.strip().split(None, 1)
-                feedback_body = tokens[1].strip() if len(tokens) > 1 else ""
+                # Strip the verdict declaration, whichever form it took. Using
+                # _strip_verdict rather than an unconditional leading-token drop
+                # keeps the body intact when the verdict was stated on its own
+                # line at the end, which is the common case.
+                feedback_body = _strip_verdict(reviewer_final_msg)
                 if feedback_body:
                     write_state(state_dir, "review-feedback.txt", feedback_body)
                     log.debug("persisted fallback REVISE feedback (%d chars)", len(feedback_body))
@@ -2101,8 +2248,15 @@ async def main_async(args: argparse.Namespace) -> int:
     budget_warn    = ctx_cfg.get("budget_warn_pct", 0.80)
     budget_abort   = ctx_cfg.get("budget_abort_pct", 0.95)
 
+    # 3.1: preserve prior run logs before this run begins. Null (default) = no-op.
+    _log_archive_rel = config["loop"].get("log_archive_dir")
+    _log_archive_dir = os.path.abspath(_log_archive_rel) if _log_archive_rel else None
+    archive_prior_logs(state_dir, _log_archive_dir)
+
     log = setup_logging(state_dir)
     log.info("AEL start mode=%s model=%s state_dir=%s", args.mode, model, state_dir)
+    if _log_archive_dir:
+        log.info("log archive dir: %s", _log_archive_dir)
 
     recipe_dir  = os.path.join(os.path.dirname(__file__), "..", "recipes")
     # Recipe selection: audit-index.md in the state directory selects the audit

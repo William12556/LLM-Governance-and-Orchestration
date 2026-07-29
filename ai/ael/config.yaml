@@ -3,7 +3,7 @@ omlx:
   base_url: "http://127.0.0.1:8000/v1"
   api_key: "local"
   default_model: "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit"
-  reviewer_model: "Magistral-Small-2509-MLX-6bit"
+  reviewer_model: "Magistral-Small-2509-MLX-8bit"
 
 # MCP server definitions
 # F4: filesystem MCP is confined to the project root for scope containment.
@@ -35,6 +35,11 @@ loop:
   preflight_check: false             # Evaluate success criteria before first worker iteration
   phase_duration_minutes: 30         # F28: soft cap on a single phase's wall-clock cost during audit-run refinement
   state_dir: "ai/state/ralph"
+  # log_archive_dir: Copy prior run logs out of state_dir before each run.
+  # state_dir is transient — gitignored, reset between runs, re-propagated over —
+  # so logs left there do not survive to the next session. Null disables (default);
+  # set to a path outside state_dir to retain run evidence.
+  log_archive_dir: "ai/logs"
 
 # Execution controls (opt-in, default disabled)
 # These controls are independent and activate only when their config key is set.
@@ -64,4 +69,5 @@ context:
   model_context_windows:
     "North-Mini-Code-1.0-6bit": 262144
     "mistralai_Devstral-Small-2-24B-Instruct-2512-MLX-8Bit": 262144   # vendor-validated; overrides unvalidated live 393216 RoPE ceiling
-    "Magistral-Small-2509-MLX-6bit": 40960   # vendor-recommended effective window; overrides 131072 native max (accuracy degrades past 40k)
+    "Magistral-Small-2509-MLX-8bit": 40960   # vendor-recommended effective window; overrides 131072 native max (accuracy degrades past 40k)
+    "Magistral-Small-2509-MLX-6bit": 40960   # retained: 6-bit remains a valid reviewer selection
