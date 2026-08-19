@@ -411,7 +411,7 @@ pip list
       - Create `CLAUDE.md` at project root with project context
       - Create `.claude/` directory structure per §1.2.6
       - Provision mandatory skill: follow ai/skills/validation/run-tests.md §2.0 to install `.claude/hooks/run-tests.sh` and merge its PostToolUse block into `.claude/settings.json` (§1.1.18)
-      - Reference: [claude.md](profiles/claude.md)
+      - Reference: [claude.md](claude-code.md)
     - **claude-omlx profile** (Tactical Domain = Claude Code CLI → oMLX → Devstral):
       - Ensure oMLX is running on `http://127.0.0.1:8000` with Devstral loaded
       - Install Claude Code: `npm install -g @anthropic-ai/claude-code`
@@ -1019,6 +1019,7 @@ pip install dist/*.whl
     - Strategic Domain: Generated context file requires human approval before proceeding
     - Context file name: Defined in implementation profile (ai/profiles/)
     - Strategic Domain: After human approval of T04 prompt, presents AEL execution options; human selects preferred option:
+
     - **Option A — Human executes (all profiles):**
       - Strategic Domain: Provides ready-to-execute AEL command in conversation
       - Human: Executes command from project root directory
@@ -1038,6 +1039,20 @@ python ai/ael/src/orchestrator.py --mode loop \
       - Human: Requests status check when ready
       - Strategic Domain: Calls `ael_status`; reports SHIP or BLOCKED outcome
       - On BLOCKED: Strategic Domain reads `RALPH-BLOCKED.md` and creates T03 Issue per P04
+
+    - **Option C — Claude Code manual invocation (claude_code/claude_omlx profiles):**
+      - Human: Opens Claude Code in the project root
+      - Human: Issues the invocation instruction, substituting the T04 prompt path
+      - Reference: ai/profiles/claude-code.md §5.0 for full procedure
+      - Example instruction:
+
+
+```text
+Implement ai/workspace/prompt/prompt-<uuid>-<name>.md and close the prompt T-Doc
+when finished. Leave the issue and change T-Docs active pending test results.
+Then, once finished, write a report of what you have done in
+ai/workspace/report/report-<uuid>-<name>.md.
+```
 
   - §1.10.4 Wildcard Permissions
     - Tactical Domain: Supports wildcard patterns in permission grants for batch operations
@@ -1195,6 +1210,7 @@ See [workflow.md](workflow.md).
 | 9.10    | 2026-07-02 | P09 §1.10.2: prompt creation clause conditioned on source_ref (design-sourced vs change-sourced, §1.4.1 exception); tactical_brief/context-budget directives scoped to target_profile == ael; coupled_docs directives conditioned on source_ref; P03 §1.4.1: added cross-reference to P09 source_ref discrimination; resolves issue-713437bc (T04 schema hard-coded AEL-exclusivity and change-document-exclusivity, contradicting §1.4.1 exception and multi-profile Tactical Domain architecture) |
 | 9.11    | 2026-07-08 | P01 §1.2.8 and P09 §1.10.2: replaced retired `budget.py` file-existence precondition with orchestrator.py's own tiered context-window resolver (config.yaml override → live omlx_model_status query → per-model config.yaml override → unknown); context-budget.md now written automatically at AEL startup; Strategic Domain gate is a direct omlx_model_status call rather than a file-existence check (change-d42e64a9, Stream B) |
 | 9.12    | 2026-07-17 | P06 §1.7.15 Validation Hooks made mandatory for claude_code/claude_omlx profiles; P00 §1.1.18 adds canonical skill source ai/skills/ and mandatory skill entry (ai/skills/validation/run-tests.md); P01 §1.2.6 corrected .claude/ git-tracking comment (was incorrectly marked wholly excluded) and expanded tree; P01 §1.2.8 adds mandatory skill provisioning step to both Claude Code profiles; P01 §1.2.2 .gitignore corrected .claude/settings.json → .claude/settings.local.json to match Claude Code's team-shared-settings convention |
+| 9.13    | 2026-08-19 | P09 §1.10.3 added Option C — Claude Code manual invocation (claude_code/claude_omlx profiles), documenting the human-issued task instruction cross-referenced to ai/profiles/claude-code.md §5.0 |
 
 ---
 [Return to Table of Contents](<#table of contents>)
