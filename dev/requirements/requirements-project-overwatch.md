@@ -1,6 +1,6 @@
 Created: 2026 August 21
 
-# govwatch (Web) Requirements
+# Project Overwatch Requirements
 
 ---
 
@@ -31,7 +31,7 @@ Created: 2026 August 21
 
 ## 1.0 Purpose
 
-`govwatch` (Web) extends the existing `govwatch` governance-monitoring tool
+Project Overwatch extends the existing `govwatch` governance-monitoring tool
 into a browser-based project management interface for a single project
 governed by the LLM-Governance-and-Orchestration framework. It retains
 `govwatch`'s existing monitoring function as one panel among several, and
@@ -51,7 +51,7 @@ actioned by this document.
 
 ## 2.0 Scope
 
-`govwatch` (Web) operates on a single project's `ai/` directory only — the
+Project Overwatch operates on a single project's `ai/` directory only — the
 directory canonically sourced from LLM-Governance-and-Orchestration and
 propagated via `bin/propagate.sh`. It has no awareness of, and does not
 read, `dev/` (framework-development-only artefacts) or any other project's
@@ -270,7 +270,7 @@ with the same caveat carried in `requirements-govwatch.md` §6.0.
 | OQ-08 | FR-08-02: diff data source and the tool's access method to git history from its runtime context. |
 | OQ-09 | Retirement trigger for `govwatch.py` (TUI) is stated as "FR-01 shipped and validated" (§4.1); exact validation criteria are not yet defined. |
 | OQ-10 | Disposition of `requirements-govwatch.md`: candidate for relocation to a `dev/requirements/closed/` archive once this document is approved, consistent with the `closed/` convention used elsewhere in `dev/`. `dev/requirements/` currently has no `closed/` subdirectory. Not actioned by this document. |
-| OQ-11 | Tool identity: this document assumes the name `govwatch` is retained for the web tool (continuity with existing references across `governance.md`, `primer.md`, and downstream projects). Open to revision. |
+| OQ-11 | Tool identity: **Resolved** — named **Project Overwatch**. Chosen for semantic fit with the tool's observe-and-support-without-authoring character (CON-07), over retaining `govwatch`. Trademark note: the name's dominant term is shared with the trademarked video game *Overwatch* (Blizzard/Activision); flagged during naming discussion, accepted as an internal-tool-only risk. |
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -302,6 +302,7 @@ a single-effort ("Big Bang") delivery.
 | Version | Date | Description |
 |---|---|---|
 | 0.1 | 2026-08-21 | Initial draft, capturing requirements elicitation conducted in Claude Desktop brainstorming session |
+| 0.2 | 2026-08-21 | Renamed tool from `govwatch` (Web) to Project Overwatch throughout; resolved OQ-11; file renamed from `requirements-govwatch-web.md` to `requirements-project-overwatch.md` |
 
 ---
 
