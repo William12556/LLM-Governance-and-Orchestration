@@ -52,6 +52,7 @@ fi
 EXCLUDES=(
     --exclude='/ael/config.yaml'    # project-specific AEL configuration
     --exclude='/context.md'         # project-specific conventions/stack; seeded below when absent
+    --exclude='/task.md'            # project-specific open-work register; seeded below when absent
     --exclude='/workspace/'         # project-local governance documents
     --exclude='/state/'             # AEL runtime state (post-2026-06-16 path; was ael/state/)
     --exclude='/dashboard-alerts.md' # govwatch write target
@@ -76,15 +77,21 @@ echo ""
 # and admitted as work to be done.
 
 if [[ -f "${PROJECT_AI}/context.md" ]]; then
-    NEEDS_SEED="false"
+    NEEDS_SEED_CONTEXT="false"
 else
-    NEEDS_SEED="true"
+    NEEDS_SEED_CONTEXT="true"
+fi
+
+if [[ -f "${PROJECT_AI}/task.md" ]]; then
+    NEEDS_SEED_TASK="false"
+else
+    NEEDS_SEED_TASK="true"
 fi
 
 CHANGES=$(rsync --dry-run -av --itemize-changes "${EXCLUDES[@]}" \
     "${AI_SRC}/" "${PROJECT_AI}/" | grep '^>f' || true)
 
-if [[ -z "${CHANGES}" && "${NEEDS_SEED}" == "false" ]]; then
+if [[ -z "${CHANGES}" && "${NEEDS_SEED_CONTEXT}" == "false" && "${NEEDS_SEED_TASK}" == "false" ]]; then
     echo "Target is up to date. No changes to apply."
     exit 0
 fi
@@ -95,8 +102,12 @@ else
     echo "(no framework files differ)"
 fi
 
-if [[ "${NEEDS_SEED}" == "true" ]]; then
+if [[ "${NEEDS_SEED_CONTEXT}" == "true" ]]; then
     echo "seed         context.md (absent in target)"
+fi
+
+if [[ "${NEEDS_SEED_TASK}" == "true" ]]; then
+    echo "seed         task.md (absent in target)"
 fi
 
 echo ""
@@ -120,13 +131,22 @@ rsync -av "${EXCLUDES[@]}" \
 # NEEDS_SEED was evaluated before the preview's early exit; --ignore-existing is
 # not used, as the absence of the file is already established by that test.
 
-if [[ "${NEEDS_SEED}" == "true" ]]; then
+if [[ "${NEEDS_SEED_CONTEXT}" == "true" ]]; then
     rsync -a "${AI_SRC}/context.md" "${PROJECT_AI}/"
     echo ""
     echo "context.md: template seeded (new project). Fill it in before the first AEL run."
 else
     echo ""
     echo "context.md: existing project copy preserved."
+fi
+
+if [[ "${NEEDS_SEED_TASK}" == "true" ]]; then
+    rsync -a "${AI_SRC}/task.md" "${PROJECT_AI}/"
+    echo ""
+    echo "task.md: template seeded (new project)."
+else
+    echo ""
+    echo "task.md: existing project copy preserved."
 fi
 
 echo ""

@@ -263,6 +263,13 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Team coordination: Review context file changes during git commits
     - Auto-generation: Strategic Domain creates initial context file during project initialization or when absent
     - Implementation: Context file name and update mechanism defined in implementation profile (ai/profiles/)
+  - §1.1.20 Task Register
+    - Location: `ai/task.md` (project root, git-tracked)
+    - Purpose: single-file index of open work items, cross-referencing document-class UUIDs (issue, change, prompt)
+    - Exempt from §1.1.10 naming convention and §1.1.14 lifecycle management: no UUID, no master suffix, no closed/ archival
+    - Row removed in place once the referenced document triple's closed/ records the outcome; git history preserves prior state
+    - Strategic Domain: adds a row when a T03/T02/T04 triple opens; removes the row when the triple closes
+    - Framework ships a skeleton `ai/task.md`; `bin/propagate.sh` excludes it from overwrite and seeds it only when absent in the target, per `context.md` treatment
 
 [Return to Table of Contents](<#table of contents>)
 
@@ -271,6 +278,7 @@ python ai/ael/src/orchestrator.py --mode loop \
     - Create (see §1.2.6 Project folder structure)
   - §1.2.2 GitHub documents
     - Create .gitignore in project root:
+    - Offer to keep the ai/ framework out of a fork's GitHub history entirely.
 ```
 # Python
 __pycache__/
@@ -309,6 +317,7 @@ build/
 #   /ai/
 #   /CLAUDE.md
 # — to keep the framework out of the fork's history entirely.
+# else
 deprecated/
 ai/workspace/report/
 ai/workspace/ai/
@@ -347,6 +356,7 @@ test.txt
         ├── ai/                       # Framework — operational rules + execution space
         │   ├── governance.md
         │   ├── context.md            # AEL profile only — Tactical Domain context (team shared)
+        │   ├── task.md                # open-work register (git-tracked)
         │   ├── state/                # AEL loop state (ephemeral, excluded from git)
         │   ├── dashboard-alerts.md   # govwatch output (excluded from git)
         │   └── workspace/            # Framework execution space
@@ -1213,6 +1223,7 @@ See [workflow.md](workflow.md).
 | 9.13    | 2026-08-19 | P09 §1.10.3 added Option C — Claude Code manual invocation (claude_code/claude_omlx profiles), documenting the human-issued task instruction cross-referenced to ai/profiles/claude-code.md §5.0 |
 | 9.14    | 2026-08-19 | P09 §1.10.3: corrected heading “presents AEL execution options” → “presents Tactical Domain execution options”, since Option C is not an AEL path (issue raised via GTach ai/task.md) |
 | 9.15    | 2026-08-19 | P06 §1.7.15: corrected stale reference ai/profiles/claude.md → ai/profiles/claude-code.md (claude.md was an obsolete duplicate, identified via GTach ai/profiles/ audit) |
+| 9.16    | 2026-08-21 | Added P00 §1.1.20 Task Register: ai/task.md open-work index, exempt from §1.1.10 naming and §1.1.14 lifecycle; added task.md to §1.2.6 folder structure; concept sourced from GTach ai/task.md |
 
 ---
 [Return to Table of Contents](<#table of contents>)

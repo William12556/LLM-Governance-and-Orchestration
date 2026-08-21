@@ -138,6 +138,7 @@ The Strategic Domain owns the following functions:
 
 - Traceability matrix updates at every phase transition (P05)
 - Document lifecycle management: active → closed (P00 §1.1.14)
+- Open-work register maintenance: `ai/task.md` (P00 §1.1.20)
 - Git commit after every iteration increment
 
 [Return to Table of Contents](<#table of contents>)
@@ -220,6 +221,9 @@ the requested mode is unclear, ask before proceeding.
 
 Document classes: `design`, `change`, `issue`, `prompt`, `test`, `result`,
 `audit`, `trace`, `requirements`.
+
+**Exempt:** `ai/task.md` (open-work register) carries no UUID and no
+lifecycle state — see P00 §1.1.20.
 
 **UUID propagation:** The first document created in a workflow cycle (issue or
 change) generates the UUID. All coupled documents inherit it.
@@ -321,6 +325,7 @@ any document.
 | 0.11 | 2026-07-02 | Rescoped §3.0 and §7.0 context-budget directives to AEL-targeted T04 prompts only (prompt_info.target_profile field; issue-713437bc) |
 | 0.12 | 2026-07-08 | §4.0/§5.0/§7.0: replaced retired `budget.py` file-existence gate with direct `omlx_model_status` (mcp_omlx) query before authoring AEL-targeted T04 prompts; `context-budget.md` now written automatically by the orchestrator at AEL runtime (change-d42e64a9) |
 | 0.13 | 2026-08-19 | Synced with governance v9.13: added Option C (Claude Code manual invocation) to §2.0 alongside Options A/B; corrected stale `ai/profiles/claude.md` → `ai/profiles/claude-code.md` reference in §2.0 and §2.1; flattened §4.0 workflow block to present Options A/B/C as one selection set, matching governance §1.10.3 structure |
+| 0.14 | 2026-08-21 | Synced with governance v9.16: added §3.0 Governance bullet for `ai/task.md` open-work register maintenance (P00 §1.1.20); added §6.1 exemption note for `ai/task.md` |
 
 ---
 
